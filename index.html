@@ -1,0 +1,33 @@
+<!DOCTYPE html><html lang="de"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="theme-color" content="#04060d">
+<link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="assets/p/heimatwelt.webp"><link rel="apple-touch-icon" href="assets/p/heimatwelt.webp">
+<title>Galaxy Empire</title><link rel="stylesheet" href="style.css?v=10"></head><body>
+<div id="app">
+ <canvas id="stars"></canvas>
+ <main id="views">
+  <section id="v-base" class="view active"><div id="pano"><div id="sizer"></div><div id="world"><img id="terrain" src="assets/base_pano.webp" alt="" draggable="false"><div id="life"><div class="water" style="left:600px;top:40px;width:700px;height:230px"></div><div class="water lake" style="left:1490px;top:110px;width:330px;height:140px"></div><div class="car" style="offset-path:path('M290 350 C380 340 460 360 520 368 S700 380 820 420 S760 560 650 565 S430 540 300 470 Z');animation-duration:48s;animation-delay:-0s;--s:1"><img src="assets/life/car.png" alt=""></div><div class="car" style="offset-path:path('M290 350 C380 340 460 360 520 368 S700 380 820 420 S760 560 650 565 S430 540 300 470 Z');animation-duration:48s;animation-delay:-24s;--s:1"><img src="assets/life/car.png" alt=""></div><div class="car" style="offset-path:path('M1290 240 C1350 300 1400 380 1450 405 S1600 420 1700 470 S1840 600 1900 715');animation-duration:34s;animation-delay:-5s;--s:1"><img src="assets/life/car.png" alt=""></div><div class="car" style="offset-path:path('M1290 240 C1350 300 1400 380 1450 405 S1600 420 1700 470 S1840 600 1900 715');animation-duration:34s;animation-delay:-20s;--s:0.9"><img src="assets/life/car.png" alt=""></div><div class="car" style="offset-path:path('M440 250 C520 250 600 260 660 262 S820 290 850 300');animation-duration:22s;animation-delay:-3s;--s:0.8"><img src="assets/life/car.png" alt=""></div><div class="car" style="offset-path:path('M1560 430 C1640 440 1760 430 1850 440 S2050 450 2120 440');animation-duration:30s;animation-delay:-12s;--s:1"><img src="assets/life/car.png" alt=""></div><div class="drone" style="left:520px;top:90px;animation-delay:-0s"><img src="assets/life/drone.png" alt=""></div><div class="drone" style="left:980px;top:170px;animation-delay:-2.1s"><img src="assets/life/drone.png" alt=""></div><div class="drone" style="left:1610px;top:60px;animation-delay:-1.2s"><img src="assets/life/drone.png" alt=""></div><div class="drone" style="left:2200px;top:180px;animation-delay:-3.3s"><img src="assets/life/drone.png" alt=""></div><div class="drone" style="left:820px;top:520px;animation-delay:-0.6s"><img src="assets/life/drone.png" alt=""></div><i class="puff" style="left:2160px;top:280px;animation-delay:-0.0s"></i><i class="puff" style="left:2160px;top:280px;animation-delay:-1.2s"></i><i class="puff" style="left:2160px;top:280px;animation-delay:-2.4s"></i><i class="puff" style="left:2160px;top:280px;animation-delay:-3.5999999999999996s"></i><i class="puff" style="left:2160px;top:280px;animation-delay:-4.8s"></i><div class="cloud c1"></div><div class="cloud c2"></div><div class="cloud c3"></div></div><div id="blds"></div></div></div>
+   <div id="rail" class="glass"></div>
+   <div id="queues"></div>
+   <div id="aries"></div>
+  </section>
+  <section id="v-system" class="view"><div id="sysbar" class="glass"></div><div id="sysstrip"></div></section>
+  <section id="v-galaxy" class="view"><div id="galbar" class="glass"></div><div id="galtable" class="glass"></div></section>
+  <section id="v-fleet" class="view"><div class="subtabs glass" id="fleettabs"></div><div id="fleetbody"></div></section>
+  <section id="v-ally" class="view"><div id="allybody"></div></section>
+  <section id="v-chat" class="view"><div id="chatbody"></div></section>
+ </main>
+ <header id="top" class="glass">
+  <button id="plchip"></button>
+  <div id="res"></div>
+  <div id="topbtns"></div>
+ </header>
+ <nav id="nav" class="glass"></nav>
+ <div id="panel" class="hidden"><div class="pwrap glass"><div class="phead"><button class="iconbtn back" data-act="pback" aria-label="Zurück"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><div class="ptitle"></div><button class="iconbtn" data-act="pclose" aria-label="Schließen"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div><div class="pbody"></div></div></div>
+ <div id="replay" class="hidden"><canvas id="rcv"></canvas><div id="rhud"></div></div>
+ <div id="toasts"></div>
+</div>
+<div id="rotate"><svg viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M3 12a9 9 0 0 1 4-7.5M21 12a9 9 0 0 1-4 7.5"/></svg><div>Bitte dreh dein iPhone ins Querformat</div></div>
+<script src="js/layout.js"></script><script src="js/data.js?v=10"></script><script src="js/engine.js?v=10"></script><script src="js/art.js?v=10"></script><script src="js/ui1.js?v=10"></script><script src="js/ui2.js?v=10"></script><script src="js/ui3.js?v=10"></script><script src="js/replay.js?v=10"></script>
+</body></html>

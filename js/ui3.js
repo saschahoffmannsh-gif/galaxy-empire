@@ -50,7 +50,7 @@ function sysPop(pn,el){const sl=E.slot(sysG,sysS,pn);const ms=E.missionsFor(sysG
  d.innerHTML=`<h4>${sl.kind==='empty'?'Freie Position':esc(sl.name)} <span class="mut">[${sysG}:${sysS}:${pn}]</span></h4><div class="desc" style="font-size:11.5px">${info}</div>${deb?`<div class="mut" style="font-size:11px;margin-top:4px">Trümmerfeld: ${fmt(deb.m)} M · ${fmt(deb.k)} K</div>`:''}<div class="acts">${sl.kind==='own'&&sl.pl.id!==S.cur?`<button class="btn sm" data-act="switch" data-id="${sl.pl.id}">Besuchen</button>`:''}${ms.map(m=>`<button class="btn sm ${m==='attack'?'red':''}" data-act="dispatch" data-g="${sysG}" data-s="${sysS}" data-p="${pn}" data-m="${m}">${E.MISSIONS[m]}</button>`).join('')}</div>`;
  $('#app').appendChild(d);const w=d.offsetWidth,hh=d.offsetHeight;d.style.left=Math.max(8,Math.min(innerWidth-w-8,r.left+r.width/2-w/2))+'px';d.style.top=Math.max(56,Math.min(innerHeight-hh-64,r.top+r.height*0.6))+'px'}
 let galG=null,galS=null;
-function renderGalaxy(){const p=pl();if(galG==null){galG=p.g;galS=p.s}
+function renderGalList(){const p=pl();if(galG==null){galG=p.g;galS=p.s}
  $('#galbar').innerHTML=`<span class="mut">Galaxie</span><button class="iconbtn" data-act="galnav" data-k="g" data-d="-1">‹</button><input class="navin" id="gg" type="number" value="${galG}" min="1" max="9"><button class="iconbtn" data-act="galnav" data-k="g" data-d="1">›</button><span class="mut">System</span><button class="iconbtn" data-act="galnav" data-k="s" data-d="-1">‹</button><input class="navin" id="gs" type="number" value="${galS}" min="1" max="499"><button class="iconbtn" data-act="galnav" data-k="s" data-d="1">›</button><button class="btn sm" data-act="galgo">Los</button><button class="btn sm ghost" data-act="galhome">Heimat</button><span class="mut" style="font-size:11px">Sonden: ${fmt(p.ships.pr||0)}</span>`;
  $('#galtable').innerHTML=`<table class="gt"><tr><th>Pos</th><th></th><th>Planet</th><th>Spieler</th><th>Allianz</th><th>Trümmer</th><th>Aktionen</th></tr>${E.system(galG,galS).map(sl=>{const deb=S.debris[E.ck(galG,galS,sl.p)];const ms=E.missionsFor(galG,galS,sl.p);
   const img=sl.kind==='nebula'?A.img('nebula','pt'):sl.type?`<img class="pt" src="${A.planetSrc(sl.type)}" style="${sl.kind==='empty'?'opacity:.35;filter:grayscale(.6)':''}">`:'';
@@ -119,9 +119,9 @@ document.addEventListener('click',ev=>{const t=ev.target.closest('[data-act]');i
  case 'sysplan':sysPop(+t.dataset.p,t);break;
  case 'sysnav':sysS=(sysS-1+ +t.dataset.d+499)%499+1;renderSystem();break;
  case 'syshome':sysG=p.g;sysS=p.s;renderSystem();break;
- case 'galnav':if(t.dataset.k==='g')galG=Math.min(9,Math.max(1,galG+ +t.dataset.d));else galS=(galS-1+ +t.dataset.d+499)%499+1;renderGalaxy();break;
- case 'galgo':galG=Math.min(9,Math.max(1,+$('#gg').value||1));galS=Math.min(499,Math.max(1,+$('#gs').value||1));renderGalaxy();break;
- case 'galhome':galG=p.g;galS=p.s;renderGalaxy();break;
+ case 'galnav':if(t.dataset.k==='g')galG=Math.min(9,Math.max(1,galG+ +t.dataset.d));else galS=(galS-1+ +t.dataset.d+499)%499+1;renderGalList();break;
+ case 'galgo':galG=Math.min(9,Math.max(1,+$('#gg').value||1));galS=Math.min(499,Math.max(1,+$('#gs').value||1));renderGalList();break;
+ case 'galhome':galG=p.g;galS=p.s;renderGalList();break;
  case 'dispatch':closePanel();dispatch(+t.dataset.g,+t.dataset.s,+t.dataset.p,t.dataset.m);break;
  case 'ftab':fleetTab=t.dataset.v;renderFleet();break;
  case 'recall':E.recall(+id);toast('Flotte zurückgerufen');renderFleet();break;
@@ -148,7 +148,7 @@ function loop(){try{E.tick()}catch(e){console.error(e)}const n=Date.now();updRes
   const typing=document.activeElement&&['INPUT','TEXTAREA'].includes(document.activeElement.tagName);
   if(!typing){if(view==='base')renderBase();else if(view==='fleet'&&fleetTab!=='send')renderFleet();else if(view==='chat')renderChat();if(panelStack.length)renderPanel(true)}}
  if(n-lastSave>3000){lastSave=n;save()}}
-load();A.stars($('#stars'));renderAll();setInterval(loop,250);
+load();A.stars($('#stars'));renderAll();setInterval(loop,250);if(window.WATER)WATER.init($('#waterhost'));
 addEventListener('resize',()=>{A.stars($('#stars'));layoutPano()});addEventListener('orientationchange',()=>setTimeout(layoutPano,300));
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{E.tick();renderAll()}});
 if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});

@@ -59,26 +59,32 @@ document.addEventListener('visibilitychange',()=>$('#pano').classList.toggle('pa
 function renderView(){({base:renderBase,system:renderSystem,galaxy:renderGalaxy,fleet:renderFleet,ally:renderAlly,chat:renderChat})[view]()}
 // Basis: Gelände mit 12 Plattformen (Pad-Zentren per Bildanalyse ermittelt, Quelle 1280×720)
 // Basis-Panorama 2340×720 (zwei Hälften, weich überblendet). Pad-Zentren per Bildanalyse.
+// Basis-Panorama 2360×720 mit Horizont (zwei Hälften, farbangeglichen + weich überblendet). Pads per Bildanalyse.
+// [Bild, cx, cy(Oberseite Pad), Pad-Breite]  Ökonomie links am Fluss · Technik Mitte · Militär/Allianz rechts am See
 const PADS=[
- ['Bergbau',430,185,111],['Schmiede',598,188,111],['Raffinerie',758,222,117],['Kraftwerk',362,282,119],['@fusion',360,404,131],
- ['Forschung',552,304,122],['KI_Center',740,337,126],['Roboter_Labor',552,437,137],['Lager',746,480,137],
- ['Werft',1480,319,129],['Verteidigung',1392,478,139],['Waffen',1716,358,133],['Allianzzentrum',1663,524,146],['@radar',1972,368,139],['@stargate',2012,522,153]];
+ ['Bergbau',390,502,187],['Schmiede',453,415,108],['Raffinerie',680,415,103],['Kraftwerk',610,378,80],['@fusion',828,460,146],
+ ['Forschung',922,410,107],['Roboter_Labor',939,600,308],['KI_Center',1162,468,167],['Lager',1418,467,147],
+ ['Waffen',1522,404,106],['Verteidigung',1672,448,136],['Werft',1544,565,202],['Allianzzentrum',1922,568,212],['@stargate',2166,428,128],['@radar',2125,504,176]];
 const BIMG={Bergbau:[600,450],Schmiede:[460,346],Raffinerie:[480,371],Kraftwerk:[500,374],Forschung:[420,292],Roboter_Labor:[480,357],KI_Center:[460,384],Lager:[500,374],Werft:[600,476],Verteidigung:[500,366],Waffen:[500,372],Allianzzentrum:[500,385]};
 const SHORTN={metal_mine:'Metall',crystal_mine:'Kristall',gas_mine:'Gas',solar:'Solar',fusion:'Fusion',lab:'Labor',nanite:'Naniten',robotics:'Roboter','@store':'Lager',shipyard:'Werft','@defense':'Abwehr',galacto:'Galactonit',alliance:'Allianz',radar:'Radar',stargate:'Sternentor',moon_base:'Mondbasis',pioneer:'Pionier',eux:'EUX',wormhole:'Wurmloch'};
-const PANO_W=2340,PANO_H=720;let baseKey=null,panoS=1,panoCentered=false;
-function layoutPano(){const H=$('#pano').clientHeight||innerHeight;panoS=H/PANO_H;
- $('#world').style.transform=`scale(${panoS})`;$('#sizer').style.width=PANO_W*panoS+'px';
- if(!panoCentered&&$('#pano').clientWidth){panoCentered=true;$('#pano').scrollLeft=Math.max(0,580*panoS-$('#pano').clientWidth/2+40)}}
-function placePlates(){if(!$('#pano').clientWidth){placePlates._ok=0;return}const ps=[...$$('#blds .plate')].map(el=>({el,x:+el.dataset.x,y:+el.dataset.y,w:el.offsetWidth+8,h:el.offsetHeight+4}));
+const PANO_W=2360,PANO_H=720,PANO_Y0=40,PANO_Y1=720;let baseKey=null,panoS=1,panoCentered=false;
+function navH(){const n=$('#nav');return n?n.offsetHeight+10:64}
+function layoutPano(){const H=($('#pano').clientHeight||innerHeight);panoS=H/(PANO_Y1-PANO_Y0);
+ $('#world').style.transform=`translate(0,${-PANO_Y0*panoS}px) scale(${panoS})`;$('#world').style.setProperty('--ps',panoS);placePlates._ok&&placePlates();$('#sizer').style.width=PANO_W*panoS+'px';
+ if(!panoCentered&&$('#pano').clientWidth){panoCentered=true;$('#pano').scrollLeft=Math.max(0,1080*panoS-$('#pano').clientWidth/2)}
+ if(window.WATER)WATER.resize(panoS)}
+function placePlates(){if(!$('#pano').clientWidth){placePlates._ok=0;return}const ymax=PANO_Y0+(($('#pano').clientHeight||innerHeight)-navH()-4)/panoS;
+ const ps=[...$$('#blds .plate')].map(el=>({el,x:+el.dataset.x,y:+el.dataset.y,w:el.offsetWidth+10,h:el.offsetHeight+6}));
  ps.sort((a,b)=>a.y-b.y);const done=[];
- for(const p of ps){let tries=0;const hit=()=>done.find(q=>Math.abs(q.x-p.x)<(q.w+p.w)/2&&Math.abs(q.y-p.y)<(q.h+p.h)/2);let o;
-  while((o=hit())&&tries++<20){p.y=o.y+(o.h+p.h)/2}p.el.style.left=p.x+'px';p.el.style.top=p.y+'px';done.push(p)}}
+ for(const p of ps){p.y=Math.min(p.y,ymax-p.h/2);let tries=0,o;const hit=()=>done.find(q=>Math.abs(q.x-p.x)<(q.w+p.w)/2&&Math.abs(q.y-p.y)<(q.h+p.h)/2);
+  while((o=hit())&&tries++<24){const down=o.y+(o.h+p.h)/2;if(down+p.h/2<=ymax)p.y=down;else{p.x+=(p.x>=o.x?1:-1)*((o.w+p.w)/2-Math.abs(p.x-o.x)+2)}}
+  p.el.style.left=p.x+'px';p.el.style.top=p.y+'px';done.push(p)}}
 function buildBase(p){const moonMap={Werft:'shipyard',Roboter_Labor:'robotics',Lager:'moon_base',Forschung:'pioneer',Verteidigung:'@defense',Kraftwerk:'eux',KI_Center:'wormhole','@stargate':'stargate','@radar':'radar'};
  let h='';for(const [img,cx,cy,pw] of PADS){const id=p.moon?moonMap[img]:(img[0]==='@'?img.slice(1):GE.PANO[img]);if(!id)continue;
-  let w,hh,src;if(img[0]==='@'){w=pw*1.25;hh=w;src=`assets/img/${img.slice(1)}.png`}else{const [iw,ih]=BIMG[img];w=pw*1.32;hh=w*ih/iw;src=`assets/b/${img}.webp`}
-  const top=img[0]==='@'?cy+pw*0.42-hh:cy+pw*0.30-hh;
-  h+=`<div class="bld" data-act="bld" data-id="${id}" style="left:${cx-w/2}px;top:${top}px;width:${w}px;height:${hh}px"><div class="shadow" style="width:${pw*1.05}px;height:${pw*0.5}px;left:${(w-pw*1.05)/2}px;top:${hh-pw*0.42}px"></div><img src="${src}" alt="" draggable="false"><div class="hint">Bauen</div></div>
-  <div class="plate" data-pl="${id}" data-act="bld" data-id="${id}" data-x="${cx}" data-y="${cy+pw*0.40}"><b></b><span></span><div class="prog"><i></i></div></div>`}
+  const ico=img[0]==='@';let w,hh,src;if(ico){w=Math.min(pw*1.3,200);hh=w;src=`assets/img/${img.slice(1)}.png`}else{const [iw,ih]=BIMG[img];w=Math.min(pw*1.18,215);hh=w*ih/iw;src=`assets/b/${img}.webp`}
+  const base=cy+pw*0.16;const top=base-hh*(ico?0.86:0.97);
+  h+=`<div class="bld" data-act="bld" data-id="${id}" style="left:${cx-w/2}px;top:${top}px;width:${w}px;height:${hh}px"><div class="shadow" style="width:${pw*1.25}px;height:${pw*0.34}px;left:${(w-pw*1.25)/2+pw*0.14}px;top:${base-top-pw*0.2}px"></div><img src="${src}" alt="" draggable="false"><div class="hint">Bauen</div></div>
+  <div class="plate" data-pl="${id}" data-act="bld" data-id="${id}" data-x="${cx}" data-y="${base+16}"><b></b><span></span><div class="prog"><i></i></div></div>`}
  $('#blds').innerHTML=h;}
 function renderBase(){const p=pl();const key=p.id+(p.moon?'m':'');
  if(baseKey!==key){baseKey=key;$('#world').classList.toggle('moon',!!p.moon);buildBase(p);layoutPano();var _np=1}

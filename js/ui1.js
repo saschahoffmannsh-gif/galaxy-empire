@@ -63,8 +63,8 @@ function renderView(){({base:renderBase,system:renderSystem,galaxy:renderGalaxy,
 // 17 bebaubare Pads per Bildanalyse: [cx, cy (Mitte Oberseite), Breite, Höhe der Oberseite]. Index 17 = großer Vordergrund-Pad (v14 wieder bebaubar; Kamera zeigt ihn ganz über dem Menü).
 const PADS=[[390,502,187,47],[453,415,108,20],[680,415,103,20],[610,378,80,13],[828,460,146,32],[922,410,107,19],[1162,468,167,34],[1002,378,83,15],
  [1418,467,147,40],[1522,404,106,24],[1672,448,136,35],[1544,565,202,72],[1922,568,212,78],[2166,428,128,30],[2125,504,176,54],[2070,378,91,19],[1914,395,105,24],[939,600,308,93]];
-const PAD_PREF={metal_mine:0,crystal_mine:1,gas_mine:2,solar:3,fusion:4,lab:5,nanite:6,robotics:7,metal_store:8,galacto:9,'@defense':10,shipyard:11,alliance:12,stargate:13,radar:14,crystal_store:15,gas_store:16,
- moon_base:0,pioneer:5,eux:4,wormhole:13};
+const PAD_PREF={metal_mine:0,crystal_mine:2,gas_mine:4,solar:8,fusion:12,lab:10,nanite:9,robotics:5,metal_store:11,galacto:7,'@defense':15,shipyard:6,alliance:1,stargate:13,radar:16,crystal_store:3,gas_store:14,
+ moon_base:6,pioneer:10,eux:16,wormhole:13};
 const RIMG={metal_store:'store',crystal_store:'store',gas_store:'store','@defense':'defense'};
 const rimg=id=>RIMG[id]||id;
 const PANO_W=2360,PANO_Y0=84,PANO_VIS1=714;let baseKey=null,panoS=1,panoCentered=false;
@@ -75,15 +75,22 @@ function layoutPano(){const H=($('#pano').clientHeight||innerHeight);const vis=H
  if(window.WATER)WATER.resize(panoS);if(window.AMBIENT)AMBIENT.place()}
 // Perspektiv-Variante: Gebäude ohne eigenes Pad, Fuß per Spalte auf die Pad-Neigung verschoben (Aufbau bleibt unverzerrt).
 const IMP={lab:1.32,shipyard:1.3,robotics:1.3,fusion:1.32,alliance:1.28,stargate:1.34,nanite:1.34,galacto:1.18,radar:1.2,defense:1.15,solar:1.0,metal_mine:1.06,crystal_mine:1.06,gas_mine:1.06,store:1.0,moon_base:1.3,pioneer:1.3,eux:1.18,wormhole:1.32};
+// Freiraum je Pad: Oberkante darf die Vorderkante (Basis) überlappender, weiter hinten liegender Pads nicht verdecken.
+const PAD_HMAX=PADS.map(([cx,cy,w,h],i)=>{let m=1e9;PADS.forEach(([cx2,cy2,w2,h2],j)=>{if(j===i||cy2>=cy)return;if(Math.abs(cx2-cx)<(w*.8+w2)/2)m=Math.min(m,cy-(cy2+Math.max(h2,w2*.16)*.55))});return m});
 function padGeo(i,name,lv){const [cx,cy,w,h]=PADS[i];const r=h/w;let vi=0,bd=9;B3.rt.forEach((t,j)=>{if(Math.abs(t-r)<bd){bd=Math.abs(t-r);vi=j}});
- const v=B3.v[name][vi];const s=w/288*(IMP[name]||1)*(1+Math.min(lv||0,20)*.008);const half=cx<1180?640:1720;const sk=-Math.max(-1,Math.min(1,(cx-half)/640))*7;
- return{src:`assets/b3/${name}_${vi}.webp`,left:cx-v[2]*s,top:cy-v[3]*s,width:v[0]*s,height:v[1]*s,ox:v[2]*s,oy:v[3]*s,sk,cx,cy,w,h:Math.max(h,w*.16)}}
+ const v=B3.v[name][vi];let s=w/288*(IMP[name]||1)*(1+Math.min(lv||0,20)*.008);const hm=PAD_HMAX[i];if(v[3]*s>hm)s=Math.max(w/288*.8,hm/v[3]);const half=cx<1180?640:1720;const sk=-Math.max(-1,Math.min(1,(cx-half)/640))*7;
+ return{vi,src:`assets/b3/${name}_${vi}.webp`,left:cx-v[2]*s,top:cy-v[3]*s,width:v[0]*s,height:v[1]*s,ox:v[2]*s,oy:v[3]*s,sk,cx,cy,w,h:Math.max(h,w*.16)}}
+// Bewegliche Teile (assets/b3/{name}_{v}_{id}.webp), Pivot in Sprite-Pixeln
+function partsHTML(PT,src){const W=PT.W,H=PT.H;return PT.p.map(p=>{const pos=`left:${p.x/W*100}%;top:${p.y/H*100}%;width:${p.w/W*100}%;height:${p.h/H*100}%`;const u=src.replace('.webp',`_${p.id}.webp`);
+ if(p.anim==='wave'){const N=8;return`<span class="pw" style="${pos}">${Array.from({length:N},(_,k)=>`<i style="top:${k/N*100}%;height:calc(${100/N}% + 1px);background-image:url(${u});background-position:0 ${k/(N-1)*100}%;--x:${(p.amp*(k+1)/N/p.w*100).toFixed(2)}%;animation-duration:${p.dur}s;animation-delay:-${(k*.13).toFixed(2)}s"></i>`).join('')}</span>`}
+ const o=`transform-origin:${((p.px-p.x)/p.w*100).toFixed(1)}% ${((p.py-p.y)/p.h*100).toFixed(1)}%`;
+ return`<img class="pt pt-${p.anim}" src="${u}" alt="" style="${pos};${o};--a:${p.amp}deg;--d:${(p.amp/p.h*100).toFixed(1)}%;animation-duration:${p.dur}s">`}).join('')}
 function busyOf(p,id){return id[0]==='@'?null:p.bq.find(q=>q.id===id)}
 function lvOf(p,id){return id==='@defense'?((p.def.sdome||0)+(p.def.ldome||0)>0?1:0):E.lv(p,id)}
 function placed(p,id){return lvOf(p,id)>0||!!busyOf(p,id)}
 function ensurePads(p){if(!p.pads)p.pads={};const P=p.pads;let ch=false;
  for(const k in P)if(+k>=PADS.length||!placed(p,P[k])){delete P[k];ch=true}
- if(p.padsV!==13){p.padsV=13;for(const k in P)delete P[k];ch=true}
+ if(p.padsV!==18){p.padsV=18;for(const k in P)delete P[k];ch=true}
  const list=(p.moon?GE.MOON_B:GE.PLANET_B).concat(p.moon?[]:['@defense']);const used=new Set(Object.values(P));
  for(const id of list){if(!placed(p,id)||used.has(id))continue;let i=PAD_PREF[id];if(i==null||P[i]!=null){i=PADS.findIndex((_,j)=>P[j]==null)}if(i<0)continue;P[i]=id;used.add(id);ch=true}
  return ch}
@@ -98,6 +105,7 @@ function scaffoldSVG(i){const [cx,cy,w,hh]=PADS[i];const h=Math.max(hh,w*.16);co
  return`<svg class="scaf" viewBox="${X0} ${Y0-H*.3} ${VW} ${VH+H*.3}" style="left:${X0}px;top:${Y0-H*.3}px;width:${VW}px;height:${VH+H*.3}px">${s}</svg>`}
 function buildBase(p){let h='';PADS.forEach(([cx,cy,w,hh],i)=>{const g={cx,cy,w,h:Math.max(hh,w*.16)};
   h+=`<div class="pad" data-act="pad" data-i="${i}" style="z-index:${Math.round(cy)}"><div class="shadow"></div><img class="pb" alt="" draggable="false"><div class="fx"></div><div class="scafw"></div><svg class="ring" viewBox="0 0 100 100" preserveAspectRatio="none"><ellipse cx="50" cy="50" rx="47" ry="44" class="rbg"/><ellipse cx="50" cy="50" rx="47" ry="44" class="rfg" pathLength="100"/></svg><div class="hit" style="--l1:${cx-w*.37}px;--w1:${w*.74}px;--l0:${cx-w*.55}px;--w0:${w*1.1}px;--t1:${cy-w*.45}px;--h1:${w*.45+g.h*.9}px;--t0:${cy-g.h*.15}px;--h0:${g.h*1.45}px"></div></div>`});
+ h+=`<div id="padhits">${PADS.map(([cx,cy,w,hh],i)=>{const g=Math.max(hh,w*.16);return`<div class="bh" data-act="pad" data-i="${i}" style="left:${cx-w*.42}px;top:${cy-g*.35}px;width:${w*.84}px;height:${g*.85}px"></div>`}).join('')}</div>`;
  $('#blds').innerHTML=h;}
 function renderBase(){const p=pl();const key=p.id+(p.moon?'m':'');if(ensurePads(p))save();
  if(baseKey!==key){baseKey=key;$('#world').classList.toggle('moon',!!p.moon);buildBase(p);layoutPano()}
@@ -105,8 +113,9 @@ function renderBase(){const p=pl();const key=p.id+(p.moon?'m':'');if(ensurePads(
   const state=!id?'empty':busy&&!lv?'new':busy?'up':'done';const k=(id||'')+state+Math.min(lv,20);const pb=el.querySelector('.pb');
   if(el.dataset.k!==k){el.dataset.k=k;el.dataset.id=id||'';el.className='pad '+state;const sh=el.querySelector('.shadow');
    if(!id){pb.removeAttribute('src');const fx=el.querySelector('.fx');fx.innerHTML='';fx.dataset.n=''}
-   else{const g=padGeo(i,rimg(id),lv);if(pb.getAttribute('src')!==g.src)pb.src=g.src;const bs={left:g.left+'px',top:g.top+'px',width:g.width+'px',height:g.height+'px',transformOrigin:`${g.ox}px ${g.oy}px`,transform:`skewX(${g.sk.toFixed(2)}deg)`};Object.assign(pb.style,bs);
-    const fx=el.querySelector('.fx');Object.assign(fx.style,bs);fx.style.setProperty('--m',`url(${g.src})`);const fh=state==='new'?'':window.BFX?BFX.html(rimg(id)):'';if(fx.dataset.n!==id+state){fx.dataset.n=id+state;fx.innerHTML=fh}
+   else{const g=padGeo(i,rimg(id),lv);const PT=window.B3P&&B3P[rimg(id)]&&state!=='new'?B3P[rimg(id)][g.vi]:null;const src=PT?g.src.replace('.webp','b.webp'):g.src;if(pb.getAttribute('src')!==src)pb.src=src;const bs={left:g.left+'px',top:g.top+'px',width:g.width+'px',height:g.height+'px',transformOrigin:`${g.ox}px ${g.oy}px`,transform:`skewX(${g.sk.toFixed(2)}deg)`};Object.assign(pb.style,bs);
+    const fx=el.querySelector('.fx');Object.assign(fx.style,bs);fx.style.setProperty('--m',`url(${g.src})`);const fh=state==='new'?'':(PT?partsHTML(PT,g.src):'')+(window.BFX?BFX.html(rimg(id)):'');if(fx.dataset.n!==id+state+g.vi){fx.dataset.n=id+state+g.vi;fx.innerHTML=fh}
+    const ht=el.querySelector('.hit');ht.style.setProperty('--t1',g.top+g.height*.08+'px');ht.style.setProperty('--h1',(g.cy+g.h*.55)-(g.top+g.height*.08)+'px');ht.style.setProperty('--l1',g.left+g.width*.12+'px');ht.style.setProperty('--w1',g.width*.76+'px');
     Object.assign(sh.style,{left:g.cx-g.w*.5+g.w*.08+'px',top:g.cy-g.h*.45+'px',width:g.w*1.08+'px',height:g.h*1.5+'px'})}
    el.querySelector('.scafw').innerHTML=state==='new'||state==='up'?scaffoldSVG(i):'';
    const r=el.querySelector('.ring');const [cx,cy,w,hh]=PADS[i];const h2=Math.max(hh,w*.16);Object.assign(r.style,{left:cx-w*.56+'px',top:cy-h2*.62+'px',width:w*1.12+'px',height:h2*1.24+'px'})}

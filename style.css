@@ -597,3 +597,13 @@ video.pimg{border-radius:50%;object-fit:cover;mix-blend-mode:screen;background:t
 }
 @keyframes ldpar{from{transform:scale(1.01) translateX(-.5%)}to{transform:scale(1.045) translateX(.5%)}}
 @keyframes ldtw{0%,100%{opacity:.15}50%{opacity:.9}}
+/* v18 bewegliche Teile */
+#blds .fx .pt{position:absolute;filter:sepia(.16) saturate(1.06) hue-rotate(-5deg) brightness(1.06) contrast(1.02);animation:ptrot 4s ease-in-out infinite alternate}
+.pt-rot{animation-name:ptrot!important}.pt-yaw{animation-name:ptyaw!important}.pt-pump{animation-name:ptpump!important;animation-direction:normal!important;animation-timing-function:cubic-bezier(.45,0,.55,1)!important}
+@keyframes ptrot{from{transform:rotate(var(--a))}to{transform:rotate(calc(var(--a)*-1))}}
+@keyframes ptyaw{from{transform:rotate(var(--a)) scaleX(1)}50%{transform:rotate(0deg) scaleX(.93)}to{transform:rotate(calc(var(--a)*-1)) scaleX(1)}}
+@keyframes ptpump{0%,100%{transform:translateY(0)}50%{transform:translateY(var(--d))}}
+#blds .fx .pw{position:absolute}
+#blds .fx .pw i{position:absolute;left:0;width:100%;background-size:100% 800%;background-repeat:no-repeat;filter:sepia(.16) saturate(1.06) hue-rotate(-5deg) brightness(1.06) contrast(1.02);animation:ptwave 2s ease-in-out infinite alternate}
+@keyframes ptwave{from{transform:translateX(calc(var(--x)*-1))}to{transform:translateX(var(--x))}}
+#padhits{position:absolute;left:0;top:0;width:0;height:0;z-index:5000}#padhits .bh{position:absolute;border-radius:45%;cursor:pointer}

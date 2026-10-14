@@ -62,10 +62,12 @@ E.gemBonus=gemBonus;
 function costOf(def,lv){const f=def.f||2;return def.c.map(v=>Math.floor(v*Math.pow(f,lv-1)))}
 E.bCost=(id,lv)=>costOf(GE.BUILD[id],lv);
 E.tCost=(id,lv)=>costOf(GE.TECH[id],lv);
-E.bTime=function(pl,id,lv){const c=E.bCost(id,lv);let h=(c[0]+c[1])/(2500*(1+E.lv(pl,'robotics'))*Math.pow(2,E.lv(pl,'nanite')));if(cmdActive('commander'))h*=0.9;return Math.max(1,h*3600/S.speed)};
+// v20: echte Bauzeiten (Faktor 6 auf die OGame-Formel, min. 15 s), Beschleunigen kostet immer DM
+E.TMUL=6;
+E.bTime=function(pl,id,lv){const c=E.bCost(id,lv);let h=(c[0]+c[1])/(2500*(1+E.lv(pl,'robotics'))*Math.pow(2,E.lv(pl,'nanite')));if(cmdActive('commander'))h*=0.9;return Math.max(15,h*3600*E.TMUL/S.speed)};
 E.labLevel=function(pl){return E.lv(pl,'lab')};
-E.tTime=function(id,lv,pl){const c=E.tCost(id,lv);let h=(c[0]+c[1])/(1000*(1+E.labLevel(pl||E.planet())));if(cmdActive('technocrat'))h*=0.75;return Math.max(1,h*3600/S.speed)};
-E.uTime=function(pl,kind,id){const d=kind==='def'?GE.DEF[id]:GE.SHIP[id];let h=(d.c[0]+d.c[1])/(2500*(1+E.lv(pl,'shipyard'))*Math.pow(2,E.lv(pl,'nanite')));if(kind==='def'&&cmdActive('admiral'))h*=0.9;return Math.max(0.05,h*3600/S.speed)};
+E.tTime=function(id,lv,pl){const c=E.tCost(id,lv);let h=(c[0]+c[1])/(1000*(1+E.labLevel(pl||E.planet())));if(cmdActive('technocrat'))h*=0.75;return Math.max(15,h*3600*E.TMUL/S.speed)};
+E.uTime=function(pl,kind,id){const d=kind==='def'?GE.DEF[id]:GE.SHIP[id];let h=(d.c[0]+d.c[1])/(2500*(1+E.lv(pl,'shipyard'))*Math.pow(2,E.lv(pl,'nanite')));if(kind==='def'&&cmdActive('admiral'))h*=0.9;return Math.max(2,h*3600*E.TMUL*.5/S.speed)};
 // Felder
 E.fieldsUsed=pl=>Object.values(pl.b).reduce((a,b)=>a+b,0);
 E.fieldsMax=pl=>pl.moon?1+3*E.lv(pl,'moon_base'):pl.fields;
@@ -179,8 +181,8 @@ function progressYard(pl,t){
    let st=sqEnd(q);for(const n of pl.sq){n.start=st;st=sqEnd(n)}}else break;}
 }
 // ---------- Beschleunigen (1 DM je angefangene 15 Min) ----------
-E.FREE_MS=5*MIN;
-E.speedCost=ms=>ms<=E.FREE_MS?0:Math.ceil(ms/(15*MIN));
+E.FREE_MS=0;
+E.speedCost=ms=>ms<=0?0:Math.max(1,Math.ceil(Math.pow(ms/MIN,.9)*.75));
 E.speedupBuild=function(pid){const pl=S.planets[pid];const q=pl.bq[0];if(!q)return;const rem=q.end-now();const c=E.speedCost(rem);
  if(S.dm<c)return 'Zu wenig Dunkle Materie';S.dm-=c;const shift=q.end-now();q.end=now();
  for(let i=1;i<pl.bq.length;i++){pl.bq[i].start-=shift;pl.bq[i].end-=shift}

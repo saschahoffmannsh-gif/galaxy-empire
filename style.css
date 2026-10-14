@@ -635,3 +635,24 @@ video.pimg{border-radius:50%;object-fit:cover;mix-blend-mode:screen;background:t
 @keyframes ptturn{0%{transform:perspective(300px) rotateY(-10deg) rotate(calc(var(--a)*.4));filter:sepia(.16) brightness(1.12)}100%{transform:perspective(300px) rotateY(12deg) rotate(calc(var(--a)*-.4));filter:sepia(.16) brightness(.86)}}
 #blds .fx .pw i{animation-name:ptwave3!important;animation-timing-function:cubic-bezier(.45,.05,.55,.95)!important}
 @keyframes ptwave3{0%{transform:translateX(calc(var(--x)*-1)) scaleX(1);filter:sepia(.16) brightness(1.1)}50%{transform:translateX(0) scaleX(.94);filter:sepia(.16) brightness(.86)}100%{transform:translateX(var(--x)) scaleX(1);filter:sepia(.16) brightness(1.05)}}
+/* v20 kompakte Infokacheln, Seitenleiste, Pad-Timer */
+#queues{width:auto!important;align-items:flex-end;gap:5px}
+.qcard{position:relative;width:46px;height:46px;padding:5px!important;justify-content:center;overflow:visible}
+.qcard>div{display:none}
+.qcard .gi,.qcard img,.qcard>svg{width:34px!important;height:34px!important}
+.qcard:not(.idle)>div{display:block;position:absolute;left:3px;right:3px;bottom:3px}
+.qcard:not(.idle)>div .qt{display:none}.qcard:not(.idle)>div .qs{font-size:8.5px;justify-content:center;color:#fff;text-shadow:0 1px 2px #000}.qcard:not(.idle)>div .qs span+span{display:none}
+.qcard:not(.idle)>div .bar{height:3px;margin-top:1px}
+.qcard.idle{opacity:.55;width:38px;height:38px}.qcard.idle img,.qcard.idle .gi{width:26px!important;height:26px!important}
+.qsp{position:absolute;left:-30px;top:50%;transform:translateY(-50%);height:24px;min-width:26px;padding:0 5px;border-radius:12px;border:1px solid rgba(166,107,255,.6);background:rgba(40,20,70,.85);color:#e8d8ff;font:700 10px system-ui;display:flex;align-items:center;gap:2px;cursor:pointer}
+.qsp svg{width:11px;height:11px}
+#aries{width:auto!important;max-width:none!important}
+.ariescard{width:46px;height:46px;padding:4px!important;justify-content:center;position:relative}
+.ariescard>div{display:none}.ariescard .av{width:36px!important;height:36px!important}
+.ariescard::after{content:"";position:absolute;top:-3px;right:-3px;width:10px;height:10px;border-radius:50%;background:var(--v);box-shadow:0 0 6px var(--v)}
+.ariescard.done::after{background:var(--ok);box-shadow:0 0 8px var(--ok)}
+#rail{overflow:hidden;padding:5px 0!important;justify-content:space-between!important;gap:0}
+#rail button{flex:1 1 0;min-height:0;justify-content:center;font-size:8.5px;line-height:1.05;padding:0!important}
+#rail button svg{width:clamp(14px,4.4vh,20px)!important;height:clamp(14px,4.4vh,20px)!important}
+#blds .ptime{position:absolute;transform:translateX(-50%);font:700 15px/1 system-ui,sans-serif;color:#fff;padding:3px 8px;border-radius:9px;background:rgba(8,14,30,.72);border:1px solid rgba(56,225,255,.45);box-shadow:0 0 10px rgba(56,225,255,.25);white-space:nowrap;pointer-events:none;display:none;z-index:2}
+#blds .pad.new .ptime[data-end],#blds .pad.up .ptime[data-end]{display:block}

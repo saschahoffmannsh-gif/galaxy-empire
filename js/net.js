@@ -32,8 +32,9 @@ NET.sync=async function(withSave){if(!NET.on||!GS())return;const S=GS();
   if(window.RANK)RANK.g=null;rkC.t=0;try{hud()}catch(e){}
   if(withSave||Date.now()-NET.lastSave>10*60e3){await NET.pushSave()}
  }catch(e){NET.err=e.message}};
+NET.CV=42; // Client-Version: der Server lehnt Spielstände älterer Clients (ohne Stufen-Regeln) ab
 NET.pushSave=async function(keepalive){const S=GS();if(!S)return;const z=await zip(JSON.stringify(S));
- try{await api('save',{body:{z,t:S.t},keepalive:keepalive&&z.length<60000});NET.lastSave=Date.now()}
+ try{await api('save',{body:{z,t:S.t,cv:NET.CV},keepalive:keepalive&&z.length<60000});NET.lastSave=Date.now()}
  catch(e){if(e.code==='reject'&&!keepalive){console.warn('Spielstand abgelehnt',e.reasons);await NET.revert(e.message)}else throw e}};
 // v41: Server hat den Stand abgelehnt (unmöglicher Fortschritt) → letzten gültigen Server-Stand laden
 NET.revert=async function(msg){try{const s=await api('save');const key=window.NET_KEY||('ge_mp_save_'+String(NET.cfg.name).toLowerCase());localStorage.setItem(key,await unzip(s.z));

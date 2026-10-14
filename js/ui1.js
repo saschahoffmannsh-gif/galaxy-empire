@@ -195,7 +195,7 @@ function renderPanel(keep){if(!panelStack.length)return;const [k,a]=panelStack[p
  const r=PANELS[k](a);setHTML($('#panel .ptitle'),r[0]);const ch=setHTML(b,r[1]);if(!ch&&keep)return;$('#panel .phead').classList.toggle('hasback',panelStack.length>1);
  if(keep){b.scrollTop=st;$$('#panel input').forEach(i=>{if(i.dataset.k&&vals[i.dataset.k]!=null&&i.type!=='range')i.value=vals[i.dataset.k]})}updTimers()}
 const costHTML=(c,p)=>`<div class="costs">${c.map((v,i)=>v?`<span class="cost ${p&&p.r['mkg'[i]]<v?'no':''}">${IC['mkg'[i]]}${fmt(v)}</span>`:'').join('')}</div>`;
-const reqHTML=list=>list.length?`<div class="reqs">${list.map(r=>`<span class="req ${r.ok?'':'no'}">${esc(r.n)} ${r.have}/${r.need}</span>`).join('')}</div>`:'';
+const reqHTML=(list,lbl)=>list.length?`<div class="reqs">${lbl?`<span class="mut" style="font-size:11px">${lbl}</span>`:''}${list.map(r=>`<span class="req ${r.ok?'ok':'no'}">${r.ok?'✓':'✗'} ${esc(r.n)} ${r.have}/${r.need}</span>`).join('')}</div>`:'';
 function bImg(id){const b=GE.BUILD[id];return b.img?`<img src="assets/b/${b.img}.webp">`:A.img(id)}
 function speedBtn(kind,end,pid){const c=E.speedCost(end-E.now());return c===0?`<button class="btn sm green freefin" data-act="speed" data-k="${kind}">${IC.bolt} Gratis fertigstellen</button>`:`<button class="btn sm dm" data-act="speed" data-k="${kind}">${IC.bolt} Beschleunigen · ${c} DM</button>`}
 const PANELS={};

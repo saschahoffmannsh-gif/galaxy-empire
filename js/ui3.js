@@ -154,5 +154,5 @@ function loop(){try{E.tick()}catch(e){console.error(e)}const n=Date.now();updRes
 load();A.stars($('#stars'));renderAll();setInterval(loop,250);/* v39: alte Pano-Effekte (WebGL/Wasser) deaktiviert */
 addEventListener('resize',()=>{A.stars($('#stars'));layoutPano()});addEventListener('orientationchange',()=>setTimeout(layoutPano,300));
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{E.tick();renderAll()}});
-if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
+if('serviceWorker' in navigator&&location.protocol.startsWith('http')){const had=!!navigator.serviceWorker.controller;navigator.serviceWorker.register('sw.js').then(r=>{try{r.update()}catch(e){}}).catch(()=>{});let rl=false;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(had&&!rl){rl=true;try{save()}catch(e){}location.reload()}})}
 window.GAME={E,get S(){return S},openPanel,setView,save,toast,dispatch,get panel(){return panelStack[panelStack.length-1]||null},closePanel};

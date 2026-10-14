@@ -1,7 +1,7 @@
 'use strict';
 PANELS.buildings=()=>{const p=pl();const list=p.moon?GE.MOON_B:GE.PLANET_B;
- return[`Gebäude · ${esc(p.name)} <span class="mut" style="font-size:12px">Felder ${E.fieldsUsed(p)}/${E.fieldsMax(p)}</span>`,`<div class="grid">${list.map(id=>{const d=GE.BUILD[id],lv=E.lv(p,id),ok=E.reqOk(d.req,p);const busy=p.bq.find(q=>q.id===id);
-  return`<div class="card ${ok?'':'lock'} ${busy?'busy':''}" data-act="pbld" data-id="${id}">${d.img?`<img class="thumb" src="assets/b/${d.img}.webp">`:A.img(id)}<span class="cl">${lv}</span><div class="cn">${d.n}</div><div class="tag">${busy?`<span data-end="${busy.end}"></span>`:ok?ft(E.bTime(p,id,E.nextLevel(p,id))*1000):'Gesperrt'}</div></div>`}).join('')}</div>`]};
+ return[`Gebäude · ${esc(p.name)} <span class="mut" style="font-size:12px">Felder ${E.fieldsUsed(p)}/${E.fieldsMax(p)}</span>`,`<div class="grid">${list.map(id=>{const d=GE.BUILD[id],lv=E.lv(p,id),ok=E.reqOk(d.req,p),nxt=p.moon?null:E.bReqs(p,id,E.nextLevel(p,id)).some(x=>!x.ok);const busy=p.bq.find(q=>q.id===id);
+  return`<div class="card ${ok?'':'lock'} ${busy?'busy':''}" data-act="pbld" data-id="${id}">${d.img?`<img class="thumb" src="assets/b/${d.img}.webp">`:A.img(id)}<span class="cl">${lv}</span><div class="cn">${d.n}</div><div class="tag">${busy?`<span data-end="${busy.end}"></span>`:!ok?'Gesperrt':nxt?'✗ Voraussetzung':ft(E.bTime(p,id,E.nextLevel(p,id))*1000)}</div></div>`}).join('')}</div>`]};
 function prodTable(p,id){const d=GE.BUILD[id];if(!d.prod&&!d.grp)return'';const L=E.lv(p,id);let rows='';
  for(let l=Math.max(1,L-1);l<=L+3;l++){let v=0;if(d.grp)v=5000*Math.floor(2.5*Math.exp(20*l/33));
   else if(id==='metal_mine')v=30*l*Math.pow(1.1,l)*S.speed;else if(id==='crystal_mine')v=20*l*Math.pow(1.1,l)*S.speed;else if(id==='gas_mine')v=10*l*Math.pow(1.1,l)*(1.44-0.004*p.temp)*S.speed;else if(id==='power')v=30*l*Math.pow(1.1+0.004*E.tl('energy'),l);
@@ -21,9 +21,9 @@ PANELS.bld=id=>{const p=pl();if(id==='@store')id='store';if(id==='@defense')retu
  return[d.n,`<div class="det"><div class="dimg">${TIERED.has(id)?`<img src="assets/b3/${timg(id,Math.max(1,L))}_2.webp" style="object-fit:contain">`:bImg(id)}</div><div class="dinfo">
   <div class="lvl">Stufe ${L}${nl>L+1?` · in Bau bis ${nl-1}`:''} · <span class="tierb t${tierOf(Math.max(1,L))}">Ausbaustufe ${ROMAN[tierOf(Math.max(1,L))]}</span></div><div class="mut" style="font-size:11px">${L<20?`Nächste Ausbaustufe ab Stufe ${[5,10,15,20][tierOf(Math.max(1,L))-1]}: sichtbar größerer Ausbau.`:'Höchste Ausbaustufe erreicht.'}</div><div class="desc">${d.d}</div>
   ${busy?`<div class="box"><div class="row"><b>${busy.demo?'Abriss':'Ausbau'} auf Stufe ${busy.lv}</b><span class="spacer"></span><span data-end="${busy.end}"></span></div>${bi===0?`<div class="bar" style="margin:6px 0"><i data-pstart="${busy.start}" data-pend="${busy.end}"></i></div><div class="row">${speedBtn('sub',busy.end)}${bi===p.bq.length-1?`<button class="btn sm ghost" data-act="cancelb" data-i="${bi}">Abbrechen</button>`:''}</div>`:'<div class="mut">In der Bauschleife</div>'}</div>`:''}
-  ${reqHTML(E.reqList(d.req,p))}
+  ${p.moon?reqHTML(E.reqList(d.req,p)):reqHTML(E.bReqs(p,id,nl),'Für Stufe '+nl+':')}
   <div><div class="mut" style="font-size:11px;margin-bottom:3px">Kosten für Stufe ${nl}</div>${costHTML(c,p)}</div>
-  ${(()=>{if(p.moon)return"";const rq=E.lvReqs(p,id,nl);const st=!E.storeOk(p,c);return rq.length||st?`<div class="lvreq"><span class="mut">Für Stufe ${nl}:</span> ${rq.map(x=>`<span class="${x.ok?"ok":"no"}">${x.ok?"✓":"✗"} ${esc(x.n)} ${x.need}</span>`).join(" ")}${st?` <span class="no">✗ Lager zu klein</span>`:""}</div>`:""})()}
+  ${!p.moon&&!E.storeOk(p,c)?`<div class="lvreq"><span class="no">✗ Lager zu klein für Stufe ${nl} (Kapazität ${fmt(E.storeCap(p))})</span></div>`:""}
   <div class="row"><span class="cost">${IC.time}${ft(E.bTime(p,id,nl)*1000)}</span><span class="spacer"></span>
    ${L>1&&!busy?`<button class="btn sm ghost" data-act="demo" data-id="${id}">Abreißen</button>`:''}
    <button class="btn ${er?'dis':''}" data-act="build" data-id="${id}">${IC.up} ${L?'Ausbauen':'Bauen'}</button></div>
@@ -34,13 +34,13 @@ PANELS.research=()=>{const p=pl();const cats=['Basis','Fortgeschritten','Kampf',
  if(!E.lv(p,'lab'))h+=`<div class="box" style="margin-bottom:8px">Auf diesem Planeten gibt es kein Forschungslabor. <button class="btn sm" data-act="pbld" data-id="lab">Labor bauen</button></div>`;
  if(S.rq){const r=S.rq;h+=`<div class="box" style="margin-bottom:8px"><div class="row"><b>${GE.TECH[r.id].n} → Stufe ${r.lv}</b><span class="mut">(${esc(S.planets[r.pid]?.name||'')})</span><span class="spacer"></span><span data-end="${r.end}"></span>${speedBtn('res',r.end)}<button class="btn sm ghost" data-act="cancelr">Abbrechen</button></div><div class="bar" style="margin-top:6px"><i data-pstart="${r.start}" data-pend="${r.end}"></i></div></div>`}
  for(const c of cats){h+=`<div class="cat">${{Basis:'Basisforschung',Kampf:'Kampfforschung',Galactonit:'Galactonit',Fortgeschritten:'Fortgeschrittene Forschung'}[c]}</div><div class="grid">`;
-  for(const id in GE.TECH){const t=GE.TECH[id];if(t.cat!==c)continue;const ok=E.reqOk(t.req,p);const busy=S.rq&&S.rq.id===id;
+  for(const id in GE.TECH){const t=GE.TECH[id];if(t.cat!==c)continue;const ok=!E.tBlock(p,id,E.nextTL(id));const busy=S.rq&&S.rq.id===id;
    h+=`<div class="card ${ok?'':'lock'} ${busy?'busy':''}" data-act="ptech" data-id="${id}">${A.img(id)}<span class="cl">${E.tl(id)}</span><div class="cn">${t.n}</div><div class="tag">${busy?`<span data-end="${S.rq.end}"></span>`:ok?ft(E.tTime(id,E.nextTL(id),p)*1000):'Gesperrt'}</div></div>`}
   h+='</div>'}
  return[`Forschung <span class="mut" style="font-size:12px">Labor Stufe ${E.lv(p,'lab')}</span>`,h]};
 function unlocks(id){const out=[];for(const T of[GE.BUILD,GE.TECH,GE.SHIP,GE.DEF])for(const k in T)if(T[k].req&&T[k].req[id])out.push(`${T[k].n} (St. ${T[k].req[id]})`);return out.join(', ')}
 PANELS.tech=id=>{const p=pl(),t=GE.TECH[id],L=E.tl(id),c=E.tCost(id,L+1,p),er=E.canResearch(p,id);
- return[t.n,`<div class="det"><div class="dimg">${A.img(id)}</div><div class="dinfo"><div class="lvl">Stufe ${L} · ${t.cat}</div><div class="desc">${t.d}</div>${reqHTML(E.reqList(t.req,p))}
+ return[t.n,`<div class="det"><div class="dimg">${A.img(id)}</div><div class="dinfo"><div class="lvl">Stufe ${L} · ${t.cat}</div><div class="desc">${t.d}</div>${reqHTML(E.tReqs(p,id,L+1),'Für Stufe '+(L+1)+':')}${!E.storeOk(p,c)?`<div class="lvreq"><span class="no">✗ Lager zu klein (Kapazität ${fmt(E.storeCap(p))})</span></div>`:''}
  <div><div class="mut" style="font-size:11px;margin-bottom:3px">Kosten für Stufe ${L+1}</div>${costHTML(c,p)}</div>
  <div class="row"><span class="cost">${IC.time}${ft(E.tTime(id,L+1,p)*1000)}</span><span class="spacer"></span><button class="btn ${er?'dis':''}" data-act="research" data-id="${id}">${IC.res} Erforschen</button></div>
  ${er?`<div class="mut" style="text-align:right;font-size:11px">${er}</div>`:''}
@@ -51,7 +51,7 @@ function unitPanel(kind){const p=pl();const T=kind==='def'?GE.DEF:GE.SHIP;let h=
  for(const id in T){const d=T[id];const ok=E.reqOk(d.req,p);const have=(kind==='def'?p.def[id]:p.ships[id])||0;const mx=E.maxUnits(p,kind,id);
   h+=`<div class="unitrow ${ok?'':'lock'}"><span data-act="unit" data-id="${id}" data-kind="${kind}">${A.img(id)}</span><div style="flex:1;min-width:0"><div class="row"><span class="un">${d.n}</span><span class="mut">Vorhanden: ${fmt(have)}</span></div>
   <div class="us"><span>Angriff ${fmt(d.at)}</span><span>Schild ${fmt(d.sh)}</span><span>Hülle ${fmt(d.hull)}</span>${kind==='ship'?`<span>Laderaum ${fmt(d.cargo)}</span><span>Tempo ${fmt(E.shipSpeed(id))}</span>`:''}<span>${ft(E.uTime(p,kind,id)*1000)}/Stk.</span></div>
-  ${ok?costHTML(d.c,p):reqHTML(E.reqList(d.req,p))}</div>
+  ${ok?costHTML(d.c,p):''}${reqHTML(E.reqList(d.req,p))}</div>
   ${ok?`<div class="stepper"><input class="num" type="number" min="0" inputmode="numeric" data-k="u_${id}" id="u_${id}" placeholder="0"><button data-act="umax" data-id="${id}" data-max="${mx}" style="width:auto;padding:0 7px;font-size:11px">Max</button><button class="btn sm" data-act="units" data-id="${id}" data-kind="${kind}">Bauen</button></div>`:''}</div>`}
  return h}
 PANELS.yard=()=>[`Raumschiffwerft <span class="mut" style="font-size:12px">Stufe ${E.lv(pl(),'shipyard')}</span>`,unitPanel('ship')];
@@ -145,6 +145,6 @@ PANELS.padbuild=i=>{const p=pl();const all=p.moon?GE.MOON_B:GE.PLANET_B;const li
  const zone=cx<1080?(cx<760?'Flusstal':'Hochebene'):'Seeufer';
  const rows=list.map(id=>{const d=GE.BUILD[id];if(placed(p,id))return`<div class="unitrow done"><img class="gi" src="assets/b3/${timg(id,1)}_2.webp" alt="" style="object-fit:contain"><div style="flex:1;min-width:0"><div class="row"><span class="un">${d.n}</span><span class="mut">Stufe ${E.lv(p,id)}</span></div><div class="desc" style="font-size:11px">Steht bereits auf Bauplatz ${padOf(id)||'–'}</div></div><button class="btn sm ghost" data-act="bld" data-id="${id}">Öffnen</button></div>`;const nl=E.nextLevel(p,id),c=E.bCost(id,nl,p),ok=E.reqOk(d.req,p),er=E.canBuild(p,id);
   return`<div class="unitrow ${ok?'':'lock'}"><img class="gi" src="assets/b3/${timg(id,1)}_2.webp" alt="" style="object-fit:contain"><div style="flex:1;min-width:0"><div class="row"><span class="un">${d.n}</span><span class="mut">${ok?'⏱ '+ft(E.bTime(p,id,nl)*1000):'Gesperrt'}</span></div>
-  <div class="desc" style="font-size:11px;margin:2px 0">${esc(d.d||'')}</div>${ok?costHTML(c,p):reqHTML(E.reqList(d.req,p))}</div>
+  <div class="desc" style="font-size:11px;margin:2px 0">${esc(d.d||'')}</div>${costHTML(c,p)}${reqHTML(p.moon?E.reqList(d.req,p):E.bReqs(p,id,nl),'Für Stufe '+nl+':')}</div>
   <button class="btn sm" ${er?'disabled title="'+esc(er)+'"':''} data-act="padbuild" data-i="${i}" data-id="${id}">Hier bauen</button></div>`}).join('');
  return[`Bauplatz ${i+1} <span class="mut" style="font-size:12px">${zone} · frei</span>`,`<div class="padlist">${rows}</div>`]};

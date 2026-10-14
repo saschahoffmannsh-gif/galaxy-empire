@@ -1113,3 +1113,4 @@ body.raid:has(#panel:not(.hidden)) #raidbar{top:auto;bottom:8px;z-index:41}
 .aq-bar span{position:relative;display:block;text-align:center;font:600 11px system-ui;line-height:16px;font-variant-numeric:tabular-nums}
 .aq-parts{display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:5px;font-size:11px;color:var(--mut)}.aq-parts .ok{color:#5cf2a0}
 .lvreq{font-size:11px;margin:4px 0;display:flex;flex-wrap:wrap;gap:4px 8px}.lvreq .ok{color:#5cf2a0}.lvreq .no{color:#ff7a8a}
+.reqs .req.ok{color:#5cf2a0}.reqs .req.no{color:#ff7a8a}

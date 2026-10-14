@@ -22,9 +22,9 @@ const IC={m:SV('<path d="M4 15l8 4 8-4M4 11l8-4 8 4-8 4z" stroke="#c9d4e3"/>'),k
  pen:SV('<path d="M4 20h4L19 9l-4-4L4 16z"/>'),up:SV('<path d="M12 19V5M5 12l7-7 7 7"/>'),bolt:SV('<path d="M13 2L5 14h6l-1 8 8-12h-6z"/>'),x:SV('<path d="M6 6l12 12M18 6L6 18"/>'),play:SV('<path d="M7 4l13 8-13 8z"/>'),rank:SV('<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/>')};
 let S,view='base',panelStack=[],dirty=false;
 const pl=()=>E.planet();
-function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function save(){if(window.__noSave)return;try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 // Test-Ressourcen (v19): einmalig für neue und bestehende Spielstände, plus Knopf in den Einstellungen
-function grantTest(force){S.flags=S.flags||{};if(!force&&S.flags.testRes19)return;S.flags.testRes19=1;const p=S.planets[S.home];p.r.m+=500000;p.r.k+=300000;p.r.g+=150000;S.dm=(S.dm||0)+50000;save();if(force)toast('+500k Metall, +300k Kristall, +150k Gas, +50k DM','ok');else setTimeout(()=>toast('Test-Ressourcen gutgeschrieben: 500k Metall · 300k Kristall · 150k Gas · 50k DM','ok',5000),900)}
+function grantTest(){/* v41: Test-Ressourcen entfernt (Fortschrittsbremse) */}
 window.GE_REBOOT=function(key){try{save()}catch(e){}KEY=key;load();try{closePanel()}catch(e){}renderAll()};
 function load(){let raw=null;try{const imp=sessionStorage.getItem('ge_import');if(imp){sessionStorage.removeItem('ge_import');localStorage.setItem(KEY,imp)}raw=JSON.parse(localStorage.getItem(KEY))}catch(e){}
  if(raw&&raw.v===3){S=E.load(raw);const before=S.t,logN=S.log.length;E.tick();const away=Date.now()-before;
@@ -59,9 +59,11 @@ function renderTop(){const p=pl();try{renderRaid()}catch(e){}
  updRes();
  const unread=S.reports.filter(r=>!r.read).length;const done=E.taskDone();
  setHTML($('#topbtns'),`<button class="iconbtn" data-act="open" data-p="rank" aria-label="Rangliste">${IC.trophy}</button><button class="iconbtn" data-act="open" data-p="tasks" aria-label="Aufgaben">${IC.task}${done?'<span class="dot ok">!</span>':''}</button><button class="iconbtn" data-act="open" data-p="reports" aria-label="Berichte">${IC.mail}${unread?`<span class="dot">${unread>99?'99+':unread}</span>`:''}</button><button class="iconbtn" data-act="open" data-p="settings" aria-label="Einstellungen">${IC.gear}</button>`);}
+// v41: kompakte Zahlen für die Ressourcenleiste (12,3k · 4,5M) – nie breiter als ~6 Zeichen
+const fmtS=n=>{n=Math.floor(n||0);const a=Math.abs(n),f=(v,u)=>(v>=100?Math.round(v):v.toFixed(1).replace(/\.0$/,'')).toString().replace('.',',')+u;return a>=1e9?f(n/1e9,'G'):a>=1e6?f(n/1e6,'M'):a>=1e4?f(n/1e3,'k'):n.toLocaleString('de-DE')};window.fmtS=fmtS;
 function updRes(){const p=pl(),pi=E.prodInfo(p);const els=$$('#res .rc');if(els.length<5)return;
- ['m','k','g'].forEach((r,i)=>{const el=els[i],cap=E.storeCap(p,r);el.querySelector('.rv').textContent=fmt(p.r[r]);el.querySelector('.rr').textContent=(pi[r]>=0?'+':'')+fmt(pi[r])+'/h';el.classList.toggle('full',p.r[r]>=cap);el.querySelector('.rbar i').style.width=Math.min(100,p.r[r]/cap*100)+'%'});
- const e=pi.eProd-pi.eUse;els[3].querySelector('.rv').textContent=fmt(e);els[3].querySelector('.rr').textContent=fmt(pi.eProd)+' erz.';els[3].classList.toggle('neg',e<0);{let bd=els[3].querySelector('.ebadge');if(e<0&&!p.moon){if(!bd){bd=document.createElement('span');bd.className='ebadge';els[3].appendChild(bd)}const fx='power';bd.dataset.act='pbld';bd.dataset.id=fx;bd.textContent='!';bd.title='Energie negativ – '+GE.BUILD[fx].n+' ausbauen'}else if(bd)bd.remove()}els[4].querySelector('.rv').textContent=fmt(S.dm)}
+ ['m','k','g'].forEach((r,i)=>{const el=els[i],cap=E.storeCap(p,r);el.querySelector('.rv').textContent=fmtS(p.r[r]);el.querySelector('.rr').textContent=(pi[r]>=0?'+':'')+fmtS(pi[r])+'/h';el.title=GE.RES[r]+': '+fmt(p.r[r])+' / '+fmt(cap);el.classList.toggle('full',p.r[r]>=cap);el.querySelector('.rbar i').style.width=Math.min(100,p.r[r]/cap*100)+'%'});
+ const e=pi.eProd-pi.eUse;els[3].querySelector('.rv').textContent=fmtS(e);els[3].querySelector('.rr').textContent=fmtS(pi.eProd)+' erz.';els[3].classList.toggle('neg',e<0);{let bd=els[3].querySelector('.ebadge');if(e<0&&!p.moon){if(!bd){bd=document.createElement('span');bd.className='ebadge';els[3].appendChild(bd)}const fx='power';bd.dataset.act='pbld';bd.dataset.id=fx;bd.textContent='!';bd.title='Energie negativ – '+GE.BUILD[fx].n+' ausbauen'}else if(bd)bd.remove()}els[4].querySelector('.rv').textContent=fmtS(S.dm)}
 const TABS=[['base','Base',IC.base],['system','System',IC.sys],['galaxy','Galaxie',IC.gal],['fleet','Flotte',IC.fleet],['ally','Allianz',IC.ally],['chat','Chat',IC.chat]];
 function renderNav(){$('#nav').innerHTML=TABS.map(t=>`<button data-act="tab" data-v="${t[0]}" class="${view===t[0]?'on':''}">${t[2]}${t[1]}</button>`).join('')}
 function setView(v){view=v;$$('.view').forEach(e=>e.classList.remove('active'));$('#v-'+v).classList.add('active');$('#pano').classList.toggle('paused',v!=='base');if(v==='base'){layoutPano()}renderNav();renderView()}
@@ -169,7 +171,7 @@ function renderBase(){const p=pl();const key=p.id+(p.moon?'m':'');if(ensurePads(
   const fg=el.querySelector('.rfg');let pr=0;if(busy&&busy===p.bq[0]&&busy.end)pr=Math.max(0,Math.min(1,(E.now()-busy.start)/(busy.end-busy.start)));
   fg.style.strokeDashoffset=(100-pr*100).toFixed(1);
   if(state==='new'){const c=`inset(${((1-pr)*100*.85+5).toFixed(1)}% 0 0 0)`;if(pb.style.clipPath!==c)pb.style.clipPath=c}else if(pb.style.clipPath)pb.style.clipPath=''});
- renderRail();renderQueues();renderAries();updTimers();}
+ renderRail();renderQueues();(window.renderAries||renderAries)();updTimers();}
 const galNew=()=>!S.flags.galinfo&&(Object.values(S.gal.shards).some(n=>n>0)||E.maxB('galacto')>0||S.task>=25);
 function renderRail(){if(galNew()&&!S.flags.galhint){S.flags.galhint=1;setTimeout(()=>toast('Neu: Galactonit! Tippe links auf „Galact.“ – dort wird alles erklärt.'),600)}const it=[['buildings','Gebäude',IC.bld],['research','Forschung',IC.res],['yard','Werft',IC.yard],['defense','Abwehr',IC.def],['store','Store',IC.store],['cmd','Offiziere',IC.cmd],['galacto','Galact.',IC.gem],['inv','Inventar',IC.inv]];
  setHTML($('#rail'),it.map(i=>`<button data-act="open" data-p="${i[0]}">${i[2]}${i[1]}${i[0]==='store'&&E.giftReady()?'<span class="dot ok" style="top:-2px;right:6px">1</span>':''}${i[0]==='galacto'&&galNew()?'<span class="dot" style="top:-2px;right:6px;background:var(--v)">!</span>':''}</button>`).join(''))}
@@ -183,7 +185,7 @@ function renderQueues(){const p=pl();let h='';
  for(const f of S.fleets.filter(f=>f.npc&&E.raidVisible(f)))h+=`<div class="qcard glass warn" data-act="tab" data-v="fleet">${IC.attack}<div style="flex:1;min-width:0"><div class="qt" style="color:var(--bad)">Angriff!</div><div class="qs"><span data-end="${f.arrive}"></span></div></div></div>`;
  const own=S.fleets.filter(f=>!f.npc).length;if(own)h+=`<div class="qcard glass" data-act="tab" data-v="fleet">${A.img('sc')}<div><div class="qt">${own} Flotte${own>1?'n':''}</div><div class="qs"><span>unterwegs</span></div></div></div>`;
  setHTML($('#queues'),h)}
-function renderAries(){if(S.task>=GE.TASKS.length){setHTML($('#aries'),'');return}const T=GE.TASKS[S.task],done=E.taskDone();
+function renderAries(){if(window.renderAries&&window.renderAries!==renderAries)return window.renderAries();if(!window.CAMP_PROG)return;if(S.task>=GE.TASKS.length){setHTML($('#aries'),'');return}const T=GE.TASKS[S.task],done=E.taskDone();
  setHTML($('#aries'),`<div class="ariescard glass ${done?'done':''}" data-act="${done?'claim':'open'}" data-p="tasks">${A.img('aries','av')}<div style="min-width:0"><div class="at">Aries ${S.task+1}/29</div><div class="ad">${esc(T.t)}</div><div class="as" style="color:${done?'var(--ok)':'var(--mut)'}">${done?'Abholen!':'Tippen für Details'}</div></div></div>`)}
 function openPanel(kind,arg,push){if(!push)panelStack=[];panelStack.push([kind,arg]);$('#panel').classList.remove('hidden');renderPanel()}
 function closePanel(){panelStack=[];$('#panel').classList.add('hidden');renderAll()}

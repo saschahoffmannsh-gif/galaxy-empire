@@ -8,7 +8,7 @@ window.NET=NET;
 if(NET.on){window.NET_KEY='ge_mp_save_'+String(cfg.name).toLowerCase();if(window.ENGINE)ENGINE.mp=true;try{const u=JSON.parse(localStorage.getItem('ge_mp_uni')||'null');if(u)NET.uni=u}catch(e){}}
 const api=async(path,opt={})=>{const url=(opt.url||NET.cfg.url).replace(/\/+$/,'')+'/api/'+path;const h={'content-type':'application/json'};if(NET.cfg.token&&!opt.noauth)h.authorization='Bearer '+NET.cfg.token;
  const r=await fetch(url,{method:opt.body?'POST':'GET',headers:h,body:opt.body?JSON.stringify(opt.body):undefined,keepalive:!!opt.keepalive});let j=null;try{j=await r.json()}catch(e){}
- if(!r.ok)throw new Error((j&&j.error)||('HTTP '+r.status));return j};
+ if(!r.ok){const er=new Error((j&&j.error)||('HTTP '+r.status));er.status=r.status;er.code=j&&j.code;er.reasons=j&&j.reasons;throw er}return j};
 NET.api=api;
 // gzip + base64
 async function zip(str){const cs=new CompressionStream('gzip');const b=await new Response(new Blob([str]).stream().pipeThrough(cs)).arrayBuffer();let s='';const u=new Uint8Array(b);for(let i=0;i<u.length;i+=32768)s+=String.fromCharCode.apply(null,u.subarray(i,i+32768));return btoa(s)}
@@ -32,7 +32,13 @@ NET.sync=async function(withSave){if(!NET.on||!GS())return;const S=GS();
   if(window.RANK)RANK.g=null;rkC.t=0;try{hud()}catch(e){}
   if(withSave||Date.now()-NET.lastSave>10*60e3){await NET.pushSave()}
  }catch(e){NET.err=e.message}};
-NET.pushSave=async function(keepalive){const S=GS();if(!S)return;const z=await zip(JSON.stringify(S));await api('save',{body:{z,t:S.t},keepalive:keepalive&&z.length<60000});NET.lastSave=Date.now()};
+NET.pushSave=async function(keepalive){const S=GS();if(!S)return;const z=await zip(JSON.stringify(S));
+ try{await api('save',{body:{z,t:S.t},keepalive:keepalive&&z.length<60000});NET.lastSave=Date.now()}
+ catch(e){if(e.code==='reject'&&!keepalive){console.warn('Spielstand abgelehnt',e.reasons);await NET.revert(e.message)}else throw e}};
+// v41: Server hat den Stand abgelehnt (unmöglicher Fortschritt) → letzten gültigen Server-Stand laden
+NET.revert=async function(msg){try{const s=await api('save');const key=window.NET_KEY||('ge_mp_save_'+String(NET.cfg.name).toLowerCase());localStorage.setItem(key,await unzip(s.z));
+ try{toast('Server: '+String(msg||'Spielstand abgelehnt').slice(0,140)+' – letzter gültiger Stand wird geladen','err',6000)}catch(_){}
+ window.__noSave=1;setTimeout(()=>location.reload(),2500)}catch(e){console.warn(e)}};
 // Anmeldung: Server-Spielstand holen und lokal ablegen, dann neu laden
 async function enter(res,url){const c={url,token:res.token,name:res.name,home:res.home,speed:res.speed,seed:res.seed||4242};NET.cfg=c;
  const key='ge_mp_save_'+String(res.name).toLowerCase();

@@ -1069,3 +1069,47 @@ body.raid:has(#panel:not(.hidden)) #raidbar{top:auto;bottom:8px;z-index:41}
 #b2ui .b2pill{position:absolute;left:0;top:0;display:flex}
 #aries-h:not(.show) .ah-fig,#aries-h:not(.show) .ah-fig img{animation:none!important}
 .lite #aries-h .ah-fig{filter:none!important}
+/* ===== v41 Ressourcenleiste: feste Icon-Breite, gleich breite Kacheln, Tabellenziffern, nie Überlappung ===== */
+#res{gap:3px}
+#res .rc{flex:1 1 0;min-width:0;max-width:128px;gap:4px;padding:3px 6px;overflow:hidden}
+#res .rc>svg,#res .rc>.dmi,#res .rc>img{width:16px!important;height:16px!important;flex:0 0 16px}
+#res .rc>div{min-width:0;flex:1 1 auto;overflow:hidden}
+#res .rc .rv,#res .rc .rr{overflow:hidden;text-overflow:clip;font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1}
+#res .rc .rv{font-size:12px;letter-spacing:-.1px}
+@media (max-width:900px){#res .rc{padding:3px 4px}#res .rc .rv{font-size:11.5px}}
+@media (max-width:860px){#res .rc .rr{font-size:9px}}
+/* ===== v41 Chat-Schublade ===== */
+#chatdr{position:fixed;inset:0;z-index:70;pointer-events:none}
+#chatdr .cd-bg{position:absolute;inset:0;background:rgba(0,0,0,.35);opacity:0;transition:opacity .2s}
+#chatdr .cd-panel{position:absolute;top:0;bottom:0;right:0;width:min(380px,46vw);padding:calc(8px + env(safe-area-inset-top)) calc(8px + env(safe-area-inset-right)) 8px 10px;display:flex;flex-direction:column;gap:6px;transform:translateX(105%);transition:transform .22s ease-out;border-radius:14px 0 0 14px;background:rgba(12,16,34,.94)}
+#chatdr.on{pointer-events:auto}#chatdr.on .cd-bg{opacity:1}#chatdr.on .cd-panel{transform:none}
+.cd-head{display:flex;align-items:center;gap:6px}.cd-tabs{display:flex;gap:4px;flex:1;min-width:0}
+.cd-tabs button{flex:1;border:0;border-radius:8px;padding:6px 4px;background:rgba(255,255,255,.06);color:#cfd8ff;font:600 12px system-ui;white-space:nowrap}
+.cd-tabs button.on{background:linear-gradient(180deg,#3a6bff,#2a4bd0);color:#fff}
+.cd-x{border:0;background:rgba(255,255,255,.08);color:#fff;border-radius:8px;width:30px;height:30px}
+.cd-sub{font-size:12px;color:#dfe6ff;display:flex;align-items:center;gap:6px;min-height:18px}
+.cd-back{border:0;background:rgba(255,255,255,.08);color:#fff;border-radius:6px;width:24px;height:22px}
+.cd-list{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column;gap:5px;padding-right:2px;contain:content}
+.cd-m{background:rgba(255,255,255,.05);border-radius:9px;padding:5px 8px;max-width:92%}.cd-m.me{align-self:flex-end;background:rgba(58,107,255,.22)}
+.cd-mh{font-size:11px;display:flex;align-items:baseline;gap:5px}.cd-name{color:#8fd3ff;cursor:pointer}.cd-pw{color:#ffcf6b;font-size:10.5px;font-variant-numeric:tabular-nums}
+.cd-t{margin-left:auto;color:var(--mut);font-size:10px}.cd-tx{font-size:12.5px;color:#eef2ff;word-break:break-word;margin-top:1px}
+.cd-sys{font-size:11px;color:var(--mut);text-align:center}.cd-empty{color:var(--mut);font-size:12px;text-align:center;padding:24px 8px}
+.cd-in{display:flex;gap:6px;padding-bottom:env(safe-area-inset-bottom)}.cd-in input{flex:1;min-width:0;font-size:16px;padding:7px 10px;border-radius:9px;border:1px solid rgba(120,160,255,.3);background:rgba(0,0,0,.35);color:#fff}
+.cd-conv{display:flex;align-items:center;gap:8px;padding:7px;border-radius:10px;background:rgba(255,255,255,.05)}.cd-cb{flex:1;min-width:0}
+.cd-cn{display:flex;align-items:baseline;gap:6px;font-size:12.5px}.cd-cl{font-size:11.5px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cd-av{width:30px;height:30px;flex:none;border-radius:50%;display:grid;place-items:center;font:700 13px system-ui;background:linear-gradient(135deg,#3a6bff,#a66bff);color:#fff;text-transform:uppercase}.cd-av.big{width:44px;height:44px;font-size:18px}
+.cd-badge{display:inline-grid;place-items:center;min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:#ff4d6a;color:#fff;font:700 10px system-ui;font-style:normal}
+#pprof{position:fixed;inset:0;z-index:80;display:none}#pprof.on{display:block}#pprof .pp-bg{position:absolute;inset:0;background:rgba(0,0,0,.4)}
+#pprof .pp-card{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(340px,86vw);padding:14px;border-radius:14px;background:rgba(14,18,38,.96)}
+.pp-h{display:flex;gap:10px;align-items:center}.pp-bot{font-size:11px;background:rgba(255,255,255,.1);padding:1px 6px;border-radius:6px}
+.pnl{color:#8fd3ff;text-decoration:underline dotted;cursor:pointer}
+/* ===== v41 Aries ===== */
+#aries-h .ah-fig img:not(.on){display:none}
+#aries-h .ah-txt.fade{animation:ahTx .35s ease-out}
+@keyframes ahTx{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
+.ariescard .ap{height:3px;border-radius:2px;background:rgba(255,255,255,.12);margin-top:3px;overflow:hidden}.ariescard .ap i{display:block;height:100%;background:linear-gradient(90deg,#a66bff,#5cf2a0)}
+.ariescard.muted{opacity:.85}
+.aq-bar{position:relative;height:16px;border-radius:8px;background:rgba(255,255,255,.08);overflow:hidden}.aq-bar i{position:absolute;inset:0 auto 0 0;background:linear-gradient(90deg,#6b4bff,#38e1ff)}
+.aq-bar span{position:relative;display:block;text-align:center;font:600 11px system-ui;line-height:16px;font-variant-numeric:tabular-nums}
+.aq-parts{display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:5px;font-size:11px;color:var(--mut)}.aq-parts .ok{color:#5cf2a0}
+.lvreq{font-size:11px;margin:4px 0;display:flex;flex-wrap:wrap;gap:4px 8px}.lvreq .ok{color:#5cf2a0}.lvreq .no{color:#ff7a8a}

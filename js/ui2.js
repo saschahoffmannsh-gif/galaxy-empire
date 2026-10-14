@@ -23,6 +23,7 @@ PANELS.bld=id=>{const p=pl();if(id==='@store')id='store';if(id==='@defense')retu
   ${busy?`<div class="box"><div class="row"><b>${busy.demo?'Abriss':'Ausbau'} auf Stufe ${busy.lv}</b><span class="spacer"></span><span data-end="${busy.end}"></span></div>${bi===0?`<div class="bar" style="margin:6px 0"><i data-pstart="${busy.start}" data-pend="${busy.end}"></i></div><div class="row">${speedBtn('sub',busy.end)}${bi===p.bq.length-1?`<button class="btn sm ghost" data-act="cancelb" data-i="${bi}">Abbrechen</button>`:''}</div>`:'<div class="mut">In der Bauschleife</div>'}</div>`:''}
   ${reqHTML(E.reqList(d.req,p))}
   <div><div class="mut" style="font-size:11px;margin-bottom:3px">Kosten für Stufe ${nl}</div>${costHTML(c,p)}</div>
+  ${(()=>{if(p.moon)return"";const rq=E.lvReqs(p,id,nl);const st=!E.storeOk(p,c);return rq.length||st?`<div class="lvreq"><span class="mut">Für Stufe ${nl}:</span> ${rq.map(x=>`<span class="${x.ok?"ok":"no"}">${x.ok?"✓":"✗"} ${esc(x.n)} ${x.need}</span>`).join(" ")}${st?` <span class="no">✗ Lager zu klein</span>`:""}</div>`:""})()}
   <div class="row"><span class="cost">${IC.time}${ft(E.bTime(p,id,nl)*1000)}</span><span class="spacer"></span>
    ${L>1&&!busy?`<button class="btn sm ghost" data-act="demo" data-id="${id}">Abreißen</button>`:''}
    <button class="btn ${er?'dis':''}" data-act="build" data-id="${id}">${IC.up} ${L?'Ausbauen':'Bauen'}</button></div>

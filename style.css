@@ -656,3 +656,17 @@ video.pimg{border-radius:50%;object-fit:cover;mix-blend-mode:screen;background:t
 #rail button svg{width:clamp(14px,4.4vh,20px)!important;height:clamp(14px,4.4vh,20px)!important}
 #blds .ptime{position:absolute;transform:translateX(-50%);font:700 15px/1 system-ui,sans-serif;color:#fff;padding:3px 8px;border-radius:9px;background:rgba(8,14,30,.72);border:1px solid rgba(56,225,255,.45);box-shadow:0 0 10px rgba(56,225,255,.25);white-space:nowrap;pointer-events:none;display:none;z-index:2}
 #blds .pad.new .ptime[data-end],#blds .pad.up .ptime[data-end]{display:block}
+/* v21 Galactonit-Info, Ausbaustufen */
+.galinfo .gi-hero{display:flex;gap:12px;align-items:center;padding:10px 12px;border-radius:14px;background:linear-gradient(120deg,rgba(166,107,255,.18),rgba(56,225,255,.10));border:1px solid rgba(166,107,255,.35);font-size:12.5px;line-height:1.45}
+.galinfo .gi-hero img{width:38px;height:38px;filter:drop-shadow(0 0 8px rgba(160,120,255,.7));flex:none}.galinfo .gi-hero img+img{margin-left:-14px}
+.galinfo .gi-stat{display:flex;flex-wrap:wrap;gap:6px 14px;margin:8px 2px;font-size:11.5px;color:var(--mut)}.galinfo .gi-stat b{color:#fff}
+.galinfo .gi-step{display:flex;gap:10px;align-items:flex-start;padding:7px 4px;border-bottom:1px solid rgba(255,255,255,.06);font-size:12px}
+.galinfo .gi-step .mut{font-size:11.5px;line-height:1.4}
+.galinfo .gi-ic{width:30px;height:30px;border-radius:9px;flex:none;display:grid;place-items:center;background:rgba(166,107,255,.18);border:1px solid rgba(166,107,255,.4)}.galinfo .gi-ic svg{width:17px;height:17px;color:#d9c6ff}
+.galinfo .gi-ex{margin-top:8px;font-size:12px;line-height:1.45;border-color:rgba(56,225,255,.35)}
+.tierb{display:inline-block;padding:1px 7px;border-radius:8px;font-size:11px;font-weight:700;letter-spacing:.3px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);color:#dfe8ff}
+.tierb.t2{border-color:rgba(56,225,255,.5);color:#9fefff}.tierb.t3{border-color:rgba(166,107,255,.6);color:#d6c2ff}
+.tierb.t4{border-color:rgba(255,200,90,.7);color:#ffd98a;box-shadow:0 0 8px rgba(255,200,90,.3)}.tierb.t5{border-color:#ffd36b;color:#1a1200;background:linear-gradient(90deg,#ffd36b,#ff9ae8);box-shadow:0 0 10px rgba(255,211,107,.6)}
+#blds .pad.t4 .pb{filter:drop-shadow(0 0 3px rgba(255,200,90,.45))}
+#blds .pad.t5 .pb{filter:drop-shadow(0 0 4px rgba(255,211,107,.85)) drop-shadow(0 0 10px rgba(255,120,220,.45)) saturate(1.15);animation:t5g 3.2s ease-in-out infinite}
+@keyframes t5g{50%{filter:drop-shadow(0 0 6px rgba(255,211,107,1)) drop-shadow(0 0 16px rgba(255,120,220,.6)) saturate(1.2)}}

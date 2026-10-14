@@ -70,6 +70,9 @@ const PAD_PREF={metal_mine:0,crystal_mine:2,gas_mine:4,solar:8,fusion:12,lab:10,
  moon_base:6,pioneer:10,eux:16,wormhole:13};
 const RIMG={metal_store:'store',crystal_store:'store',gas_store:'store','@defense':'defense'};
 const rimg=id=>RIMG[id]||id;
+const TIERED=new Set(['metal_mine','crystal_mine','gas_mine','solar','fusion','lab','robotics','nanite','shipyard','metal_store','crystal_store','gas_store','defense','galacto','alliance','stargate','radar']);
+const tierOf=lv=>lv<5?1:lv<10?2:lv<15?3:lv<20?4:5;const ROMAN=['','I','II','III','IV','V'];
+const timg=(id,lv)=>{const b=id==='@defense'?'defense':id;return TIERED.has(b)?`${b}_t${Math.min(4,tierOf(Math.max(1,lv)))}`:rimg(id)};
 const PANO_W=2360,PANO_Y0=84,PANO_VIS1=714;let baseKey=null,panoS=1,panoCentered=false;
 function navH(){const n=$('#nav');return n?n.offsetHeight+10:64}
 // Basis-Trefferflächen: mind. 46×36 Bildschirm-Pixel, damit auch kleine, weit hinten liegende Pads sicher antippbar sind
@@ -84,7 +87,7 @@ const IMP={lab:1.32,shipyard:1.3,robotics:1.3,fusion:1.32,alliance:1.28,stargate
 // Freiraum je Pad: Oberkante darf die Vorderkante (Basis) überlappender, weiter hinten liegender Pads nicht verdecken.
 const PAD_HMAX=PADS.map(([cx,cy,w,h],i)=>{let m=1e9;PADS.forEach(([cx2,cy2,w2,h2],j)=>{if(j===i||cy2>=cy)return;if(Math.abs(cx2-cx)<(w*.8+w2)/2)m=Math.min(m,cy-(cy2+Math.max(h2,w2*.16)*.55))});return m});
 function padGeo(i,name,lv){const [cx,cy,w,h]=PADS[i];const r=h/w;let vi=0,bd=9;B3.rt.forEach((t,j)=>{if(Math.abs(t-r)<bd){bd=Math.abs(t-r);vi=j}});
- const v=B3.v[name][vi];let s=w/288*(IMP[name]||1)*(1+Math.min(lv||0,20)*.008);const hm=PAD_HMAX[i];if(v[3]*s>hm)s=Math.max(w/288*.8,hm/v[3]);const half=cx<1180?640:1720;const sk=-Math.max(-1,Math.min(1,(cx-half)/640))*7;
+ const v=B3.v[name][vi];const bn=name.replace(/_t\d$/,'');let s=w/288*(IMP[bn]||IMP[rimg(bn)]||1)*(1+Math.min(lv||0,20)*.008);const hm=PAD_HMAX[i];if(v[3]*s>hm)s=Math.max(w/288*.8,hm/v[3]);const half=cx<1180?640:1720;const sk=-Math.max(-1,Math.min(1,(cx-half)/640))*7;
  return{vi,src:`assets/b3/${name}_${vi}.webp`,left:cx-v[2]*s,top:cy-v[3]*s,width:v[0]*s,height:v[1]*s,ox:v[2]*s,oy:v[3]*s,sk,cx,cy,w,h:Math.max(h,w*.16)}}
 // Bewegliche Teile (assets/b3/{name}_{v}_{id}.webp), Pivot in Sprite-Pixeln
 function partsHTML(PT,src){const W=PT.W,H=PT.H;return PT.p.map(p=>{const pos=`left:${p.x/W*100}%;top:${p.y/H*100}%;width:${p.w/W*100}%;height:${p.h/H*100}%`;const u=src.replace('.webp',`_${p.id}.webp`);
@@ -116,10 +119,10 @@ function buildBase(p){let h='';PADS.forEach(([cx,cy,w,hh],i)=>{const g={cx,cy,w,
 function renderBase(){const p=pl();const key=p.id+(p.moon?'m':'');if(ensurePads(p))save();
  if(baseKey!==key){baseKey=key;$('#world').classList.toggle('moon',!!p.moon);buildBase(p);layoutPano()}
  const pads=$$('#blds .pad');PADS.forEach((pd,i)=>{const el=pads[i];const id=p.pads[i];const lv=id?lvOf(p,id):0;const busy=id?busyOf(p,id):null;
-  const state=!id?'empty':busy&&!lv?'new':busy?'up':'done';const k=(id||'')+state+Math.min(lv,20);const pb=el.querySelector('.pb');
+  const state=!id?'empty':busy&&!lv?'new':busy?'up':'done';const k=(id||'')+state+Math.min(lv,20);el.classList.toggle('t5',!!id&&lv>=20);el.classList.toggle('t4',!!id&&lv>=15&&lv<20);const pb=el.querySelector('.pb');
   if(el.dataset.k!==k){el.dataset.k=k;el.dataset.id=id||'';el.className='pad '+state;const sh=el.querySelector('.shadow');
    if(!id){pb.removeAttribute('src');const fx=el.querySelector('.fx');fx.innerHTML='';fx.dataset.n=''}
-   else{const g=padGeo(i,rimg(id),lv);const PT=window.B3P&&B3P[rimg(id)]&&state!=='new'?B3P[rimg(id)][g.vi]:null;const src=PT?g.src.replace('.webp','b.webp'):g.src;if(pb.getAttribute('src')!==src)pb.src=src;const bs={left:g.left+'px',top:g.top+'px',width:g.width+'px',height:g.height+'px',transformOrigin:`${g.ox}px ${g.oy}px`,transform:`skewX(${g.sk.toFixed(2)}deg)`};Object.assign(pb.style,bs);
+   else{const g=padGeo(i,timg(id,lv),lv);const PT=window.B3P&&B3P[timg(id,lv)]&&state!=='new'?B3P[timg(id,lv)][g.vi]:null;const src=PT?g.src.replace('.webp','b.webp'):g.src;if(pb.getAttribute('src')!==src)pb.src=src;const bs={left:g.left+'px',top:g.top+'px',width:g.width+'px',height:g.height+'px',transformOrigin:`${g.ox}px ${g.oy}px`,transform:`skewX(${g.sk.toFixed(2)}deg)`};Object.assign(pb.style,bs);
     const fx=el.querySelector('.fx');Object.assign(fx.style,bs);fx.style.setProperty('--m',`url(${g.src})`);fx.style.fontSize=(g.width/25).toFixed(2)+'px';const fh=state==='new'?'':(PT?partsHTML(PT,g.src):'')+(window.BFX?BFX.html(rimg(id),g.oy/g.height):'');if(fx.dataset.n!==id+state+g.vi){fx.dataset.n=id+state+g.vi;fx.innerHTML=fh}
     const ht=el.querySelector('.hit');ht.style.setProperty('--t1',g.top+g.height*.08+'px');ht.style.setProperty('--h1',(g.cy+g.h*.55)-(g.top+g.height*.08)+'px');ht.style.setProperty('--l1',g.left+g.width*.12+'px');ht.style.setProperty('--w1',g.width*.76+'px');
     Object.assign(sh.style,{left:g.cx-g.w*.5+g.w*.08+'px',top:g.cy-g.h*.45+'px',width:g.w*1.08+'px',height:g.h*1.5+'px'})}
@@ -130,8 +133,9 @@ function renderBase(){const p=pl();const key=p.id+(p.moon?'m':'');if(ensurePads(
   fg.style.strokeDashoffset=(100-pr*100).toFixed(1);
   if(state==='new'){const c=`inset(${((1-pr)*100*.85+5).toFixed(1)}% 0 0 0)`;if(pb.style.clipPath!==c)pb.style.clipPath=c}else if(pb.style.clipPath)pb.style.clipPath=''});
  renderRail();renderQueues();renderAries();updTimers();}
-function renderRail(){const it=[['buildings','Gebäude',IC.bld],['research','Forschung',IC.res],['yard','Werft',IC.yard],['defense','Abwehr',IC.def],['store','Store',IC.store],['cmd','Offiziere',IC.cmd],['galacto','Galact.',IC.gem],['inv','Inventar',IC.inv]];
- setHTML($('#rail'),it.map(i=>`<button data-act="open" data-p="${i[0]}">${i[2]}${i[1]}${i[0]==='store'&&E.giftReady()?'<span class="dot ok" style="top:-2px;right:6px">1</span>':''}</button>`).join(''))}
+const galNew=()=>!S.flags.galinfo&&(Object.values(S.gal.shards).some(n=>n>0)||E.maxB('galacto')>0||S.task>=25);
+function renderRail(){if(galNew()&&!S.flags.galhint){S.flags.galhint=1;setTimeout(()=>toast('Neu: Galactonit! Tippe links auf „Galact.“ – dort wird alles erklärt.'),600)}const it=[['buildings','Gebäude',IC.bld],['research','Forschung',IC.res],['yard','Werft',IC.yard],['defense','Abwehr',IC.def],['store','Store',IC.store],['cmd','Offiziere',IC.cmd],['galacto','Galact.',IC.gem],['inv','Inventar',IC.inv]];
+ setHTML($('#rail'),it.map(i=>`<button data-act="open" data-p="${i[0]}">${i[2]}${i[1]}${i[0]==='store'&&E.giftReady()?'<span class="dot ok" style="top:-2px;right:6px">1</span>':''}${i[0]==='galacto'&&galNew()?'<span class="dot" style="top:-2px;right:6px;background:var(--v)">!</span>':''}</button>`).join(''))}
 const qimg=id=>GE.BUILD[id]&&GE.BUILD[id].img?`<img src="assets/b/${GE.BUILD[id].img}.webp">`:A.img(id);
 function renderQueues(){const p=pl();let h='';
  const q=p.bq[0];h+=q?`<div class="qcard glass" data-act="bld" data-id="${q.id}">${qimg(q.id)}<div style="flex:1;min-width:0"><div class="qt">${GE.BUILD[q.id].n} ${q.demo?'↓':''}${q.lv}</div><div class="qs"><span data-end="${q.end}"></span>${p.bq.length>1?`<span>+${p.bq.length-1}</span>`:''}</div><div class="bar"><i data-pstart="${q.start}" data-pend="${q.end}"></i></div></div><button class="qsp" data-act="speed" data-k="sub">${IC.bolt}${E.speedCost(q.end-E.now())}</button></div>`

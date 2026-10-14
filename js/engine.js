@@ -414,7 +414,7 @@ function nebulaResolve(f){
  const combatShare=combat/Math.max(1,combat+total*5);
  const probes=ships.pr||0;
  const key=nebulaKey(f);const use=(S.neb[key]||[]).filter(x=>x>t-24*HOUR/S.speed);use.push(t);S.neb[key]=use;const unstable=use.length>12;
- let W={res:30+(E.tl('espionage')>=6?8:0),wreck:9,ast:6,dm:10,ships:7+Math.min(25,Math.log10(probes+1)*5),items:6,pirates:4+combatShare*14,aliens:2+combatShare*6,none:12,delay:6,early:3,black:1};
+ let W={res:30+(E.tl('espionage')>=6?8:0),wreck:9,ast:6,dm:10,ships:7+Math.min(25,Math.log10(probes+1)*5),items:6,gal:7,pirates:4+combatShare*14,aliens:2+combatShare*6,none:12,delay:6,early:3,black:1};
  if(unstable){W.res*=0.3;W.wreck*=0.3;W.ast*=0.3;W.none+=25}
  let sum=0;for(const k in W)sum+=W[k];let x=Math.random()*sum,out='none';for(const k in W){x-=W[k];if(x<=0){out=k;break}}
  const rec={outcome:out,sent:{...ships},unstable};let text='',title='Nebelbericht';
@@ -436,6 +436,7 @@ function nebulaResolve(f){
     for(let i=0;i<parts;i++){const id=pool[ri(0,pool.length-1)];const share=i===parts-1?left:left*rnd(0.3,0.7);left-=share;const n=Math.floor(share/val(id));if(n>0)got[id]=(got[id]||0)+n}
     if(!Object.keys(got).length)got[pool[ri(0,pool.length-1)]]=1;
     for(const id in got)f.ships[id]=(f.ships[id]||0)+got[id];rec.ships=got;text=`Eine verlassene Rebellenstation! Deine Flotte bringt ${Object.entries(got).map(([k,v])=>fmtN(v)+'× '+GE.SHIP[k].n).join(', ')} mit nach Hause.`;break}
+  case 'gal':{const cols=Object.keys(GE.GEMS);const n=ri(1,3)+Math.floor(E.tl('discoverer')/2);const got={};for(let i=0;i<n;i++){const c=cols[ri(0,cols.length-1)];got[c]=(got[c]||0)+1;S.gal.shards[c]=(S.gal.shards[c]||0)+1}rec.shards=got;text=`Im Nebel schimmerte ein Galactonit-Feld. Deine Crew barg ${Object.entries(got).map(([c,k])=>k+'× '+GE.GEMS[c].n).join(', ')} (Splitter).`;break}
   case 'items':{const lv2=Math.random()<0.2;const types=['armor','energy','power','engine'];const it=types[ri(0,3)]+(lv2?'2':'1');const n=lv2?1:ri(1,10);S.items[it]=(S.items[it]||0)+n;rec.items={[it]:n};text=`Im Nebel trieben Container mit Ausrüstung: ${n}× ${GE.ITEMS[it].n}.`;break}
   case 'pirates':case 'aliens':{const ali=out==='aliens';const enemy={};for(const id in ships){const n=Math.ceil(ships[id]*rnd(0.1,0.35));if(n>0)enemy[id]=n}
     const tf=ali?1.3:0.7;const myT=E.techOf();const et={weapons:Math.round(myT.weapons*tf),shielding:Math.round(myT.shielding*tf),armour:Math.round(myT.armour*tf)};

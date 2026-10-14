@@ -9,7 +9,7 @@ function prodTable(p,id){const d=GE.BUILD[id];if(!d.prod&&!d.grp)return'';const 
   rows+=`<tr class="${l===L?'cur':''}"><td>Stufe ${l}</td><td>${fmt(v)}${d.grp?'':'/h'}</td>${use?`<td class="negv">−${fmt(use)}</td>`:'<td></td>'}</tr>`}
  return`<table class="tbl"><tr><th>Stufe</th><th>${d.grp?'Kapazität':d.prod==='e'?'Energie':'Produktion'}</th><th>${d.prod&&d.prod!=='e'?'Energie':''}</th></tr>${rows}</table>`}
 PANELS.bld=id=>{const p=pl();if(id==='@store')return PANELS.storegrp();if(id==='@defense')return PANELS.defense();
- const d=GE.BUILD[id],L=E.lv(p,id),nl=E.nextLevel(p,id),c=E.bCost(id,nl),er=E.canBuild(p,id);const bi=p.bq.findIndex(q=>q.id===id);const busy=p.bq[bi];
+ const d=GE.BUILD[id],L=E.lv(p,id),nl=E.nextLevel(p,id),c=E.bCost(id,nl,p),er=E.canBuild(p,id);const bi=p.bq.findIndex(q=>q.id===id);const busy=p.bq[bi];
  let extra='';
  if(d.prod&&L>0){const v=p.pct[id]??100;extra+=`<div class="box"><div class="row"><b>Produktionsleistung</b><span class="spacer"></span><b id="pctv">${v} %</b></div><input class="slider" type="range" min="0" max="100" step="10" value="${v}" data-act="pct" data-id="${id}"></div>`}
  if(id==='lab')extra+=`<button class="btn ghost" data-act="open" data-p="research" data-push="1">${IC.res} Forschung öffnen</button>`;
@@ -39,7 +39,7 @@ PANELS.research=()=>{const p=pl();const cats=['Basis','Fortgeschritten','Kampf',
   h+='</div>'}
  return[`Forschung <span class="mut" style="font-size:12px">Labor Stufe ${E.lv(p,'lab')}</span>`,h]};
 function unlocks(id){const out=[];for(const T of[GE.BUILD,GE.TECH,GE.SHIP,GE.DEF])for(const k in T)if(T[k].req&&T[k].req[id])out.push(`${T[k].n} (St. ${T[k].req[id]})`);return out.join(', ')}
-PANELS.tech=id=>{const p=pl(),t=GE.TECH[id],L=E.tl(id),c=E.tCost(id,L+1),er=E.canResearch(p,id);
+PANELS.tech=id=>{const p=pl(),t=GE.TECH[id],L=E.tl(id),c=E.tCost(id,L+1,p),er=E.canResearch(p,id);
  return[t.n,`<div class="det"><div class="dimg">${A.img(id)}</div><div class="dinfo"><div class="lvl">Stufe ${L} · ${t.cat}</div><div class="desc">${t.d}</div>${reqHTML(E.reqList(t.req,p))}
  <div><div class="mut" style="font-size:11px;margin-bottom:3px">Kosten für Stufe ${L+1}</div>${costHTML(c,p)}</div>
  <div class="row"><span class="cost">${IC.time}${ft(E.tTime(id,L+1,p)*1000)}</span><span class="spacer"></span><button class="btn ${er?'dis':''}" data-act="research" data-id="${id}">${IC.res} Erforschen</button></div>
@@ -144,7 +144,7 @@ PANELS.resinfo=()=>{const p=pl(),pi=E.prodInfo(p);const P=pi.parts||{};return['R
 
 PANELS.padbuild=i=>{const p=pl();const all=p.moon?GE.MOON_B:GE.PLANET_B;const list=all.filter(id=>!placed(p,id)).concat(all.filter(id=>placed(p,id)));const [cx]=PADS[i];const padOf=id=>{for(const k in p.pads)if(p.pads[k]===id)return +k+1};
  const zone=cx<1080?(cx<760?'Flusstal':'Hochebene'):'Seeufer';
- const rows=list.map(id=>{const d=GE.BUILD[id];if(placed(p,id))return`<div class="unitrow done"><img class="gi" src="assets/b3/${timg(id,1)}_2.webp" alt="" style="object-fit:contain"><div style="flex:1;min-width:0"><div class="row"><span class="un">${d.n}</span><span class="mut">Stufe ${E.lv(p,id)}</span></div><div class="desc" style="font-size:11px">Steht bereits auf Bauplatz ${padOf(id)||'–'}</div></div><button class="btn sm ghost" data-act="bld" data-id="${id}">Öffnen</button></div>`;const nl=E.nextLevel(p,id),c=E.bCost(id,nl),ok=E.reqOk(d.req,p),er=E.canBuild(p,id);
+ const rows=list.map(id=>{const d=GE.BUILD[id];if(placed(p,id))return`<div class="unitrow done"><img class="gi" src="assets/b3/${timg(id,1)}_2.webp" alt="" style="object-fit:contain"><div style="flex:1;min-width:0"><div class="row"><span class="un">${d.n}</span><span class="mut">Stufe ${E.lv(p,id)}</span></div><div class="desc" style="font-size:11px">Steht bereits auf Bauplatz ${padOf(id)||'–'}</div></div><button class="btn sm ghost" data-act="bld" data-id="${id}">Öffnen</button></div>`;const nl=E.nextLevel(p,id),c=E.bCost(id,nl,p),ok=E.reqOk(d.req,p),er=E.canBuild(p,id);
   return`<div class="unitrow ${ok?'':'lock'}"><img class="gi" src="assets/b3/${timg(id,1)}_2.webp" alt="" style="object-fit:contain"><div style="flex:1;min-width:0"><div class="row"><span class="un">${d.n}</span><span class="mut">${ok?'⏱ '+ft(E.bTime(p,id,nl)*1000):'Gesperrt'}</span></div>
   <div class="desc" style="font-size:11px;margin:2px 0">${esc(d.d||'')}</div>${ok?costHTML(c,p):reqHTML(E.reqList(d.req,p))}</div>
   <button class="btn sm" ${er?'disabled title="'+esc(er)+'"':''} data-act="padbuild" data-i="${i}" data-id="${id}">Hier bauen</button></div>`}).join('');

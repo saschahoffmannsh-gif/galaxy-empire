@@ -60,13 +60,21 @@ E.gemBonus=gemBonus;
 
 // ---------- Kosten & Zeiten ----------
 function costOf(def,lv){const f=def.f||2;return def.c.map(v=>Math.floor(v*Math.pow(f,lv-1)))}
-E.bCost=(id,lv)=>costOf(GE.BUILD[id],lv);
-E.tCost=(id,lv)=>{const c=costOf(GE.TECH[id],lv);return id==='astro'&&lv>=4?c.map(x=>Math.round(x*0.75)):c};
+// v28: Bauzeit-Deckel – keine Stufe dauert länger als 30 Tage (bei 1×). Ab der ersten Stufe, deren Zeit 30 Tage überschreiten würde,
+// gilt genau 30 Tage, und die Kosten bleiben auf dieser Stufe eingefroren (gilt für Gebäude und Forschung).
+const CAP_H=30*24;E.CAP_H=CAP_H;
+const bRawH=(pl,id,lv)=>{const c=costOf(GE.BUILD[id],lv);let h=(c[0]+c[1])/(2500*(1+E.lv(pl,'robotics'))*Math.pow(2,E.lv(pl,'nanite')));if((id==='lab'||id==='robotics')&&lv>8)h*=0.7;return h*E.TMUL};
+E.bCapLv=function(id,pl){pl=pl||E.planet();for(let L=1;L<400;L++)if(bRawH(pl,id,L)>CAP_H)return L;return 400};
+E.bCost=(id,lv,pl)=>costOf(GE.BUILD[id],Math.min(lv,E.bCapLv(id,pl)));
+const tRawCost=(id,lv)=>{const c=costOf(GE.TECH[id],lv);return id==='astro'&&lv>=4?c.map(x=>Math.round(x*0.75)):c};
+const tRawH=(id,lv,pl)=>{const c=tRawCost(id,lv);return (c[0]+c[1])/(1000*(1+E.labLevel(pl)))*E.TMUL};
+E.tCapLv=function(id,pl){pl=pl||E.planet();for(let L=1;L<400;L++)if(tRawH(id,L,pl)>CAP_H)return L;return 400};
+E.tCost=(id,lv,pl)=>tRawCost(id,Math.min(lv,E.tCapLv(id,pl)));
 // v20: echte Bauzeiten (Faktor 6 auf die OGame-Formel, min. 15 s), Beschleunigen kostet immer DM
 E.TMUL=6;
-E.bTime=function(pl,id,lv){const c=E.bCost(id,lv);let h=(c[0]+c[1])/(2500*(1+E.lv(pl,'robotics'))*Math.pow(2,E.lv(pl,'nanite')));if(cmdActive('commander'))h*=0.9;if((id==='lab'||id==='robotics')&&lv>8)h*=0.7;return Math.max(15,h*3600*E.TMUL/S.speed)};
+E.bTime=function(pl,id,lv){if(lv>=E.bCapLv(id,pl))return CAP_H*3600/S.speed;const c=E.bCost(id,lv,pl);let h=(c[0]+c[1])/(2500*(1+E.lv(pl,'robotics'))*Math.pow(2,E.lv(pl,'nanite')));if(cmdActive('commander'))h*=0.9;if((id==='lab'||id==='robotics')&&lv>8)h*=0.7;return Math.max(15,h*3600*E.TMUL/S.speed)};
 E.labLevel=function(pl){return E.lv(pl,'lab')};
-E.tTime=function(id,lv,pl){const c=E.tCost(id,lv);let h=(c[0]+c[1])/(1000*(1+E.labLevel(pl||E.planet())));if(cmdActive('technocrat'))h*=0.75;return Math.max(15,h*3600*E.TMUL/S.speed)};
+E.tTime=function(id,lv,pl){pl=pl||E.planet();if(lv>=E.tCapLv(id,pl))return CAP_H*3600/S.speed;const c=E.tCost(id,lv,pl);let h=(c[0]+c[1])/(1000*(1+E.labLevel(pl||E.planet())));if(cmdActive('technocrat'))h*=0.75;return Math.max(15,h*3600*E.TMUL/S.speed)};
 E.uTime=function(pl,kind,id){const d=kind==='def'?GE.DEF[id]:GE.SHIP[id];let h=(d.c[0]+d.c[1])/(2500*(1+E.lv(pl,'shipyard'))*Math.pow(2,E.lv(pl,'nanite')));if(kind==='def'&&cmdActive('admiral'))h*=0.9;return Math.max(2,h*3600*E.TMUL*.5/S.speed)};
 // Felder
 E.fieldsUsed=pl=>Object.values(pl.b).reduce((a,b)=>a+b,0);
@@ -121,19 +129,19 @@ E.canBuild=function(pl,id){
  if(E.fieldsUsed(pl)+pl.bq.filter(q=>!q.demo).length>=E.fieldsMax(pl)&&id!=='moon_base')return 'Keine freien Felder';
  if((id==='shipyard'||id==='nanite')&&pl.sq.length)return 'Werft ist beschäftigt';
  if(id==='lab'&&S.rq&&S.rq.pid===pl.id)return 'Forschung läuft';
- const lv=E.nextLevel(pl,id); if(!canPay(pl,E.bCost(id,lv)))return 'Zu wenig Rohstoffe';
+ const lv=E.nextLevel(pl,id); if(!canPay(pl,E.bCost(id,lv,pl)))return 'Zu wenig Rohstoffe';
  return null;
 };
 E.build=function(pid,id){
  const pl=S.planets[pid]; const err=E.canBuild(pl,id); if(err)return err;
- const lv=E.nextLevel(pl,id), c=E.bCost(id,lv); pay(pl,c);
+ const lv=E.nextLevel(pl,id), c=E.bCost(id,lv,pl); pay(pl,c);
  const start=pl.bq.length?pl.bq[pl.bq.length-1].end:now(); const dur=E.bTime(pl,id,lv)*1000;
  pl.bq.push({id,lv,start,end:start+dur,dur,cost:c}); S.pts.b+=(c[0]+c[1]+c[2])/1000; emit('change');return null;
 };
 E.demolish=function(pid,id){
  const pl=S.planets[pid]; const L=E.lv(pl,id); if(L<=1)return 'Abriss nur bis Stufe 1 möglich';
  if(pl.bq.length>=E.queueMax())return 'Bauschleife voll';
- const c=E.bCost(id,L).map(v=>Math.floor(v/4)); if(!canPay(pl,c))return 'Zu wenig Rohstoffe';
+ const c=E.bCost(id,L,pl).map(v=>Math.floor(v/4)); if(!canPay(pl,c))return 'Zu wenig Rohstoffe';
  pay(pl,c); const start=pl.bq.length?pl.bq[pl.bq.length-1].end:now(); const dur=E.bTime(pl,id,L)*500;
  pl.bq.push({id,lv:L-1,demo:true,start,end:start+dur,dur,cost:c}); emit('change'); return null;
 };
@@ -152,9 +160,9 @@ E.canResearch=function(pl,id){const d=GE.TECH[id];if(S.rq)return 'Es läuft bere
  if(!E.lv(pl,'lab'))return 'Forschungslabor benötigt';
  if(pl.bq.some(q=>q.id==='lab'))return 'Labor wird ausgebaut';
  if(!E.reqOk(d.req,pl))return 'Voraussetzungen fehlen';
- if(!canPay(pl,E.tCost(id,E.nextTL(id))))return 'Zu wenig Rohstoffe';return null};
+ if(!canPay(pl,E.tCost(id,E.nextTL(id),pl)))return 'Zu wenig Rohstoffe';return null};
 E.research=function(pid,id){const pl=S.planets[pid];const err=E.canResearch(pl,id);if(err)return err;
- const lv=E.nextTL(id),c=E.tCost(id,lv);pay(pl,c);const dur=E.tTime(id,lv,pl)*1000;
+ const lv=E.nextTL(id),c=E.tCost(id,lv,pl);pay(pl,c);const dur=E.tTime(id,lv,pl)*1000;
  S.rq={id,lv,pid,start:now(),end:now()+dur,dur,cost:c};S.pts.t+=2*(c[0]+c[1]+c[2])/1000;emit('change');return null};
 E.cancelResearch=function(){const q=S.rq;if(!q)return;giveRes(S.planets[q.pid],{m:q.cost[0],k:q.cost[1],g:q.cost[2]});S.pts.t-=2*(q.cost[0]+q.cost[1]+q.cost[2])/1000;S.rq=null;emit('change')};
 function finishResearch(){const q=S.rq;S.tech[q.id]=q.lv;S.rq=null;addLog(`Forschung abgeschlossen: ${GE.TECH[q.id].n} Stufe ${q.lv}`,'research');emit('researched',q)}

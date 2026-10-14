@@ -400,7 +400,7 @@ function attackArrive(f){const to=f.to;const sl=E.slot(to.g,to.s,to.p);const st=
   if(sl.kind==='npc'){const ch=0.35+0.05*E.tl('discoverer')+0.05*sl.lv;if(Math.random()<ch){const n=ri(1,sl.lv+1);shards={};const cols=Object.keys(GE.GEMS);for(let i=0;i<n;i++){const c=cols[ri(0,cols.length-1)];shards[c]=(shards[c]||0)+1;S.gal.shards[c]=(S.gal.shards[c]||0)+1}}}}
  st.t=now();
  if(B.debris.m+B.debris.k>0){const d=S.debris[k]||(S.debris[k]={m:0,k:0});d.m+=B.debris.m;d.k+=B.debris.k}
- if(sl.kind==='npc'&&sl.lv===2)S.flags.atkPurged=1; if(sl.kind==='inactive')S.flags.atkInactive=1;
+ if(sl.kind==='npc'&&sl.lv===2)S.flags.atkPurged=1;if(sl.kind==='npc')S.flags.npcWins=(S.flags.npcWins||0)+1; if(sl.kind==='inactive')S.flags.atkInactive=1;
  S.pts.fightA=(S.pts.fightA||0);
  report('combat',`Kampf bei ${sl.name} [${to.g}:${to.s}:${to.p}]`,{battle:packBattle(B,'Du',sl.kind==='npc'?`${sl.name} (NPC Lv${sl.lv})`:`${sl.player} (inaktiv)`,{loot,shards,rebuilt,coord:to,attackerIsMe:true})});
 }
@@ -516,6 +516,10 @@ const COND=[
  ()=>E.maxB('shipyard')>=2&&E.tl('combustion')>=2&&(S.built.sc||0)>=1,()=>!!S.flags.spyDeportees,()=>!!S.flags.atkPurged,()=>E.tl('astro')>=1&&!!S.flags.nebula,
  ()=>!!S.flags.named,()=>!!S.flags.exported,()=>anyColony()&&E.tl('astro')>=2,()=>!!S.flags.transportCol,()=>!!S.flags.deployCol,()=>!!S.flags.atkInactive,()=>!!S.flags.recycled,
  ()=>E.maxB('radar')>=1,()=>E.maxB('galacto')>=1&&E.tl('discoverer')>=1,()=>!!S.flags.fused,()=>!!S.flags.equipped];
+E.COND=COND;
+E.giveReward=function(r){const pl=S.planets[S.home];giveRes(pl,r);if(r.dm)S.dm+=r.dm;if(r.gal){const cols=Object.keys(GE.GEMS);for(let i=0;i<r.gal;i++){const c=cols[i%cols.length];S.gal.shards[c]=(S.gal.shards[c]||0)+1}}
+ if(r.gen)S.gal.energy+=r.gen;if(r.cmd)S.cmd[r.cmd[0]]=Math.max(now(),S.cmd[r.cmd[0]]||0)+r.cmd[1]*24*HOUR;
+ if(r.ships)for(const id in r.ships){if(GE.DEF[id])pl.def[id]=(pl.def[id]||0)+r.ships[id];else pl.ships[id]=(pl.ships[id]||0)+r.ships[id]}emit('change')};
 E.taskDone=()=>S.task<GE.TASKS.length&&COND[S.task]();
 E.claimTask=function(){if(!E.taskDone())return 'Aufgabe noch nicht erfüllt';const T=GE.TASKS[S.task];const r=T.r;const pl=S.planets[S.home];
  giveRes(pl,r);if(r.dm)S.dm+=r.dm;if(r.gal){const cols=Object.keys(GE.GEMS);for(let i=0;i<r.gal;i++){const c=cols[i%cols.length];S.gal.shards[c]=(S.gal.shards[c]||0)+1}}

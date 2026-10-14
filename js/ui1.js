@@ -89,6 +89,23 @@ const PAD_HMAX=PADS.map(([cx,cy,w,h],i)=>{let m=1e9;PADS.forEach(([cx2,cy2,w2,h2
 function padGeo(i,name,lv){const [cx,cy,w,h]=PADS[i];const r=h/w;let vi=0,bd=9;B3.rt.forEach((t,j)=>{if(Math.abs(t-r)<bd){bd=Math.abs(t-r);vi=j}});
  const v=B3.v[name][vi];const bn=name.replace(/_t\d$/,'');let s=w/288*(IMP[bn]||IMP[rimg(bn)]||1)*(1+Math.min(lv||0,20)*.008);const hm=PAD_HMAX[i];if(v[3]*s>hm)s=Math.max(w/288*.8,hm/v[3]);const half=cx<1180?640:1720;const sk=-Math.max(-1,Math.min(1,(cx-half)/640))*7;
  return{vi,src:`assets/b3/${name}_${vi}.webp`,left:cx-v[2]*s,top:cy-v[3]*s,width:v[0]*s,height:v[1]*s,ox:v[2]*s,oy:v[3]*s,sk,cx,cy,w,h:Math.max(h,w*.16)}}
+
+// v22: Leben je Ausbaustufe (bewegliche Teile, Leuchtschicht, Masken-Effekte, Signallichter, Dampf, Kran, Drohnen)
+function tfxHTML(T,src,tier){const W=T.W,H=T.H,pre=src.replace('.webp','');const X=v=>(v/W*100).toFixed(2)+'%',Y=v=>(v/H*100).toFixed(2)+'%';let h='';
+ const kids=id=>T.p.filter(q=>q.par===id);
+ const part=(p,ox,oy,pw,ph)=>{const pos=`left:${((p.x-ox)/pw*100).toFixed(2)}%;top:${((p.y-oy)/ph*100).toFixed(2)}%;width:${(p.w/pw*100).toFixed(2)}%;height:${(p.h/ph*100).toFixed(2)}%`;const u=`${pre}_${p.id}.webp`;
+  if(p.anim==='wave'){const N=8;return`<span class="pw tw" style="${pos}">${Array.from({length:N},(_,k)=>`<i style="top:${k/N*100}%;height:calc(${100/N}% + 1px);background-image:url(${u});background-position:0 ${k/(N-1)*100}%;--x:${(p.amp*(k+1)/N/p.w*100).toFixed(2)}%;animation-duration:${p.dur}s;animation-delay:-${(k*.13).toFixed(2)}s"></i>`).join('')}</span>`}
+  const o=`transform-origin:${((p.px-p.x)/p.w*100).toFixed(1)}% ${((p.py-p.y)/p.h*100).toFixed(1)}%`;
+  return`<span class="tp tp-${p.anim}" style="${pos};${o};--a:${p.amp}deg;animation-duration:${p.dur}s"><img src="${u}" alt="">${kids(p.id).map(c=>part(c,p.x,p.y,p.w,p.h)).join('')}</span>`};
+ h+=T.p.filter(p=>!p.par).map(p=>part(p,0,0,W,H)).join('');
+ h+='<span class="tsw"></span>';
+ if(T.e)h+=`<span class="te te-${T.e}" style="background-image:url(${pre}_e.webp)"></span>`;
+ if(T.m){const c=T.mc&&T.mc[0];h+=`<span class="tm tm-${T.m}" style="-webkit-mask-image:url(${pre}_m.webp);mask-image:url(${pre}_m.webp)"><i style="${c?`left:${X(c[0])};top:${Y(c[1])}`:''}"></i></span>`}
+ (T.bc||[]).forEach(([x,y],k)=>h+=`<span class="tb ${k%2?'w':''}" style="left:${X(x)};top:${Y(y)};animation-delay:-${(k*.7).toFixed(1)}s"></span>`);
+ (T.st||[]).forEach(([x,y],k)=>{for(let j=0;j<3;j++)h+=`<span class="ts" style="left:${X(x)};top:${Y(y)};animation-delay:-${(j*1.3+k*.6).toFixed(1)}s"></span>`});
+ if(T.tr){const [[x1,y1],[x2,y2]]=T.tr;h+=`<span class="tt" style="--x1:${X(x1)};--y1:${Y(y1)};--x2:${X(x2)};--y2:${Y(y2)}"><i></i></span><span class="tk" style="left:${X(x1+(x2-x1)*.6)};top:${Y(y1+(y2-y1)*.6+H*.18)}"></span>`}
+ if(tier>=2&&T.top){const [x,y]=T.top[0];const n=tier>=4?3:tier>=3?2:1;for(let k=0;k<n;k++)h+=`<span class="td" style="left:${X(x)};top:${Y(Math.max(4,y-H*.08))};--r:${(2.4+k*1.1).toFixed(1)};animation-duration:${(9+k*3.5).toFixed(1)}s;animation-delay:-${(k*2.7).toFixed(1)}s"><i></i></span>`}
+ return h}
 // Bewegliche Teile (assets/b3/{name}_{v}_{id}.webp), Pivot in Sprite-Pixeln
 function partsHTML(PT,src){const W=PT.W,H=PT.H;return PT.p.map(p=>{const pos=`left:${p.x/W*100}%;top:${p.y/H*100}%;width:${p.w/W*100}%;height:${p.h/H*100}%`;const u=src.replace('.webp',`_${p.id}.webp`);
  if(p.anim==='wave'){const N=8;return`<span class="pw" style="${pos}">${Array.from({length:N},(_,k)=>`<i style="top:${k/N*100}%;height:calc(${100/N}% + 1px);background-image:url(${u});background-position:0 ${k/(N-1)*100}%;--x:${(p.amp*(k+1)/N/p.w*100).toFixed(2)}%;animation-duration:${p.dur}s;animation-delay:-${(k*.13).toFixed(2)}s"></i>`).join('')}</span>`}
@@ -122,8 +139,8 @@ function renderBase(){const p=pl();const key=p.id+(p.moon?'m':'');if(ensurePads(
   const state=!id?'empty':busy&&!lv?'new':busy?'up':'done';const k=(id||'')+state+Math.min(lv,20);el.classList.toggle('t5',!!id&&lv>=20);el.classList.toggle('t4',!!id&&lv>=15&&lv<20);const pb=el.querySelector('.pb');
   if(el.dataset.k!==k){el.dataset.k=k;el.dataset.id=id||'';el.className='pad '+state;const sh=el.querySelector('.shadow');
    if(!id){pb.removeAttribute('src');const fx=el.querySelector('.fx');fx.innerHTML='';fx.dataset.n=''}
-   else{const g=padGeo(i,timg(id,lv),lv);const PT=window.B3P&&B3P[timg(id,lv)]&&state!=='new'?B3P[timg(id,lv)][g.vi]:null;const src=PT?g.src.replace('.webp','b.webp'):g.src;if(pb.getAttribute('src')!==src)pb.src=src;const bs={left:g.left+'px',top:g.top+'px',width:g.width+'px',height:g.height+'px',transformOrigin:`${g.ox}px ${g.oy}px`,transform:`skewX(${g.sk.toFixed(2)}deg)`};Object.assign(pb.style,bs);
-    const fx=el.querySelector('.fx');Object.assign(fx.style,bs);fx.style.setProperty('--m',`url(${g.src})`);fx.style.fontSize=(g.width/25).toFixed(2)+'px';const fh=state==='new'?'':(PT?partsHTML(PT,g.src):'')+(window.BFX?BFX.html(rimg(id),g.oy/g.height):'');if(fx.dataset.n!==id+state+g.vi){fx.dataset.n=id+state+g.vi;fx.innerHTML=fh}
+   else{const tk=timg(id,lv);const g=padGeo(i,tk,lv);const TF=window.TFX&&TFX[tk]&&state!=='new'?TFX[tk][g.vi]:null;const PT=!TF&&window.B3P&&B3P[tk]&&state!=='new'?B3P[tk][g.vi]:null;const src=(PT||(TF&&TF.p.length))?g.src.replace('.webp','b.webp'):g.src;if(pb.getAttribute('src')!==src)pb.src=src;const bs={left:g.left+'px',top:g.top+'px',width:g.width+'px',height:g.height+'px',transformOrigin:`${g.ox}px ${g.oy}px`,transform:`skewX(${g.sk.toFixed(2)}deg)`};Object.assign(pb.style,bs);
+    const fx=el.querySelector('.fx');Object.assign(fx.style,bs);fx.style.setProperty('--m',`url(${g.src})`);fx.style.fontSize=(g.width/25).toFixed(2)+'px';const fh=state==='new'?'':TF?tfxHTML(TF,g.src,tierOf(Math.max(1,lv))):(PT?partsHTML(PT,g.src):'')+(window.BFX?BFX.html(rimg(id),g.oy/g.height):'');if(fx.dataset.n!==tk+state+g.vi){fx.dataset.n=tk+state+g.vi;fx.innerHTML=fh}
     const ht=el.querySelector('.hit');ht.style.setProperty('--t1',g.top+g.height*.08+'px');ht.style.setProperty('--h1',(g.cy+g.h*.55)-(g.top+g.height*.08)+'px');ht.style.setProperty('--l1',g.left+g.width*.12+'px');ht.style.setProperty('--w1',g.width*.76+'px');
     Object.assign(sh.style,{left:g.cx-g.w*.5+g.w*.08+'px',top:g.cy-g.h*.45+'px',width:g.w*1.08+'px',height:g.h*1.5+'px'})}
    el.querySelector('.scafw').innerHTML=state==='new'||state==='up'?scaffoldSVG(i):'';

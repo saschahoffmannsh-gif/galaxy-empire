@@ -3,7 +3,7 @@
 // Nebel in den Tälern, Himmelsschleier, Kristall-Glitzern, Glühwürmchen, Vögel und ferner Schiffsverkehr.
 // Maske assets/ambient_m.png: R=Vegetation (Schwankgewicht), G=Talnebel, B=Kristalle. Ohne WebGL bleibt das Bild statisch.
 (function(){
-const PW=2360,PH=800;
+const PW=2400,PH=800;
 const VS='attribute vec2 p;varying vec2 uv;void main(){uv=vec2(p.x*.5+.5,.5-p.y*.5);gl_Position=vec4(p,0.,1.);}';
 const FS=`precision mediump float;uniform sampler2D tex,msk;uniform float t;uniform vec2 off,sz;varying vec2 uv;
 const vec2 PS=vec2(${PW}.,${PH}.);
@@ -27,7 +27,7 @@ void main(){vec2 p=off+uv*sz;vec2 tu=p/PS;vec3 m=texture2D(msk,tu).rgb;
  vec3 c=texture2D(tex,(p+d)/PS).rgb;
  float sky=clamp((240.-p.y)/45.,0.,1.);float gnd=clamp((p.y-300.)/130.,0.,1.);
  // Wolkenschatten in Bodenperspektive
- float dd=max(p.y-232.,10.);vec2 gp=vec2((p.x-1180.)/dd*26.,4200./dd);
+ float dd=max(p.y-232.,10.);vec2 gp=vec2((p.x-1200.)/dd*26.,4200./dd);
  float cs=fb(gp*.016+vec2(t*.05,t*.012));cs=smoothstep(.48,.72,cs);
  c*=mix(1.,1.-.24*cs,gnd)*mix(1.,1.045,gnd*(1.-cs));
  // Talnebel
@@ -49,7 +49,7 @@ const A={ok:false};window.AMBIENT=A;
 function load(src){return new Promise((r,j)=>{const i=new Image();i.onload=()=>r(i);i.onerror=j;i.src=src})}
 A.init=async function(world){try{
  const cv=document.createElement('canvas');cv.id='ambcv';const gl=cv.getContext('webgl',{alpha:true,premultipliedAlpha:true,antialias:false,powerPreference:'low-power',preserveDrawingBuffer:false});if(!gl)return;
- const [ti,mi]=await Promise.all([load($('#terrain').currentSrc||'assets/base_pano3.webp'),load('assets/ambient_m.png')]);
+ const [ti,mi]=await Promise.all([load($('#terrain').currentSrc||'assets/base_pano5.webp'),load('assets/ambient_m5.png')]);
  const sh=(ty,s)=>{const o=gl.createShader(ty);gl.shaderSource(o,s);gl.compileShader(o);if(!gl.getShaderParameter(o,gl.COMPILE_STATUS))throw gl.getShaderInfoLog(o);return o};
  const pr=gl.createProgram();gl.attachShader(pr,sh(gl.VERTEX_SHADER,VS));gl.attachShader(pr,sh(gl.FRAGMENT_SHADER,FS));gl.linkProgram(pr);gl.useProgram(pr);
  const b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);

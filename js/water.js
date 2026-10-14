@@ -1,7 +1,7 @@
 // Wasser-Animation: WebGL-Fragment-Shader nur auf maskierten Bereichen (Fluss, Wasserfall, See).
 // Maske: R = Wasser, G = Wasserfall, B = Gischt. Ohne WebGL bleibt das statische Bild sichtbar.
 (function(){
-const REG=[{id:'r1',x:0,y:330,w:600,h:230,flow:[-1,0.42],lake:0},{id:'r2',x:1540,y:316,w:480,h:100,flow:[0,0],lake:1}];
+const REG=[];const _REG_DISABLED=[{id:'r1',x:0,y:330,w:600,h:230,flow:[-1,0.42],lake:0},{id:'r2',x:1540,y:316,w:480,h:100,flow:[0,0],lake:1}];
 const VS='attribute vec2 p;varying vec2 uv;void main(){uv=vec2(p.x*.5+.5,.5-p.y*.5);gl_Position=vec4(p,0.,1.);}';
 const FS=`precision mediump float;uniform sampler2D tex,msk;uniform float t,lake;uniform vec2 sz,flow;varying vec2 uv;
 float h(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}

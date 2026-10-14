@@ -4,11 +4,11 @@ PANELS.buildings=()=>{const p=pl();const list=p.moon?GE.MOON_B:GE.PLANET_B;
   return`<div class="card ${ok?'':'lock'} ${busy?'busy':''}" data-act="pbld" data-id="${id}">${d.img?`<img class="thumb" src="assets/b/${d.img}.webp">`:A.img(id)}<span class="cl">${lv}</span><div class="cn">${d.n}</div><div class="tag">${busy?`<span data-end="${busy.end}"></span>`:ok?ft(E.bTime(p,id,E.nextLevel(p,id))*1000):'Gesperrt'}</div></div>`}).join('')}</div>`]};
 function prodTable(p,id){const d=GE.BUILD[id];if(!d.prod&&!d.grp)return'';const L=E.lv(p,id);let rows='';
  for(let l=Math.max(1,L-1);l<=L+3;l++){let v=0;if(d.grp)v=5000*Math.floor(2.5*Math.exp(20*l/33));
-  else if(id==='metal_mine')v=30*l*Math.pow(1.1,l)*S.speed;else if(id==='crystal_mine')v=20*l*Math.pow(1.1,l)*S.speed;else if(id==='gas_mine')v=10*l*Math.pow(1.1,l)*(1.44-0.004*p.temp)*S.speed;else if(id==='solar')v=20*l*Math.pow(1.1,l);else if(id==='fusion')v=30*l*Math.pow(1.05+0.01*E.tl('energy'),l);
+  else if(id==='metal_mine')v=30*l*Math.pow(1.1,l)*S.speed;else if(id==='crystal_mine')v=20*l*Math.pow(1.1,l)*S.speed;else if(id==='gas_mine')v=10*l*Math.pow(1.1,l)*(1.44-0.004*p.temp)*S.speed;else if(id==='power')v=30*l*Math.pow(1.1+0.004*E.tl('energy'),l);
   const use=id==='metal_mine'||id==='crystal_mine'?10*l*Math.pow(1.1,l):id==='gas_mine'?20*l*Math.pow(1.1,l):0;
   rows+=`<tr class="${l===L?'cur':''}"><td>Stufe ${l}</td><td>${fmt(v)}${d.grp?'':'/h'}</td>${use?`<td class="negv">−${fmt(use)}</td>`:'<td></td>'}</tr>`}
  return`<table class="tbl"><tr><th>Stufe</th><th>${d.grp?'Kapazität':d.prod==='e'?'Energie':'Produktion'}</th><th>${d.prod&&d.prod!=='e'?'Energie':''}</th></tr>${rows}</table>`}
-PANELS.bld=id=>{const p=pl();if(id==='@store')return PANELS.storegrp();if(id==='@defense')return PANELS.defense();
+PANELS.bld=id=>{const p=pl();if(id==='@store')id='store';if(id==='@defense')return PANELS.defense();
  const d=GE.BUILD[id],L=E.lv(p,id),nl=E.nextLevel(p,id),c=E.bCost(id,nl,p),er=E.canBuild(p,id);const bi=p.bq.findIndex(q=>q.id===id);const busy=p.bq[bi];
  let extra='';
  if(d.prod&&L>0){const v=p.pct[id]??100;extra+=`<div class="box"><div class="row"><b>Produktionsleistung</b><span class="spacer"></span><b id="pctv">${v} %</b></div><input class="slider" type="range" min="0" max="100" step="10" value="${v}" data-act="pct" data-id="${id}"></div>`}
@@ -28,8 +28,7 @@ PANELS.bld=id=>{const p=pl();if(id==='@store')return PANELS.storegrp();if(id==='
    <button class="btn ${er?'dis':''}" data-act="build" data-id="${id}">${IC.up} ${L?'Ausbauen':'Bauen'}</button></div>
   ${er?`<div class="mut" style="text-align:right;font-size:11px">${er}</div>`:''}
   ${prodTable(p,id)}${extra}</div></div>`]};
-PANELS.storegrp=()=>{const p=pl();return['Lager',`<div class="desc" style="margin-bottom:8px">Ist ein Lager voll, stoppt die Produktion des Rohstoffs. Baue die Speicher rechtzeitig aus.</div><div class="grid">${['metal_store','crystal_store','gas_store'].map(id=>{const r={metal_store:'m',crystal_store:'k',gas_store:'g'}[id];const busy=p.bq.find(q=>q.id===id);
- return`<div class="card ${busy?'busy':''}" data-act="pbld" data-id="${id}"><img class="thumb" src="assets/b/Lager.webp"><span class="cl">${E.lv(p,id)}</span><div class="cn">${GE.BUILD[id].n}</div><div class="tag">${fmt(p.r[r])} / ${fmt(E.storeCap(p,r))}</div></div>`}).join('')}</div>`]};
+PANELS.storegrp=()=>PANELS.bld('store');
 PANELS.research=()=>{const p=pl();const cats=['Basis','Fortgeschritten','Kampf','Galactonit'];let h='';
  if(!E.lv(p,'lab'))h+=`<div class="box" style="margin-bottom:8px">Auf diesem Planeten gibt es kein Forschungslabor. <button class="btn sm" data-act="pbld" data-id="lab">Labor bauen</button></div>`;
  if(S.rq){const r=S.rq;h+=`<div class="box" style="margin-bottom:8px"><div class="row"><b>${GE.TECH[r.id].n} → Stufe ${r.lv}</b><span class="mut">(${esc(S.planets[r.pid]?.name||'')})</span><span class="spacer"></span><span data-end="${r.end}"></span>${speedBtn('res',r.end)}<button class="btn sm ghost" data-act="cancelr">Abbrechen</button></div><div class="bar" style="margin-top:6px"><i data-pstart="${r.start}" data-pend="${r.end}"></i></div></div>`}
@@ -135,9 +134,8 @@ PANELS.resinfo=()=>{const p=pl(),pi=E.prodInfo(p);const P=pi.parts||{};return['R
  <tr><td>Metallmine ${E.lv(p,'metal_mine')}</td><td>${fmt(pi.m-30*S.speed)}</td><td></td><td></td><td class="negv">−${fmt(P.um)}</td></tr>
  <tr><td>Kristallmine ${E.lv(p,'crystal_mine')}</td><td></td><td>${fmt(pi.k-15*S.speed)}</td><td></td><td class="negv">−${fmt(P.uk)}</td></tr>
  <tr><td>Gasförderung ${E.lv(p,'gas_mine')}</td><td></td><td></td><td>${fmt(pi.g+(P.gasCons||0))}</td><td class="negv">−${fmt(P.ug)}</td></tr>
- <tr><td>Solarkraftwerk ${E.lv(p,'solar')}</td><td></td><td></td><td></td><td class="pos">+${fmt(P.solar)}</td></tr>
- <tr><td>Fusionskraftwerk ${E.lv(p,'fusion')}</td><td></td><td></td><td class="negv">${P.gasCons?'−'+fmt(P.gasCons):''}</td><td class="pos">+${fmt(P.fusion)}</td></tr>
- <tr><td>Solarsatelliten ${fmt(p.ships.ss||0)}</td><td></td><td></td><td></td><td class="pos">+${fmt(P.sats)}</td></tr>
+ <tr><td>Kraftwerk ${E.lv(p,'power')}</td><td></td><td></td><td></td><td class="pos">+${fmt(P.solar)}</td></tr>
+  <tr><td>Solarsatelliten ${fmt(p.ships.ss||0)}</td><td></td><td></td><td></td><td class="pos">+${fmt(P.sats)}</td></tr>
  <tr class="cur"><td>Gesamt</td><td>${fmt(pi.m)}</td><td>${fmt(pi.k)}</td><td>${fmt(pi.g)}</td><td>${fmt(pi.eProd-pi.eUse)}</td></tr></table>
  <div class="desc" style="margin-top:8px">Energieversorgung ${Math.round(pi.f*100)} % · Temperatur ${p.temp} °C · Spieltempo ${S.speed}×${E.cmdActive('geologist')?' · Geologe +10 %':''}</div>
  <div class="cat">Lager</div>${['m','k','g'].map(r=>`<div class="row" style="font-size:12px">${IC[r]} ${GE.RES[r]}<span class="spacer"></span>${fmt(p.r[r])} / ${fmt(E.storeCap(p,r))}</div>`).join('')}`]};

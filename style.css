@@ -313,7 +313,7 @@ video.pimg{border-radius:50%;object-fit:cover;mix-blend-mode:screen;background:t
 .sun img{-webkit-mask-image:radial-gradient(circle closest-side,#000 62%,rgba(0,0,0,.6) 78%,transparent 100%);mask-image:radial-gradient(circle closest-side,#000 62%,rgba(0,0,0,.6) 78%,transparent 100%)}
 
 /* ---- Basis v11: Horizont-Panorama ---- */
-#world,#terrain,#blds{width:2360px}
+#world,#terrain,#blds{width:1920px}
 .watercv{position:absolute;pointer-events:none}
 #life .car,#life .cloud,#life .water,#life .puff{display:none}
 .skycloud{position:absolute;width:calc(380px*var(--s));height:calc(70px*var(--s));border-radius:50%;background:radial-gradient(ellipse,rgba(255,225,235,.30),rgba(255,210,230,0) 68%);filter:blur(6px);animation:skyc linear infinite}
@@ -904,3 +904,153 @@ body.raid:has(#panel:not(.hidden)) #raidbar{top:auto;bottom:8px;z-index:41}
 #mplogin .er{min-height:16px;color:var(--bad);font-size:11px;text-align:center;margin:6px 0 2px}
 #mplogin .off{display:block;margin:6px auto 0;color:var(--mut);font-size:11px;text-decoration:underline;text-underline-offset:3px}
 @media (orientation:landscape) and (max-height:480px){#mplogin .lg{padding:10px 16px 8px}#mplogin h1{font-size:17px}#mplogin input{padding:6px 10px;margin-bottom:5px}#mplogin .sub{margin-bottom:6px}#mplogin .tabs{margin-bottom:7px}#mplogin .go{padding:7px}}
+
+/* v34: Panorama 2400×800, 15 Bauplätze */
+#world,#terrain,#blds{width:2400px}
+
+/* v34: b4-Gebäude – Fundament im Sprite, kein separater Schatten/Gerüst */
+#blds .pad.b4 .shadow{display:block;background:radial-gradient(ellipse 50% 50% at 50% 55%,rgba(14,2,22,.7),rgba(14,2,22,.35) 55%,rgba(14,2,22,0) 100%);transform:scale(1.18,1.05)}
+#blds .pad.b4.new img.pb{filter:none;opacity:1}
+#blds .pad.b4 .b4glow{position:absolute;inset:0;-webkit-mask-image:var(--m);mask-image:var(--m);-webkit-mask-size:100% 100%;mask-size:100% 100%;background:radial-gradient(ellipse 40% 45% at 50% 45%,rgba(255,190,120,.10),transparent 65%);mix-blend-mode:screen;animation:b4p 3.2s ease-in-out infinite;pointer-events:none}
+@keyframes b4p{0%,100%{opacity:.3}50%{opacity:.8}}
+#blds .pad.b4 img.pb{clip-path:none!important}
+#blds .pad .fgov{position:absolute;pointer-events:none;display:none}
+#blds .pad.b4 .fgov{display:block}
+#world.moon .fgov{display:none!important}
+#blds .pad.b4 img.pb{filter:saturate(calc(1 - .3*var(--hz,0))) contrast(calc(1 - .2*var(--hz,0))) brightness(calc(1 + .06*var(--hz,0)))}
+#blds .pad.b4 .b4haze{position:absolute;inset:0;-webkit-mask-image:var(--m);mask-image:var(--m);-webkit-mask-size:100% 100%;mask-size:100% 100%;background:linear-gradient(rgba(190,160,225,.9),rgba(150,120,200,.6));opacity:calc(.22*var(--hz,0));pointer-events:none}
+#blds .pad.b4 .fgov.clump{z-index:3}
+
+/* v35: Plateau-Basis (freie Platzierung) */
+#b2{position:absolute;inset:0;overflow:hidden;touch-action:none;background:#120c22;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+#b2::before{content:"";position:absolute;inset:-40px;background:url(assets/plat/low.webp) center/cover;filter:blur(18px) brightness(.55)}
+#b2w{position:absolute;left:0;top:0;width:3000px;height:2250px;transform-origin:0 0;will-change:transform}
+#b2img{position:absolute;left:0;top:0;width:3000px;height:2250px;pointer-events:none}
+#b2tiles .b2t{position:absolute;opacity:0;transition:opacity .25s;pointer-events:none}#b2tiles .b2t.on{opacity:1}
+#b2fx{position:absolute;inset:0;pointer-events:none}
+.b2mist{position:absolute;width:90px;height:60px;margin:-30px 0 0 -45px;border-radius:50%;background:radial-gradient(ellipse,rgba(225,235,255,.55),rgba(225,235,255,0) 70%);animation:b2m 5s ease-out infinite;opacity:0}
+.b2mist.d2{animation-delay:-2.5s}
+@keyframes b2m{0%{transform:translate(0,0) scale(.6);opacity:0}30%{opacity:.8}100%{transform:translate(-40px,-50px) scale(2.2);opacity:0}}
+.b2glow{position:absolute;width:160px;height:160px;margin:-80px 0 0 -80px;border-radius:50%;background:radial-gradient(circle,rgba(160,110,255,.45),rgba(120,80,255,0) 70%);mix-blend-mode:screen;animation:b2g 3.6s ease-in-out infinite}
+@keyframes b2g{0%,100%{opacity:.25;transform:scale(.9)}50%{opacity:.85;transform:scale(1.08)}}
+#b2blds{position:absolute;inset:0}
+.b2b{position:absolute;left:0;top:0;width:0;height:0}
+.b2b img{position:absolute;pointer-events:auto;-webkit-user-drag:none}
+.b2sh{position:absolute;border-radius:50%;background:radial-gradient(ellipse 50% 50%,rgba(40,18,6,.6),rgba(40,18,6,.3) 55%,rgba(40,18,6,0) 100%);pointer-events:none}
+.b2ring{position:absolute;height:7px;border-radius:4px;background:rgba(0,0,0,.55);display:none;pointer-events:none}.b2ring i{display:block;height:100%;width:0;border-radius:4px;background:linear-gradient(90deg,#38e1ff,#7cf);box-shadow:0 0 6px #38e1ff}
+.b2b.new .b2ring,.b2b.up .b2ring{display:block}
+.b2b .b2t{position:absolute;transform:translate(-50%,0);font:600 18px system-ui;color:#fff;text-shadow:0 1px 3px #000;white-space:nowrap;pointer-events:none;display:none;background:rgba(10,14,30,.7);padding:1px 8px;border-radius:8px}
+.b2b.new .b2t[data-end],.b2b.up .b2t[data-end]{display:block}
+#b2ghost{position:absolute;left:0;top:0;width:0;height:0;display:none;pointer-events:none}
+#b2ghost img{position:absolute;opacity:.85;filter:drop-shadow(0 0 10px rgba(80,255,140,.7))}
+#b2ghost .b2fp{position:absolute;border-radius:50%;border:4px solid rgba(80,255,140,.95);background:rgba(80,255,140,.25)}
+#b2ghost.bad .b2fp{border-color:rgba(255,70,70,.95);background:rgba(255,70,70,.3)}#b2ghost.bad img{filter:drop-shadow(0 0 10px rgba(255,60,60,.8)) saturate(.6)}
+#b2bar{position:absolute;left:50%;bottom:76px;transform:translateX(-50%);display:none;gap:8px;align-items:center;background:rgba(12,14,34,.85);border:1px solid rgba(120,160,255,.35);padding:6px 10px;border-radius:14px;z-index:50}
+#b2bar #b2msg{font-size:13px;color:#dfe6ff;margin-right:4px}
+#b2bar #b2ok:disabled{opacity:.45}
+#b2hint{position:absolute;display:none;border-radius:50%;border:4px dashed rgba(255,230,120,.95);background:rgba(255,230,120,.18);box-shadow:0 0 18px rgba(255,220,100,.6);animation:b2g 1.6s ease-in-out infinite}
+#b2hint.on{display:block}
+#b2ghost .b2fp{z-index:2;background:transparent!important;box-shadow:0 0 12px currentColor}#b2ghost img{z-index:1}
+#b2ghost .b2fp{color:rgba(80,255,140,.9)}#b2ghost.bad .b2fp{color:rgba(255,70,70,.9)}
+/* ===== v37 Umgebung ===== */
+#b2fx .ev{position:absolute;pointer-events:none;display:block}
+.ev.star{width:5px;height:5px;margin:-2.5px;border-radius:50%;background:#fff;box-shadow:0 0 6px 2px rgba(200,215,255,.8);animation:evTw 4s ease-in-out infinite}
+@keyframes evTw{0%,100%{opacity:.15;transform:scale(.6)}50%{opacity:1;transform:scale(1.15)}}
+.ev.gcore{width:260px;height:150px;margin:-75px 0 0 -130px;border-radius:50%;background:radial-gradient(ellipse,rgba(255,230,210,.55),rgba(220,150,255,.18) 45%,transparent 70%);animation:evG 9s ease-in-out infinite}
+@keyframes evG{0%,100%{opacity:.35;transform:scale(.95) rotate(-2deg)}50%{opacity:.8;transform:scale(1.06) rotate(2deg)}}
+.ev.neb{width:1100px;height:520px;border-radius:50%;background:radial-gradient(ellipse,rgba(170,90,255,.16),rgba(80,60,200,.07) 50%,transparent 72%);animation:evN 60s ease-in-out infinite alternate}
+@keyframes evN{from{transform:translate(-120px,0) scale(1)}to{transform:translate(140px,20px) scale(1.12)}}
+.ev.wf{overflow:hidden;-webkit-mask-size:100% 100%;mask-size:100% 100%;opacity:.7}
+.ev.wf i{position:absolute;left:0;right:0;top:-320px;bottom:0;background:url(assets/plat/fx/streak.png) 0 0/120px 320px repeat;animation:evWf 2s linear infinite;will-change:transform}
+.ev.wf i.b{background-size:180px 480px;top:-480px;opacity:.6;animation-name:evWf2}
+@keyframes evWf{to{transform:translateY(320px)}}@keyframes evWf2{to{transform:translateY(480px)}}
+.ev.spray{height:60px;margin:-30px 0 0 0;transform:translateX(-50%);border-radius:50%;background:radial-gradient(ellipse,rgba(230,240,255,.5),transparent 70%);animation:evSp 4s ease-in-out infinite}
+@keyframes evSp{0%,100%{opacity:.35;transform:translateX(-50%) scale(.9,.8)}50%{opacity:.75;transform:translateX(-50%) scale(1.15,1.1)}}
+.ev.mush{transform-origin:50% 92%;animation:evMu 6s ease-in-out infinite}
+@keyframes evMu{0%,100%{transform:rotate(-.9deg)}50%{transform:rotate(.9deg) translateY(-1px)}}
+.ev.glint{width:44px;height:44px;margin:-22px;background:radial-gradient(circle,#fff 0,rgba(210,220,255,.9) 6%,transparent 22%),linear-gradient(90deg,transparent 46%,rgba(255,255,255,.95) 50%,transparent 54%),linear-gradient(0deg,transparent 46%,rgba(255,255,255,.95) 50%,transparent 54%);opacity:0;animation:evGl 7s ease-in-out infinite}
+@keyframes evGl{0%,82%,100%{opacity:0;transform:scale(.2) rotate(0)}88%{opacity:1;transform:scale(1) rotate(20deg)}94%{opacity:0;transform:scale(.4) rotate(40deg)}}
+.ev.cglow{aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle,rgba(150,120,255,.38),transparent 65%);animation:evCg 4.5s ease-in-out infinite}
+@keyframes evCg{0%,100%{opacity:.3}50%{opacity:.85}}
+.ev.clouds{left:-700px;width:4400px;height:520px;overflow:hidden}
+.ev.clouds i{position:absolute;left:0;top:0;width:200%;height:100%;background:url(assets/plat/fx/cloud.webp) 0 0/2200px 100% repeat-x;animation:evCl 140s linear infinite}
+.ev.clouds.c1{top:1830px;opacity:.5}.ev.clouds.c2{top:1980px;opacity:.42}.ev.clouds.c2 i{animation-duration:95s;animation-direction:reverse;background-size:1700px 100%}
+@keyframes evCl{to{transform:translateX(-2200px)}}
+.ev.side{top:300px;width:700px;height:1400px;border-radius:50%;background:radial-gradient(ellipse,rgba(225,232,255,.3),transparent 65%);animation:evSd 30s ease-in-out infinite alternate}
+.ev.side.l{left:-420px}.ev.side.r{left:2720px;animation-delay:-15s}
+@keyframes evSd{from{transform:translateY(-80px)}to{transform:translateY(90px)}}
+.ev.mote{width:6px;height:6px;border-radius:50%;background:rgba(255,236,205,.55);box-shadow:0 0 4px rgba(255,230,190,.5);animation:evMo 20s linear infinite;opacity:0}
+@keyframes evMo{0%{opacity:0;transform:translate(0,0)}15%{opacity:.7}85%{opacity:.5}100%{opacity:0;transform:translate(240px,-70px)}}
+.ev.skyfx{left:0;top:0;width:3000px;height:400px}
+.ev.shoot{width:220px;height:3px;border-radius:2px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.95));transform-origin:100% 50%;animation:evSh 1.4s ease-out forwards}
+@keyframes evSh{0%{opacity:0;transform:rotate(var(--a)) translateX(0) scaleX(.3)}15%{opacity:1}100%{opacity:0;transform:rotate(var(--a)) translateX(520px) scaleX(1)}}
+.ev.ship{left:-60px;width:16px;height:5px;border-radius:3px;background:#dfe9ff;box-shadow:0 0 8px 3px rgba(140,190,255,.7),-26px 0 18px -2px rgba(120,170,255,.45);animation:evShp 24s linear forwards;opacity:.85}
+.ev.ship.rtl{animation-name:evShpR}
+@keyframes evShp{from{transform:translate(0,0)}to{transform:translate(3120px,-60px)}}
+@keyframes evShpR{from{transform:translate(3120px,-40px) scaleX(-1)}to{transform:translate(0,10px) scaleX(-1)}}
+/* ===== v37 Gebäude-FX ===== */
+.b2fx{position:absolute;pointer-events:none}
+.b2fx .fx{position:absolute;display:block;aspect-ratio:1;transform:translate(-50%,-50%);pointer-events:none}
+.fx.glow{border-radius:50%;animation:fxP 3.5s ease-in-out infinite}
+.fx.glow.cy{background:radial-gradient(circle,rgba(120,220,255,.55),rgba(60,160,255,.18) 45%,transparent 70%)}
+.fx.glow.or{background:radial-gradient(circle,rgba(255,200,110,.75),rgba(255,120,40,.22) 45%,transparent 70%);animation-name:fxF}
+.fx.glow.rd{background:radial-gradient(circle,rgba(255,80,70,.6),rgba(255,40,40,.15) 45%,transparent 70%)}
+.fx.glow.gr{background:radial-gradient(circle,rgba(120,255,140,.45),transparent 65%);animation-name:fxS}
+@keyframes fxP{0%,100%{opacity:.25;transform:translate(-50%,-50%) scale(.85)}50%{opacity:.9;transform:translate(-50%,-50%) scale(1.1)}}
+@keyframes fxF{0%,100%{opacity:.6}20%{opacity:.95}35%{opacity:.5}55%{opacity:1}70%{opacity:.65}85%{opacity:.9}}
+@keyframes fxS{0%,100%{opacity:.25}48%{opacity:.3}50%{opacity:.7}53%{opacity:.35}}
+.fx.smoke{border-radius:50%;background:radial-gradient(circle,rgba(205,205,210,.45),rgba(180,180,190,.18) 45%,transparent 70%);animation:fxSm 6.6s ease-out infinite;opacity:0}
+@keyframes fxSm{0%{opacity:0;transform:translate(-50%,-50%) scale(.4)}20%{opacity:.6}100%{opacity:0;transform:translate(-40%,-150%) scale(1.4)}}
+.fx.mist{border-radius:50%;background:radial-gradient(circle,rgba(235,245,255,.5),transparent 68%);animation:fxMi 8s ease-in-out infinite}
+@keyframes fxMi{0%,100%{opacity:.15;transform:translate(-50%,-50%) scale(.8)}50%{opacity:.55;transform:translate(-40%,-70%) scale(1.25)}}
+.fx.pulse{border-radius:50%;border:3px solid rgba(160,230,255,.8);box-shadow:0 0 14px rgba(120,210,255,.7),inset 0 0 10px rgba(120,210,255,.5);animation:fxPu 2.6s ease-out infinite}
+@keyframes fxPu{0%{opacity:.9;transform:translate(-50%,-50%) scale(.3)}100%{opacity:0;transform:translate(-50%,-50%) scale(2.2)}}
+.fx.brain{border-radius:50%;background:radial-gradient(circle,rgba(140,230,255,.6),rgba(70,170,255,.2) 45%,transparent 70%);animation:fxBr 2.4s ease-in-out infinite}
+@keyframes fxBr{0%,100%{opacity:.35;transform:translate(-50%,-50%) scale(.9)}12%{opacity:.95;transform:translate(-50%,-50%) scale(1.05)}24%{opacity:.5}36%{opacity:.85;transform:translate(-50%,-50%) scale(1.02)}}
+.fx.swirl{border-radius:50%;overflow:hidden;transform:translate(-50%,-50%) scaleX(.62);opacity:.55}
+.fx.swirl b{position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 0deg,rgba(120,170,255,0),rgba(170,210,255,.7),rgba(120,100,255,0) 30%,rgba(150,200,255,.6) 50%,rgba(120,100,255,0) 65%,rgba(190,220,255,.65) 82%,rgba(120,170,255,0));-webkit-mask:radial-gradient(circle,#000 30%,transparent 70%);mask:radial-gradient(circle,#000 30%,transparent 70%);animation:fxRot 7s linear infinite}
+@keyframes fxRot{to{transform:rotate(360deg)}}
+.fx.weld{width:5%;background:radial-gradient(circle,#fff 0,rgba(255,240,180,.95) 12%,rgba(255,170,60,.5) 30%,transparent 60%);border-radius:50%;opacity:0;animation:fxWe 2.6s steps(1) infinite}
+.fx.weld::after{content:"";position:absolute;inset:-40%;background:radial-gradient(circle at 30% 70%,#ffd 0 3%,transparent 4%),radial-gradient(circle at 70% 80%,#ffb 0 2.5%,transparent 3.5%),radial-gradient(circle at 55% 95%,#fd8 0 2.5%,transparent 3.5%),radial-gradient(circle at 20% 90%,#fe9 0 2%,transparent 3%);animation:fxSpk .35s ease-in infinite}
+@keyframes fxWe{0%{opacity:0}8%{opacity:1}10%{opacity:.4}12%{opacity:1}16%{opacity:.7}22%{opacity:1}30%{opacity:0}62%{opacity:0}64%{opacity:1}70%{opacity:.6}74%{opacity:0}}
+@keyframes fxSpk{from{transform:translateY(-10%) scale(.8)}to{transform:translateY(25%) scale(1.15)}}
+.fx.dust{border-radius:50%;background:radial-gradient(circle,rgba(200,160,115,.5),transparent 68%);animation:fxDu 5s ease-out infinite;opacity:0}
+@keyframes fxDu{0%{opacity:0;transform:translate(-50%,-30%) scale(.4)}30%{opacity:.6}100%{opacity:0;transform:translate(-30%,-90%) scale(1.6)}}
+.fx.wl{border-radius:50%;background:radial-gradient(circle,rgba(255,225,150,.55),rgba(255,190,90,.15) 40%,transparent 68%);animation:fxP 1.9s ease-in-out infinite}
+.fx.blink{border-radius:50%;background:radial-gradient(circle,#fff 0,rgba(255,70,60,.95) 18%,rgba(255,40,40,.3) 40%,transparent 70%);animation:fxBl 2.6s steps(1) infinite}
+@keyframes fxBl{0%,100%{opacity:1}12%{opacity:.1}}
+.fx.glint{border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.9) 0,rgba(180,220,255,.3) 25%,transparent 60%);animation:fxGt 5.5s ease-in-out infinite}
+@keyframes fxGt{0%,70%,100%{opacity:0;transform:translate(-50%,-50%) scale(.3)}80%{opacity:.9;transform:translate(-50%,-50%) scale(1)}90%{opacity:0;transform:translate(-50%,-50%) scale(.5)}}
+.fx.beam{aspect-ratio:auto;height:10%;transform-origin:0 50%;transform:translate(0,-50%) rotate(-150deg);background:linear-gradient(90deg,rgba(255,240,200,.45),rgba(255,240,200,0));clip-path:polygon(0 45%,100% 0,100% 100%,0 55%);animation:fxBm 9s ease-in-out infinite}
+@keyframes fxBm{0%,100%{transform:translate(0,-50%) rotate(-165deg);opacity:.5}50%{transform:translate(0,-50%) rotate(-120deg);opacity:.8}}
+.b2fx img.fx.dish{aspect-ratio:auto;transform:none;transform-origin:55% 60%;animation:fxDi 10s ease-in-out infinite}
+@keyframes fxDi{0%,100%{transform:scaleX(1) rotate(0)}30%{transform:scaleX(.86) rotate(-3deg)}65%{transform:scaleX(.94) rotate(2.5deg)}}
+/* Bau-Timer: eigene Pille über dem Gebäude, bildschirmkonstant */
+.b2pill{position:absolute;display:none;flex-direction:column;align-items:center;gap:2px;transform:translate(-50%,-100%) scale(var(--inv,1));transform-origin:50% 100%;pointer-events:none;background:rgba(10,14,30,.78);border:1px solid rgba(120,200,255,.35);border-radius:9px;padding:3px 8px 5px;box-shadow:0 2px 8px rgba(0,0,0,.5)}
+.b2b.new .b2pill,.b2b.up .b2pill{display:flex}
+.b2pill .b2t{position:static!important;transform:none!important;display:block!important;font:600 10px system-ui!important;padding:0!important;background:none!important;color:#fff}
+.b2pill .b2ring{position:static!important;display:block!important;width:46px!important;height:3px!important}
+.fxpause .b2fx *,.fxpause #b2fx *{animation-play-state:paused!important}
+@media (prefers-reduced-motion:reduce){.b2fx,#b2fx .ev:not(.mush){display:none!important}.ev.mush{animation:none!important}}
+/* ===== v38 bewegliche Teile ===== */
+.b2fx .pt{position:absolute;pointer-events:none;will-change:transform}
+.b2fx .pt>img{position:absolute;inset:0;width:100%;height:100%}
+.pt.crane_tower{animation:ptSlew 16s ease-in-out infinite}
+@keyframes ptSlew{0%,100%{transform:scaleX(1)}18%{transform:scaleX(1)}45%{transform:scaleX(.68) skewY(-1.2deg)}62%{transform:scaleX(.68) skewY(-1.2deg)}88%{transform:scaleX(1)}}
+.pt.crane_luff{animation:ptLuff 11s ease-in-out infinite}
+@keyframes ptLuff{0%,100%{transform:rotate(-3.5deg)}40%{transform:rotate(2.5deg)}55%{transform:rotate(2.8deg)}}
+.pt.turret{animation:ptTur 8.1s ease-in-out infinite}
+@keyframes ptTur{0%,100%{transform:rotate(0)}12%{transform:rotate(-5deg)}30%{transform:rotate(-5deg)}45%{transform:rotate(4deg)}62%{transform:rotate(4deg)}78%{transform:rotate(0)}}
+.pt.turret .mz{position:absolute;left:4%;top:6%;width:26%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle,#fff 0,rgba(255,235,170,.95) 15%,rgba(255,150,50,.5) 35%,transparent 65%);opacity:0;animation:ptMz 8.1s linear infinite}
+@keyframes ptMz{0%,33%,36.5%,100%{opacity:0;transform:translate(-50%,-50%) scale(.4)}34%{opacity:1;transform:translate(-50%,-50%) scale(1.1)}35%{opacity:.5}}
+.pt.scope{animation:ptSc 18s ease-in-out infinite}
+@keyframes ptSc{0%,100%{transform:rotate(-3deg)}35%{transform:rotate(-3deg)}55%{transform:rotate(3.5deg)}80%{transform:rotate(3.5deg)}}
+.pt.ov{overflow:hidden;-webkit-mask-size:100% 100%;mask-size:100% 100%}
+.pt.ov .rot{position:absolute;left:50%;top:50%;width:300%;height:300%}
+.pt.ov .rot i{position:absolute;inset:-40px 0 0 -40px;display:block}
+.pt.belt .rot i{background:repeating-linear-gradient(90deg,rgba(0,0,0,0) 0 9px,rgba(0,0,0,.55) 9px 13px,rgba(255,255,255,.22) 13px 15px,rgba(0,0,0,0) 15px 20px);animation:ptBelt .9s linear infinite}
+@keyframes ptBelt{to{transform:translateX(20px)}}
+.pt.drill .rot i{background:repeating-linear-gradient(160deg,rgba(0,0,0,0) 0 5px,rgba(255,255,255,.32) 5px 7px,rgba(0,0,0,.38) 7px 11px,rgba(0,0,0,0) 11px 14px);animation:ptDr .45s linear infinite}
+@keyframes ptDr{to{transform:translateY(14.9px)}}
+@media (prefers-reduced-motion:reduce){.b2fx{display:block!important}.b2fx .fx,.b2fx .pt.ov{display:none!important}.b2fx .pt,.b2fx .pt *{animation:none!important}}
+.fxpause .b2fx .pt,.fxpause .b2fx .pt *{animation-play-state:paused!important}

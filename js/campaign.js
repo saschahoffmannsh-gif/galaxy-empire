@@ -2,7 +2,7 @@
 (function(){
 const CH=[
  {t:'Ankunft',ic:'🪐',intro:'Willkommen auf deiner neuen Heimatwelt, Kommandant. Alles beginnt mit Rohstoffen: Metall, Kristall, Gas – und der Energie, um sie zu fördern.',outro:'Die ersten Minen laufen, die Energie fließt. Deine Kolonie lebt!',main:[0,1,2,3,4,5,'c1a','c1b'],
-  side:[{id:'s1a',t:'Fleißige Bergleute',d:'Metallmine auf Stufe 4.',c:()=>E.maxB('metal_mine')>=4,r:{m:1500,k:600}},{id:'s1b',t:'Volle Kraft',d:'Solarkraftwerk auf Stufe 4.',c:()=>E.maxB('solar')>=4,r:{m:1200,k:800,dm:2}}],bonus:{dm:5}},
+  side:[{id:'s1a',t:'Fleißige Bergleute',d:'Metallmine auf Stufe 4.',c:()=>E.maxB('metal_mine')>=4,r:{m:1500,k:600}},{id:'s1b',t:'Volle Kraft',d:'Kraftwerk auf Stufe 4.',c:()=>E.maxB('power')>=4,r:{m:1200,k:800,dm:2}}],bonus:{dm:5}},
  {t:'Wachstum',ic:'🏗️',intro:'Eine Kolonie, die wächst, braucht Lager, Automatisierung und Wissen. Zeit, dein Fundament auszubauen.',outro:'Lager, Roboter und dein erstes Labor – das Fundament eines Imperiums steht.',main:[6,10,13,9,8,11,'c2a','c2b'],
   side:[{id:'s2a',t:'Kristallklar',d:'Kristallmine auf Stufe 5.',c:()=>E.maxB('crystal_mine')>=5,r:{m:3000,k:3000}},{id:'s2b',t:'Forscherdrang',d:'Spionagetechnik Stufe 2.',c:()=>E.tl('espionage')>=2,r:{k:4000,g:2000}}],bonus:{dm:8}},
  {t:'Flotte',ic:'🚀',intro:'Der Weltraum ist weit – und nicht jeder dort ist freundlich. Bauen wir eine Werft und die ersten Schiffe.',outro:'Deine ersten Schiffe stehen bereit. Jetzt können wir hinausfliegen.',main:[7,14,'c3a','c3b'],
@@ -22,10 +22,10 @@ const CH=[
 ];
 const mB=o=>Object.entries(o).every(([k,v])=>E.maxB(k)>=v);const eBal=()=>{const pi=E.prodInfo(S.planets[S.home]);return pi.eProd>=pi.eUse};
 const EXTRA={rank:{t:'Ruhmeshalle',d:'Öffne die Rangliste (Pokal oben rechts).',c:()=>!!S.flags.rankSeen,r:{m:5000,k:5000,dm:3}},
- c1a:{t:'Solide Basis',d:'Metallmine Stufe 4, Kristallmine Stufe 3 und Solarkraftwerk Stufe 4.',c:()=>mB({metal_mine:4,crystal_mine:3,solar:4}),r:{m:1500,k:800,g:300}},
- c1b:{t:'Im Gleichgewicht',d:'Gasförderung Stufe 2, Solarkraftwerk Stufe 5 – und keine negative Energie.',c:()=>mB({gas_mine:2,solar:5})&&eBal(),r:{m:2000,k:1200,g:600,dm:5}},
+ c1a:{t:'Solide Basis',d:'Metallmine Stufe 4, Kristallmine Stufe 3 und Kraftwerk Stufe 4.',c:()=>mB({metal_mine:4,crystal_mine:3,power:4}),r:{m:1500,k:800,g:300}},
+ c1b:{t:'Im Gleichgewicht',d:'Gasförderung Stufe 2, Kraftwerk Stufe 5 – und keine negative Energie.',c:()=>mB({gas_mine:2,power:5})&&eBal(),r:{m:2000,k:1200,g:600,dm:5}},
  c2a:{t:'Industrie',d:'Metallmine 7, Kristallmine 6 und Gasförderung 4.',c:()=>mB({metal_mine:7,crystal_mine:6,gas_mine:4}),r:{m:8000,k:5000,g:2500}},
- c2b:{t:'Automatisierung',d:'Roboterfabrik Stufe 3 und Solarkraftwerk Stufe 9.',c:()=>mB({robotics:3,solar:9}),r:{m:6000,k:4000,g:2000,dm:5}},
+ c2b:{t:'Automatisierung',d:'Roboterfabrik Stufe 3 und Kraftwerk Stufe 9.',c:()=>mB({robotics:3,power:9}),r:{m:6000,k:4000,g:2000,dm:5}},
  c3a:{t:'Schutzschild',d:'Werft Stufe 3 und 10 Raketenwerfer auf dem Heimatplaneten.',c:()=>E.maxB('shipyard')>=3&&(S.planets[S.home].def.rl||0)>=10,r:{m:12000,k:6000,g:3000}},
  c3b:{t:'Aufklärung',d:'Forschungslabor Stufe 4 und Spionagetechnik Stufe 2.',c:()=>E.maxB('lab')>=4&&E.tl('espionage')>=2,r:{m:10000,k:15000,g:5000,dm:5}},
  c4a:{t:'Schwerindustrie',d:'Metallmine 10, Kristallmine 9 und Gasförderung 7.',c:()=>mB({metal_mine:10,crystal_mine:9,gas_mine:7}),r:{m:40000,k:25000,g:15000,dm:5}},
@@ -161,23 +161,24 @@ function fitAries(r){const key=[r.left,r.top,r.width,r.height,innerWidth,innerHe
  H.classList.add('fitmini');H.style.bottom='';H.classList.toggle('right',pref==='right')}
 setInterval(()=>{const pn=!!(window.GAME&&GAME.panel);H.classList.toggle('mini',pn);if(pn&&!spotSel)H.classList.add('right');placeSpot()},120);addEventListener('resize',placeSpot);
 // Eingaben während geführter Schritte blockieren (außer Ziel und Aries)
-for(const ev of['click','pointerdown','touchstart','mousedown'])document.addEventListener(ev,e=>{if(!spotSel)return;if(e.target.closest('#aries-h,#rwd'))return;if(spotEl&&spotEl.contains(e.target))return;e.stopPropagation();if(ev==='click')e.preventDefault()},true);
+for(const ev of['click','pointerdown','touchstart','mousedown'])document.addEventListener(ev,e=>{if(!spotSel)return;if(e.target.closest('#aries-h,#rwd'))return;if(window.B2&&B2.placing&&e.target.closest('#b2'))return;if(spotEl&&spotEl.contains(e.target))return;e.stopPropagation();if(ev==='click')e.preventDefault()},true);
 const wait=(f,ms=60000)=>new Promise(r=>{const t0=Date.now();const iv=setInterval(()=>{if(safe(f)||Date.now()-t0>ms){clearInterval(iv);r(safe(f))}},150)});
 const panelIs=(k,a)=>()=>window.GAME&&GAME.panel&&GAME.panel[0]===k&&(a===undefined||GAME.panel[1]===a);
 const padOf=id=>{const p=pl();for(const k in p.pads)if(p.pads[k]===id)return +k;return PAD_PREF[id]};
-function scrollToPad(i){const b=document.querySelector(`#padhits .bh[data-i="${i}"]`);const pano=$('#pano');if(!b||!pano)return;const r=b.getBoundingClientRect();pano.scrollLeft+=r.left+r.width/2-innerWidth/2}
+function scrollToPad(i){if(window.B2&&B2.on())return;const b=document.querySelector(`#padhits .bh[data-i="${i}"]`);const pano=$('#pano');if(!b||!pano)return;const r=b.getBoundingClientRect();pano.scrollLeft+=r.left+r.width/2-innerWidth/2}
 async function step(text,sel,until,o={}){if(o.pad!=null){if(!GAME.panel)scrollToPad(o.pad);await new Promise(r=>setTimeout(r,250))}
  spot(sel);say(text,{p:o.p||'point',btns:[['Überspringen','skip']]}).then(v=>{if(v==='skip')abort=true});
  const ok=await wait(()=>abort||until());spot(null);return ok&&!abort}
 let abort=false,busy=false;
-const padStep=id=>[`Tippe auf diesen Bauplatz.`,()=>document.querySelector(`#padhits .bh[data-i="${padOf(id)}"]`),()=>GAME.panel&&(GAME.panel[0]==='padbuild'||GAME.panel[0]==='bld'),{pad:padOf(id)}];
-const buildOn=id=>[`Wähle „${GE.BUILD[id].n}“ und tippe auf „Hier bauen“ bzw. „Ausbauen“.`,()=>document.querySelector(`#panel [data-act=padbuild][data-id="${id}"],#panel [data-act=build][data-id="${id}"]`),()=>pl().bq.some(q=>q.id===id)||E.lv(pl(),id)>0&&!GAME.panel];
+const padStep=id=>[window.B2&&B2.on()?`Tippe auf diesen freien Platz.`:`Tippe auf diesen Bauplatz.`,()=>window.B2&&B2.on()?B2.hintEl(id):document.querySelector(`#padhits .bh[data-i="${padOf(id)}"]`),()=>GAME.panel&&(GAME.panel[0]==='padbuild'||GAME.panel[0]==='bld'),{pad:padOf(id)}];
+const buildOn=id=>[`Wähle „${GE.BUILD[id].n}“ und tippe auf „Hier bauen“ bzw. „Ausbauen“.`,()=>document.querySelector(`#panel [data-act=padbuild][data-id="${id}"],#panel [data-act=build][data-id="${id}"]`),()=>pl().bq.some(q=>q.id===id)||E.lv(pl(),id)>0&&!GAME.panel||!!(window.B2&&B2.placing&&B2.placing.id===id)];
+const placeStep=id=>[`Zieh das Gebäude an einen freien Platz (grün) und tippe auf ✓.`,'#b2ok',()=>!(window.B2&&B2.placing)||pl().bq.some(q=>q.id===id)];
 const GUIDE={
  0:[['Deine Willkommensbelohnung wartet. Öffne den Missionslog über meine Kachel.','#aries .ariescard',panelIs('camp'),{p:'pointdl'}],['Tippe auf „Abholen“.','#panel [data-act=cp-claim][data-id="0"]',()=>C().cl[0]]],
- 1:[padStep('metal_mine'),buildOn('metal_mine'),['Der Bau läuft! Unter 10 Minuten Restzeit stellst du ihn mit dem Blitz gratis fertig – tippe darauf.','#queues .qsp',()=>E.lv(pl(),'metal_mine')>0,{p:'explain'}],padStep('crystal_mine'),buildOn('crystal_mine')],
- 2:[padStep('metal_mine'),buildOn('metal_mine')],3:[padStep('solar'),buildOn('solar')],4:[padStep('gas_mine'),buildOn('gas_mine')],
+ 1:[padStep('metal_mine'),buildOn('metal_mine'),['Der Bau läuft! Unter 10 Minuten Restzeit stellst du ihn mit dem Blitz gratis fertig – tippe darauf.','#queues .qsp',()=>E.lv(pl(),'metal_mine')>0,{p:'explain'}],padStep('crystal_mine'),buildOn('crystal_mine'),placeStep('crystal_mine')],
+ 2:[padStep('metal_mine'),buildOn('metal_mine'),placeStep('metal_mine')],3:[padStep('power'),buildOn('power'),placeStep('power')],4:[padStep('gas_mine'),buildOn('gas_mine'),placeStep('gas_mine')],
  5:[padStep('gas_mine'),['Schiebe den Regler „Produktionsleistung“ auf 60 %.','#panel [data-act=pct]',()=>E.COND[5]()],['__info2','Gut! Merke: Unter 100 % fördert die Mine weniger, spart aber Energie. Nach der Belohnung stelle ich sie für dich wieder auf 100 %.']],
- 6:[padStep('robotics'),buildOn('robotics')],
+ 6:[padStep('robotics'),buildOn('robotics'),placeStep('robotics')],
  8:[['Tippe auf den Blitz an der Bau-Kachel: unter 10 Minuten Restzeit gratis, darüber kostet es Dunkle Materie.','#queues .qsp',()=>!!S.flags.speedup,{p:'point'}]],
  9:[['Der Space Store – hier in der Leiste.','#rail [data-p=store]',()=>!!S.flags.store]],
  13:[['Hier geht es zur Forschung.','#rail [data-p=research]',panelIs('research')],['Erforsche „Energietechnik“.','#panel [data-act=research][data-id=energy]',()=>!!S.rq||E.tl('energy')>0]],
@@ -220,7 +221,7 @@ async function loop(){if(looping||busy||!S||!S.camp||S.camp.skip)return;if(docum
   const v=await say(`Erste Mission: „${t.t}“ – ${t.d}`,{p:'explain',btns:GUIDE[i]?[['Zeig es mir','g'],['Selbst machen',null]]:[['Verstanden',null]]});
   hide();if(v==='g'){looping=false;return guide(i)}}
  // Hinweis: negative Energie
- {const pi=E.prodInfo(pl());const now=Date.now();if(c.cl[3]&&!pl().moon&&pi.eUse>pi.eProd+0.5&&now-(c.eh||0)>8*60e3&&!GAME.panel){c.eh=now;save();const v=await say('Achtung: Deine Energie ist negativ – Minen fördern dann weniger. Baue das Solarkraftwerk aus.',{p:'alert',btns:[['Zeig es mir','g'],['Später',null]]});hide();if(v==='g'){busy=true;looping=false;for(const st of[padStep('solar'),buildOn('solar')])if(!await step(...st))break;spot(null);hide();busy=false}return}}
+ {const pi=E.prodInfo(pl());const now=Date.now();if(c.cl[3]&&!pl().moon&&pi.eUse>pi.eProd+0.5&&now-(c.eh||0)>8*60e3&&!GAME.panel){c.eh=now;save();const v=await say('Achtung: Deine Energie ist negativ – Minen fördern dann weniger. Baue das Kraftwerk aus.',{p:'alert',btns:[['Zeig es mir','g'],['Später',null]]});hide();if(v==='g'){busy=true;looping=false;for(const st of[padStep('solar'),buildOn('solar'),placeStep('solar')])if(!await step(...st))break;spot(null);hide();busy=false}return}}
  // erfüllte Mission melden
  const i=curMain();if(i!=null&&!c.seen['d'+i]&&safe(()=>done(i))){c.seen['d'+i]=1;save();const v=await say(`Mission „${T(i).t}“ erfüllt! Hervorragend.`,{p:'cheer',btns:[['Belohnung abholen','c'],['Später',null]]});
   hide();if(v==='c')await claimFx(i);return}

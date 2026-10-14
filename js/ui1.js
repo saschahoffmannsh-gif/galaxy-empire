@@ -61,7 +61,7 @@ function renderTop(){const p=pl();try{renderRaid()}catch(e){}
  setHTML($('#topbtns'),`<button class="iconbtn" data-act="open" data-p="rank" aria-label="Rangliste">${IC.trophy}</button><button class="iconbtn" data-act="open" data-p="tasks" aria-label="Aufgaben">${IC.task}${done?'<span class="dot ok">!</span>':''}</button><button class="iconbtn" data-act="open" data-p="reports" aria-label="Berichte">${IC.mail}${unread?`<span class="dot">${unread>99?'99+':unread}</span>`:''}</button><button class="iconbtn" data-act="open" data-p="settings" aria-label="Einstellungen">${IC.gear}</button>`);}
 function updRes(){const p=pl(),pi=E.prodInfo(p);const els=$$('#res .rc');if(els.length<5)return;
  ['m','k','g'].forEach((r,i)=>{const el=els[i],cap=E.storeCap(p,r);el.querySelector('.rv').textContent=fmt(p.r[r]);el.querySelector('.rr').textContent=(pi[r]>=0?'+':'')+fmt(pi[r])+'/h';el.classList.toggle('full',p.r[r]>=cap);el.querySelector('.rbar i').style.width=Math.min(100,p.r[r]/cap*100)+'%'});
- const e=pi.eProd-pi.eUse;els[3].querySelector('.rv').textContent=fmt(e);els[3].querySelector('.rr').textContent=fmt(pi.eProd)+' erz.';els[3].classList.toggle('neg',e<0);{let bd=els[3].querySelector('.ebadge');if(e<0&&!p.moon){if(!bd){bd=document.createElement('span');bd.className='ebadge';els[3].appendChild(bd)}const fx=E.lv(p,'fusion')>0||(E.canBuild&&!E.canBuild(p,'fusion'))?(E.bCost('fusion',E.lv(p,'fusion')+1).reduce((a,b)=>a+b,0)<E.bCost('solar',E.lv(p,'solar')+1).reduce((a,b)=>a+b,0)?'fusion':'solar'):'solar';bd.dataset.act='pbld';bd.dataset.id=fx;bd.textContent='!';bd.title='Energie negativ – '+GE.BUILD[fx].n+' ausbauen'}else if(bd)bd.remove()}els[4].querySelector('.rv').textContent=fmt(S.dm)}
+ const e=pi.eProd-pi.eUse;els[3].querySelector('.rv').textContent=fmt(e);els[3].querySelector('.rr').textContent=fmt(pi.eProd)+' erz.';els[3].classList.toggle('neg',e<0);{let bd=els[3].querySelector('.ebadge');if(e<0&&!p.moon){if(!bd){bd=document.createElement('span');bd.className='ebadge';els[3].appendChild(bd)}const fx='power';bd.dataset.act='pbld';bd.dataset.id=fx;bd.textContent='!';bd.title='Energie negativ – '+GE.BUILD[fx].n+' ausbauen'}else if(bd)bd.remove()}els[4].querySelector('.rv').textContent=fmt(S.dm)}
 const TABS=[['base','Base',IC.base],['system','System',IC.sys],['galaxy','Galaxie',IC.gal],['fleet','Flotte',IC.fleet],['ally','Allianz',IC.ally],['chat','Chat',IC.chat]];
 function renderNav(){$('#nav').innerHTML=TABS.map(t=>`<button data-act="tab" data-v="${t[0]}" class="${view===t[0]?'on':''}">${t[2]}${t[1]}</button>`).join('')}
 function setView(v){view=v;$$('.view').forEach(e=>e.classList.remove('active'));$('#v-'+v).classList.add('active');$('#pano').classList.toggle('paused',v!=='base');if(v==='base'){layoutPano()}renderNav();renderView()}
@@ -70,30 +70,34 @@ function renderView(){({base:renderBase,system:renderSystem,galaxy:renderGalaxy,
 // Basis: Gelände mit 12 Plattformen (Pad-Zentren per Bildanalyse ermittelt, Quelle 1280×720)
 // Basis-Panorama 2360×800 (unten 80px gespiegelt/abgedunkelt als Rand unter dem Menü).
 // 17 bebaubare Pads per Bildanalyse: [cx, cy (Mitte Oberseite), Breite, Höhe der Oberseite]. Index 17 = großer Vordergrund-Pad (v14 wieder bebaubar; Kamera zeigt ihn ganz über dem Menü).
-const PADS=[[390,502,187,47],[453,415,108,20],[680,415,103,20],[610,378,80,13],[828,460,146,32],[922,410,107,19],[1162,468,167,34],[1002,378,83,15],
- [1418,467,147,40],[1522,404,106,24],[1672,448,136,35],[1544,565,202,72],[1922,568,212,78],[2166,428,128,30],[2125,504,176,54],[2070,378,91,19],[1914,395,105,24],[939,600,308,93]];
-const PAD_PREF={metal_mine:0,crystal_mine:2,gas_mine:4,solar:8,fusion:12,lab:10,nanite:9,robotics:5,metal_store:11,galacto:7,'@defense':15,shipyard:6,alliance:1,stargate:13,radar:16,terraformer:17,crystal_store:3,gas_store:14,
- moon_base:6,pioneer:10,eux:16,wormhole:13};
-const RIMG={metal_store:'store',crystal_store:'store',gas_store:'store','@defense':'defense'};
+const PADS=[[558,349,155,46],[445,501,182,55],[846,405,165,50],[976,467,176,53],[1237,499,181,54],[749,539,188,56],[1002,602,199,60],[1346,635,205,62],[1602,410,166,50],[1755,451,173,52],[2016,418,167,50],[2174,368,159,48],[2157,490,180,54],[2000,565,193,58],[1582,565,193,58]];
+const PAD_PREF={metal_mine:6,crystal_mine:7,gas_mine:14,power:4,store:3,robotics:5,lab:2,nanite:1,shipyard:9,'@defense':13,galacto:0,alliance:8,radar:12,terraformer:11,stargate:10,
+ moon_base:4,pioneer:2,eux:8,wormhole:10};
+const RIMG={'@defense':'defense'};
+// v34: Kraftwerk nutzt die Fusions-Grafik, Lager die Speicher-Grafik (Stufenbilder)
+const ART={power:'fusion',store:'metal_store'};
 const rimg=id=>RIMG[id]||id;
-const TIERED=new Set(['metal_mine','crystal_mine','gas_mine','solar','fusion','lab','robotics','nanite','shipyard','metal_store','crystal_store','gas_store','defense','galacto','alliance','stargate','radar','terraformer']);
+const TIERED=new Set(['metal_mine','crystal_mine','gas_mine','power','store','lab','robotics','nanite','shipyard','defense','galacto','alliance','stargate','radar','terraformer']);
 const tierOf=lv=>lv<5?1:lv<10?2:lv<15?3:lv<20?4:5;const ROMAN=['','I','II','III','IV','V'];
-const timg=(id,lv)=>{const b=id==='@defense'?'defense':id;return TIERED.has(b)?`${b}_t${Math.min(4,tierOf(Math.max(1,lv)))}`:rimg(id)};
-const PANO_W=2360,PANO_Y0=84,PANO_VIS1=714;let baseKey=null,panoS=1,panoCentered=false;
+const timg=(id,lv)=>{const b=id==='@defense'?'defense':id;return TIERED.has(b)?`${ART[b]||b}_t${Math.min(4,tierOf(Math.max(1,lv)))}`:rimg(id)};
+const PANO_W=2400,PANO_Y0=48,PANO_VIS1=760;let baseKey=null,panoS=1,panoCentered=false;
 function navH(){const n=$('#nav');return n?n.offsetHeight+10:64}
 // Basis-Trefferflächen: mind. 46×36 Bildschirm-Pixel, damit auch kleine, weit hinten liegende Pads sicher antippbar sind
 function sizeHits(){const k=1/(panoS||1);$$('#padhits .bh').forEach(e=>{const [cx,cy,w,hh]=PADS[+e.dataset.i];const g=Math.max(hh,w*.16);const W=Math.max(w*1.05,52*k),H=Math.max(g*1.05,40*k);
  Object.assign(e.style,{left:cx-W/2+'px',top:cy-g*.1-H/2+'px',width:W+'px',height:H+'px'})})}
 function layoutPano(){const H=($('#pano').clientHeight||innerHeight);const vis=H-navH();panoS=vis/(PANO_VIS1-PANO_Y0);window.panoS=panoS;window.PANO_Y0v=PANO_Y0;
  $('#world').style.transform=`translate(0,${-PANO_Y0*panoS}px) scale(${panoS})`;$('#sizer').style.width=PANO_W*panoS+'px';
- if(!panoCentered&&$('#pano').clientWidth){panoCentered=true;$('#pano').scrollLeft=Math.max(0,1080*panoS-$('#pano').clientWidth/2)}
+ if(!panoCentered&&$('#pano').clientWidth){panoCentered=true;$('#pano').scrollLeft=Math.max(0,1200*panoS-$('#pano').clientWidth/2)}
  sizeHits();if(window.WATER)WATER.resize(panoS);if(window.AMBIENT)AMBIENT.place()}
 // Perspektiv-Variante: Gebäude ohne eigenes Pad, Fuß per Spalte auf die Pad-Neigung verschoben (Aufbau bleibt unverzerrt).
-const IMP={terraformer:1.38,lab:1.4,shipyard:1.38,robotics:1.38,fusion:1.4,alliance:1.36,stargate:1.42,nanite:1.42,galacto:1.28,radar:1.3,defense:1.22,solar:1.12,metal_mine:1.18,crystal_mine:1.18,gas_mine:1.18,store:1.12,moon_base:1.36,pioneer:1.36,eux:1.26,wormhole:1.4};
+const IMP={terraformer:1.38,lab:1.4,shipyard:1.38,robotics:1.38,power:1.4,fusion:1.4,alliance:1.36,stargate:1.42,nanite:1.42,galacto:1.28,radar:1.3,defense:1.22,solar:1.12,metal_mine:1.18,crystal_mine:1.18,gas_mine:1.18,store:1.12,moon_base:1.36,pioneer:1.36,eux:1.26,wormhole:1.4};
 // Freiraum je Pad: Oberkante darf die Vorderkante (Basis) überlappender, weiter hinten liegender Pads nicht verdecken.
 const PAD_HMAX=PADS.map(([cx,cy,w,h],i)=>{let m=1e9;PADS.forEach(([cx2,cy2,w2,h2],j)=>{if(j===i||cy2>=cy)return;if(Math.abs(cx2-cx)<(w*.8+w2)/2)m=Math.min(m,cy-(cy2+Math.max(h2,w2*.16)*.55))});return m});
 // v33: geringere Tiefenstaffelung (hinten nur moderat kleiner), Breite gegen Nachbarn begrenzt (max. ~12 % Überlappung)
-const EW=(()=>{const W=PADS.map(([,,w])=>1.28*170*Math.pow(w/170,.45));for(let it=0;it<10;it++)PADS.forEach(([cx,cy],i)=>PADS.forEach(([cx2,cy2],j)=>{if(j<=i||Math.abs(cy-cy2)>=70)return;const dx=Math.abs(cx-cx2),need=(W[i]+W[j])*.8*1.2/2;if(need>dx*1.4){const k=dx*1.4/need;W[i]*=Math.sqrt(k);W[j]*=Math.sqrt(k)}}));return W.map((v,i)=>Math.max(v,PADS[i][2]*1.08))})();
+const EW=(()=>{const W=PADS.map(([,,w])=>1.22*170*Math.pow(w/170,.55));for(let it=0;it<10;it++)PADS.forEach(([cx,cy],i)=>PADS.forEach(([cx2,cy2],j)=>{if(j<=i||Math.abs(cy-cy2)>=70)return;const dx=Math.abs(cx-cx2),need=(W[i]+W[j])*.8*1.2/2;if(need>dx*1.4){const k=dx*1.4/need;W[i]*=Math.sqrt(k);W[j]*=Math.sqrt(k)}}));return W.map((v,i)=>Math.max(v,PADS[i][2]*1.08))})();
+// v34: neue Gebäudegrafik (assets/b4) mit eigenem Achteck-Fundament – Fundament deckt das Pano-Pad exakt ab
+const tier5=lv=>lv<5?1:lv<10?2:lv<15?3:lv<20?4:5;
+function b4Geo(i,m,ft){const [cx,cy,w,h]=PADS[i];let [W,H,ox,oy,ow]=m;let k=1;if(ft){k=ft[0];ox+=ft[2]*ow;oy+=ft[3]*ow}const s=w*1.02/(ow*k);return{vi:0,src:'',left:cx-ox*s,top:cy-oy*s,width:W*s,height:H*s,ox:ox*s,oy:oy*s,sk:0,cx,cy,w,h:Math.max(h,w*.16)}}
 function padGeo(i,name,lv){const [cx,cy,w,h]=PADS[i];const vi=2;
  const v=B3.v[name][vi];const bn=name.replace(/_t\d$/,'');const ew=EW[i];let s=ew/288*(IMP[bn]||IMP[rimg(bn)]||1)*(1+Math.min(lv||0,20)*.008);const hm=PAD_HMAX[i]*1.35;if(v[3]*s>hm)s=Math.max(ew/288*.9,hm/v[3]);const sk=0;
  return{vi,src:`assets/b3/${name}_${vi}.webp`,left:cx-v[2]*s,top:cy-v[3]*s,width:v[0]*s,height:v[1]*s,ox:v[2]*s,oy:v[3]*s,sk,cx,cy,w,h:Math.max(h,w*.16)}}
@@ -125,7 +129,7 @@ function lvOf(p,id){return id==='@defense'?((p.def.sdome||0)+(p.def.ldome||0)>0?
 function placed(p,id){return lvOf(p,id)>0||!!busyOf(p,id)}
 function ensurePads(p){if(!p.pads)p.pads={};const P=p.pads;let ch=false;
  for(const k in P)if(+k>=PADS.length||!placed(p,P[k])){delete P[k];ch=true}
- if(p.padsV!==18){p.padsV=18;for(const k in P)delete P[k];ch=true}
+ if(p.padsV!==15){p.padsV=15;for(const k in P)delete P[k];ch=true}
  const list=(p.moon?GE.MOON_B:GE.PLANET_B).concat(p.moon?[]:['@defense']);const used=new Set(Object.values(P));
  for(const id of list){if(!placed(p,id)||used.has(id))continue;let i=PAD_PREF[id];if(i==null||P[i]!=null){i=PADS.findIndex((_,j)=>P[j]==null)}if(i<0)continue;P[i]=id;used.add(id);ch=true}
  return ch}
@@ -138,8 +142,13 @@ function scaffoldSVG(i){const [cx,cy,w,hh]=PADS[i];const h=Math.max(hh,w*.16);co
  for(let k of [5,4,0]){const a=pts[k],b=pts[(k+1)%6];for(let q=0;q<3;q++){const y1=lev[q]*H,y2=lev[q+1]*H;s+=L(a[0],a[1]-y1,b[0],b[1]-y2,'brace')}}
  const m=pts[1];const top=m[1]-H*1.25;s+=L(m[0],m[1],m[0],top,'mast');s+=`<g class="jib" style="transform-origin:${m[0]}px ${top}px">${L(m[0]-w*.12,top,m[0]+w*.55,top,'jibl')}${L(m[0]+w*.42,top,m[0]+w*.42,top+H*.45,'cable')}<rect x="${m[0]+w*.42-3}" y="${top+H*.45}" width="6" height="5" class="hook"/></g>`;
  return`<svg class="scaf" viewBox="${X0} ${Y0-H*.3} ${VW} ${VH+H*.3}" style="left:${X0}px;top:${Y0-H*.3}px;width:${VW}px;height:${VH+H*.3}px">${s}</svg>`}
+// v34: Kristall-/Pflanzenbüschel aus dem Pano vor der Vorderkante des Fundaments (überlappen das Gebäude)
+const CLS=[0,1,2,3,4,5,6,8,9];
+function clumpsHTML(cx,cy,w,i){if(!window.B4CL)return'';let h='';const xs=[[-.42,.27],[-.02,.33],[.38,.26]];
+ xs.forEach(([fx,fy],j)=>{const c=CLS[(i*3+j*4)%CLS.length];const [cw,ch]=B4CL[c];const H=w*(.30+((i+j)%3)*.04),W=H*cw/ch;const fl=(i+j)%2?'transform:scaleX(-1);':'';
+  h+=`<img class="fgov clump" alt="" draggable="false" src="assets/b4/clump_${c}.webp?v=1" style="${fl}left:${cx+fx*w-W/2}px;top:${cy+fy*w-H}px;width:${W}px;height:${H}px">`});return h}
 function buildBase(p){let h='';PADS.forEach(([cx,cy,w,hh],i)=>{const g={cx,cy,w,h:Math.max(hh,w*.16)};
-  h+=`<div class="pad" data-act="pad" data-i="${i}" style="z-index:${Math.round(cy)}"><div class="shadow"></div><img class="pb" alt="" draggable="false"><div class="fx"></div><div class="scafw"></div><svg class="ring" viewBox="0 0 100 100" preserveAspectRatio="none"><ellipse cx="50" cy="50" rx="47" ry="44" class="rbg"/><ellipse cx="50" cy="50" rx="47" ry="44" class="rfg" pathLength="100"/></svg><span class="ptime" style="left:${cx}px;top:${cy+g.h*.62}px"></span><div class="hit" style="--l1:${cx-w*.37}px;--w1:${w*.74}px;--l0:${cx-w*.55}px;--w0:${w*1.1}px;--t1:${cy-w*.45}px;--h1:${w*.45+g.h*.9}px;--t0:${cy-g.h*.15}px;--h0:${g.h*1.45}px"></div></div>`});
+  h+=`<div class="pad" data-act="pad" data-i="${i}" style="z-index:${Math.round(cy)};--hz:${Math.max(0,Math.min(1,(520-cy)/180)).toFixed(2)}"><div class="shadow"></div><img class="pb" alt="" draggable="false"><div class="fx"></div>${window.B4FG&&B4FG[i]?`<img class="fgov" alt="" draggable="false" src="assets/b4/fg_${i}.webp?v=1" style="left:${B4FG[i][0]}px;top:${B4FG[i][1]}px;width:${B4FG[i][2]}px;height:${B4FG[i][3]}px">`:''}${clumpsHTML(cx,cy,w,i)}<div class="scafw"></div><svg class="ring" viewBox="0 0 100 100" preserveAspectRatio="none"><ellipse cx="50" cy="50" rx="47" ry="44" class="rbg"/><ellipse cx="50" cy="50" rx="47" ry="44" class="rfg" pathLength="100"/></svg><span class="ptime" style="left:${cx}px;top:${cy+g.h*.62}px"></span><div class="hit" style="--l1:${cx-w*.37}px;--w1:${w*.74}px;--l0:${cx-w*.55}px;--w0:${w*1.1}px;--t1:${cy-w*.45}px;--h1:${w*.45+g.h*.9}px;--t0:${cy-g.h*.15}px;--h0:${g.h*1.45}px"></div></div>`});
  h+=`<div id="padhits">${PADS.map((p,i)=>[p,i]).sort((a,b)=>a[0][1]-b[0][1]).map(([[cx,cy,w,hh],i])=>`<div class="bh" data-act="pad" data-i="${i}"></div>`).join('')}</div>`;
  $('#blds').innerHTML=h;}
 function renderBase(){const p=pl();const key=p.id+(p.moon?'m':'');if(ensurePads(p))save();
@@ -148,11 +157,13 @@ function renderBase(){const p=pl();const key=p.id+(p.moon?'m':'');if(ensurePads(
   const state=!id?'empty':busy&&!lv?'new':busy?'up':'done';const k=(id||'')+state+Math.min(lv,20);el.classList.toggle('t5',!!id&&lv>=20);el.classList.toggle('t4',!!id&&lv>=15&&lv<20);const pb=el.querySelector('.pb');
   if(el.dataset.k!==k){el.dataset.k=k;el.dataset.id=id||'';el.className='pad '+state;const sh=el.querySelector('.shadow');
    if(!id){pb.removeAttribute('src');const fx=el.querySelector('.fx');fx.innerHTML='';fx.dataset.n=''}
-   else{const tk=timg(id,lv);const g=padGeo(i,tk,lv);const TF=window.TFX&&TFX[tk]&&state!=='new'?TFX[tk][g.vi]:null;const PT=!TF&&window.B3P&&B3P[tk]&&state!=='new'?B3P[tk][g.vi]:null;const src=(PT||(TF&&TF.p.length))?g.src.replace('.webp','b.webp'):g.src;if(pb.getAttribute('src')!==src)pb.src=src;const bs={left:g.left+'px',top:g.top+'px',width:g.width+'px',height:g.height+'px',transformOrigin:`${g.ox}px ${g.oy}px`,transform:'none'};Object.assign(pb.style,bs);
-    const fx=el.querySelector('.fx');Object.assign(fx.style,bs);fx.style.setProperty('--m',`url(${g.src})`);fx.style.fontSize=(g.width/25).toFixed(2)+'px';const fh=state==='new'?'':TF?tfxHTML(TF,g.src,tierOf(Math.max(1,lv))):(PT?partsHTML(PT,g.src):'')+(window.BFX?BFX.html(rimg(id),g.oy/g.height):'');if(fx.dataset.n!==tk+state+g.vi){fx.dataset.n=tk+state+g.vi;fx.innerHTML=fh}
+   else{const b4k=id==='@defense'?'defense':id;const B4m=window.B4&&!p.moon&&B4[b4k];const tn=B4m?(state==='new'?'build':'t'+tier5(lv)):null;let tk,g,TF=null,PT=null,src;
+    if(B4m){tk='b4_'+b4k+'_'+tn;g=b4Geo(i,B4m[tn],window.B4FIT&&B4FIT[b4k]&&B4FIT[b4k][tn]);src=`assets/b4/${b4k}_${tn}.webp?v=5`;g.src=src}
+    else{tk=timg(id,lv);g=padGeo(i,tk,lv);TF=window.TFX&&TFX[tk]&&state!=='new'?TFX[tk][g.vi]:null;PT=!TF&&window.B3P&&B3P[tk]&&state!=='new'?B3P[tk][g.vi]:null;src=(PT||(TF&&TF.p.length))?g.src.replace('.webp','b.webp'):g.src}if(pb.getAttribute('src')!==src)pb.src=src;const bs={left:g.left+'px',top:g.top+'px',width:g.width+'px',height:g.height+'px',transformOrigin:`${g.ox}px ${g.oy}px`,transform:'none'};Object.assign(pb.style,bs);
+    const fx=el.querySelector('.fx');Object.assign(fx.style,bs);fx.style.setProperty('--m',`url(${g.src})`);fx.style.fontSize=(g.width/25).toFixed(2)+'px';const fh=B4m?'<span class="b4glow"></span><span class="b4haze"></span>':state==='new'?'':TF?tfxHTML(TF,g.src,tierOf(Math.max(1,lv))):(PT?partsHTML(PT,g.src):'')+(window.BFX?BFX.html(rimg(id),g.oy/g.height):'');if(fx.dataset.n!==tk+state+g.vi){fx.dataset.n=tk+state+g.vi;fx.innerHTML=fh}
     const ht=el.querySelector('.hit');ht.style.setProperty('--t1',g.top+g.height*.08+'px');ht.style.setProperty('--h1',(g.cy+g.h*.55)-(g.top+g.height*.08)+'px');ht.style.setProperty('--l1',g.left+g.width*.12+'px');ht.style.setProperty('--w1',g.width*.76+'px');
     Object.assign(sh.style,{left:g.cx-g.w*.5+g.w*.08+'px',top:g.cy-g.h*.45+'px',width:g.w*1.08+'px',height:g.h*1.5+'px'})}
-   el.querySelector('.scafw').innerHTML=state==='new'||state==='up'?scaffoldSVG(i):'';
+   el.querySelector('.scafw').innerHTML=(state==='new'||state==='up')&&!(window.B4&&!p.moon&&B4[id==='@defense'?'defense':id])?scaffoldSVG(i):'';el.classList.toggle('b4',!!(id&&window.B4&&!p.moon&&B4[id==='@defense'?'defense':id]));
    const r=el.querySelector('.ring');const [cx,cy,w,hh]=PADS[i];const h2=Math.max(hh,w*.16);Object.assign(r.style,{left:cx-w*.56+'px',top:cy-h2*.62+'px',width:w*1.12+'px',height:h2*1.24+'px'})}
   const tm=el.querySelector('.ptime');if(busy&&busy.end){if(tm.dataset.end!=String(busy.end))tm.dataset.end=busy.end}else if(tm.dataset.end)tm.removeAttribute('data-end');
   const fg=el.querySelector('.rfg');let pr=0;if(busy&&busy===p.bq[0]&&busy.end)pr=Math.max(0,Math.min(1,(E.now()-busy.start)/(busy.end-busy.start)));

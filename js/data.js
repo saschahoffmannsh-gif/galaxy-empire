@@ -20,7 +20,7 @@ GE.BUILD = {
  radar:{n:'Radaranlage',c:[20000,20000,1000],f:2,req:{shipyard:1},d:'Erkennt anrückende feindliche Flotten. Höhere Stufen zeigen Ankunft und Schiffstypen.'},
  alliance:{n:'Allianzdepot',c:[2000,4000,0],f:2,img:'Allianzzentrum',d:'Zentrale für Allianzen. Ermöglicht Beitritt und Gründung einer Allianz.'},
  galacto:{n:'Galactonit-Forschungszentrum',c:[10000,20000,5000],f:2,img:'Waffen',req:{lab:3},d:'Verarbeitet Galactonit. Jede Stufe schaltet einen Sockel für Edelsteine frei.'},
- terraformer:{n:'Terraformer',c:[0,50000,100000],f:2,req:{robotics:8,energy:8},d:'Formt die Planetenkruste um: +5 Bauplätze (Felder) je Stufe. Belegt selbst 1 Feld.'},
+ terraformer:{n:'Terraformer',c:[0,50000,100000],f:2,req:{robotics:8,energy:8},d:'Formt die Planetenkruste um: +5 Bauplätze (Felder) je Stufe. Belegt selbst kein Feld – auch auf vollen Planeten baubar.'},
  stargate:{n:'Sternentor',c:[2000000,4000000,2000000],f:2,req:{hyper:7,shipyard:10},d:'Verlegt Flotten ohne Flugzeit zwischen eigenen Planeten mit Sternentor.'},
  // Mond
  moon_base:{n:'Mondbasis',c:[20000,40000,20000],f:2,moon:1,d:'Jede Stufe schafft 3 zusätzliche Felder auf dem Mond.'},

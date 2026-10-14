@@ -75,9 +75,9 @@ E.TMUL=6;
 E.bTime=function(pl,id,lv){if(lv>=E.bCapLv(id,pl))return CAP_H*3600/S.speed;const c=E.bCost(id,lv,pl);let h=(c[0]+c[1])/(2500*(1+E.lv(pl,'robotics'))*Math.pow(2,E.lv(pl,'nanite')));if(cmdActive('commander'))h*=0.9;if((id==='lab'||id==='robotics')&&lv>8)h*=0.7;return Math.max(15,h*3600*E.TMUL/S.speed)};
 E.labLevel=function(pl){return E.lv(pl,'lab')};
 E.tTime=function(id,lv,pl){pl=pl||E.planet();if(lv>=E.tCapLv(id,pl))return CAP_H*3600/S.speed;const c=E.tCost(id,lv,pl);let h=(c[0]+c[1])/(1000*(1+E.labLevel(pl||E.planet())));if(cmdActive('technocrat'))h*=0.75;return Math.max(15,h*3600*E.TMUL/S.speed)};
-E.uTime=function(pl,kind,id){const d=kind==='def'?GE.DEF[id]:GE.SHIP[id];let h=(d.c[0]+d.c[1])/(2500*(1+E.lv(pl,'shipyard'))*Math.pow(2,E.lv(pl,'nanite')));if(kind==='def'&&cmdActive('admiral'))h*=0.9;return Math.max(2,h*3600*E.TMUL*.5/S.speed)};
+E.uTime=function(pl,kind,id){const d=kind==='def'?GE.DEF[id]:GE.SHIP[id];let h=(d.c[0]+d.c[1])/(2500*(1+E.lv(pl,'shipyard'))*Math.pow(2,E.lv(pl,'nanite')));if(kind==='def'&&cmdActive('admiral'))h*=0.9;return Math.max(1,h*3600/S.speed)}; // v29: Originalformel (OGame/GE) ohne Zeitfaktor
 // Felder
-E.fieldsUsed=pl=>Object.values(pl.b).reduce((a,b)=>a+b,0);
+E.fieldsUsed=pl=>Object.entries(pl.b).reduce((a,[k,b])=>a+(k==='terraformer'?0:b),0);
 E.fieldsMax=pl=>pl.moon?1+3*E.lv(pl,'moon_base'):pl.fields+5*E.lv(pl,'terraformer')+(pl.xf||0);
 // Voraussetzungen
 E.reqOk=function(req,pl){if(!req)return true;for(const k in req){const need=req[k];const have=GE.TECH[k]?E.tl(k)+(k==='espionage'&&cmdActive('technocrat')?0:0):E.lv(pl,k);if(have<need)return false}return true};
@@ -126,7 +126,7 @@ E.canBuild=function(pl,id){
  if(!pl.moon&&d.moon)return 'Nur auf Monden';
  if(!E.reqOk(d.req,pl))return 'Voraussetzungen fehlen';
  if(pl.bq.length>=E.queueMax())return 'Bauschleife voll';
- if(E.fieldsUsed(pl)+pl.bq.filter(q=>!q.demo).length>=E.fieldsMax(pl)&&id!=='moon_base')return 'Keine freien Felder';
+ if(E.fieldsUsed(pl)+pl.bq.filter(q=>!q.demo&&q.id!=='terraformer').length>=E.fieldsMax(pl)&&id!=='moon_base'&&id!=='terraformer')return 'Keine freien Felder';
  if((id==='shipyard'||id==='nanite')&&pl.sq.length)return 'Werft ist beschäftigt';
  if(id==='lab'&&S.rq&&S.rq.pid===pl.id)return 'Forschung läuft';
  const lv=E.nextLevel(pl,id); if(!canPay(pl,E.bCost(id,lv,pl)))return 'Zu wenig Rohstoffe';

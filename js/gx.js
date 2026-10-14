@@ -21,6 +21,7 @@ function fit(){const m=$('#gxmap');const W=m.clientWidth-PAD.l-PAD.r,H=m.clientH
 function clampCam(){const m=$('#gxmap'),W=m.clientWidth,H=m.clientHeight,c=GX.cam;const kf=fit();c.k=Math.min(kf*8,Math.max(kf*.92,c.k));
  const x0=PAD.l,x1=W-PAD.r-GW*c.k,y0=PAD.t,y1=H-PAD.b-GH*c.k;c.x=x1>x0?(x0+x1)/2:Math.min(x0,Math.max(x1,c.x));c.y=y1>y0?(y0+y1)/2:Math.min(y0,Math.max(y1,c.y))}
 function apply(){clampCam();const c=GX.cam;if(window.GXGL&&GXGL.ok){const zr=c.k/fit();const now=performance.now();const lo=now-(GX.lastMove||0)<140;GXGL.draw(c,GX.g,HUE[GX.g-1],GX.g%2?1.05:1.2,Math.max(0,Math.min(1,(zr-2)/2.5)),lo);draw();return}$('#gximg').style.transform=`translate(${c.x}px,${c.y}px) scale(${c.k})`;const zr=c.k/fit();$('#gximg').style.opacity=zr>2.5?Math.max(.72,1-(zr-2.5)*.08).toFixed(2):'1';draw()}
+GX.goto=function(g,s,p){if(!GX._b){GX._b=1;GX.bind()}if(GX.g!==g)setGal(g);GX.sel=s;GX.slot=p;GX.focus(s,Math.max(GX.cam.k,fit()*3));card()};
 GX.focus=function(s,k){const m=$('#gxmap');const [x,y]=GX.pos(GX.g,s);const c=GX.cam;c.k=k||c.k;c.x=m.clientWidth/2-x*c.k;c.y=m.clientHeight/2-y*c.k;apply()};
 // Helligkeitskarte der Galaxie (für prozedurale Detailsterne)
 let LUM=null;function lum(){if(LUM)return LUM;const im=$('#gximginner');if(!im||!im.complete||!im.naturalWidth)return null;const c=document.createElement('canvas');c.width=256;c.height=144;const x=c.getContext('2d');x.drawImage(im,0,0,256,144);

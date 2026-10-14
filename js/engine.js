@@ -198,6 +198,7 @@ E.slot=function(g,s,p){
  const npcPos=E.npcAt(g,s);const ni=npcPos.indexOf(p);
  const r=srng(hash('slot'+S.seed+':'+k));
  if(ni>=0){const N=GE.NPC[ni];return{kind:'npc',lv:N.lv,name:N.n,de:N.de,type:poolPick(k)}}
+ if(E.slotHook){const hk=E.slotHook(g,s,p);if(hk)return Object.assign({type:poolPick(k)},hk)}
  if((S.colonized||{})[k])return{kind:'empty',fields:E.colFields(g,s,p),type:poolPick(k)};
  const x=r();
  if(x<0.42){const nm=GE.FAKE_NAMES[Math.floor(r()*GE.FAKE_NAMES.length)]+(r()<0.4?Math.floor(r()*99):'');const inactive=r()<0.55;

@@ -26,7 +26,7 @@ PANELS.bld=id=>{const p=pl();if(id==='@store')id='store';if(id==='@defense')retu
   ${!p.moon&&!E.storeOk(p,c)?`<div class="lvreq"><span class="no">✗ Lager zu klein für Stufe ${nl} (Kapazität ${fmt(E.storeCap(p))})</span></div>`:""}
   <div class="row"><span class="cost">${IC.time}${ft(E.bTime(p,id,nl)*1000)}</span><span class="spacer"></span>
    ${L>1&&!busy?`<button class="btn sm ghost" data-act="demo" data-id="${id}">Abreißen</button>`:''}
-   <button class="btn ${er?'dis':''}" data-act="build" data-id="${id}">${IC.up} ${L?'Ausbauen':'Bauen'}</button></div>
+   <button class="btn ${er?'dis':''}" data-act="build" data-id="${id}">${IC.up} ${L||(p.pos&&p.pos[id])?'Ausbauen':'Jetzt bauen'}</button></div>
   ${er?`<div class="mut" style="text-align:right;font-size:11px">${er}</div>`:''}
   ${prodTable(p,id)}${extra}</div></div>`]};
 PANELS.storegrp=()=>PANELS.bld('store');

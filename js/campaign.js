@@ -195,20 +195,55 @@ let abort=false,busy=false;
 const padStep=id=>[window.B2&&B2.on()?`Tippe auf diesen freien Platz.`:`Tippe auf diesen Bauplatz.`,()=>window.B2&&B2.on()?B2.hintEl(id):document.querySelector(`#padhits .bh[data-i="${padOf(id)}"]`),()=>GAME.panel&&(GAME.panel[0]==='padbuild'||GAME.panel[0]==='bld'),{pad:padOf(id)}];
 const buildOn=id=>[`Wähle „${GE.BUILD[id].n}“ und tippe auf „Hier bauen“ bzw. „Ausbauen“.`,()=>document.querySelector(`#panel [data-act=padbuild][data-id="${id}"],#panel [data-act=build][data-id="${id}"]`),()=>pl().bq.some(q=>q.id===id)||E.lv(pl(),id)>0&&!GAME.panel||!!(window.B2&&B2.placing&&B2.placing.id===id)];
 const placeStep=id=>[`Zieh das Gebäude an einen freien Platz (grün) und tippe auf ✓.`,'#b2ok',()=>!(window.B2&&B2.placing)||pl().bq.some(q=>q.id===id)];
+// ===== v43: Bau-Führung immer über das Menü: „Gebäude“ → Gebäude → „Jetzt bauen“/„Ausbauen“ → verschieben → „Hier bauen“ =====
+const DRAG=document.createElement('div');DRAG.id='cp-drag';DRAG.innerHTML='<div class="dg-ghost"></div><div class="dg-hand">👆</div>';document.body.appendChild(DRAG);
+function dragHint(on){const P=on&&window.B2&&B2.placing;if(!P){DRAG.classList.remove('on');return}const c=B2.cam,rt=document.querySelector('#b2');if(!c||!rt){DRAG.classList.remove('on');return}
+ const rr=rt.getBoundingClientRect();const x=rr.left+c.x+P.x*c.s,y=rr.top+c.y+(P.y-55)*c.s;DRAG.style.transform=`translate(${Math.round(x-60)}px,${Math.round(y-60)}px)`;DRAG.classList.add('on')}
+const qLv=id=>{const p=pl();return Math.max(E.lv(p,id),...p.bq.filter(q=>q.id===id&&!q.demo).map(q=>q.lv))};
+const placedB=id=>{const p=pl();return !!(p.pos&&p.pos[id])||E.lv(p,id)>0};
+function bStage(id,tgt,open){const p=pl();
+ if(open==='speed'){if(E.lv(p,id)>=tgt)return 'done'}else if(!open&&qLv(id)>=tgt)return 'done';
+ if(window.B2&&B2.placing&&B2.placing.id===id){const P=B2.placing;if(P._sx==null){P._sx=P.x;P._sy=P.y}if(Math.hypot(P.x-P._sx,P.y-P._sy)>6)P._mv=1;return !P._mv?'drag':P.ok===false?'blocked':'confirm'}
+ if(GAME.panel&&GAME.panel[0]==='bld'&&GAME.panel[1]===id)return open==='speed'?'speed':open?'done':'btn';
+ if(GAME.panel&&GAME.panel[0]==='buildings')return 'card';
+ if(GAME.panel&&GAME.panel[0]==='bld'&&backVis())return 'back';
+ if(GAME.panel)return 'close';
+ return 'menu'}
+const backVis=()=>{const b=document.querySelector('#panel [data-act=pback]');return !!(b&&b.offsetParent&&getComputedStyle(b).visibility!=='hidden')};
+const cardEl=id=>{const e=document.querySelector(`#panel [data-act=pbld][data-id="${id}"]`);if(e&&!e.dataset.cps){e.dataset.cps=1;e.scrollIntoView({block:'nearest',inline:'nearest'})}return e};
+function bText(st,id){const n=GE.BUILD[id].n;const er=st==='btn'?E.canBuild(pl(),id):null;
+ switch(st){case 'menu':return[`Öffne links im Menü „Gebäude“.`,'#rail [data-p=buildings]','pointdl'];
+  case 'back':return['Zurück zur Gebäudeliste.','#panel [data-act=pback]','point'];
+  case 'close':return['Schließe dieses Fenster – wir gehen über das Gebäude-Menü.','#panel [data-act=pclose]','point'];
+  case 'card':return[`Tippe auf „${n}“.`,()=>cardEl(id),'point'];
+  case 'btn':return[er?`„${n}“ geht gerade noch nicht: ${er}`:placedB(id)?`Tippe auf „Ausbauen“.`:`Tippe auf „Jetzt bauen“.`,`#panel [data-act=build][data-id="${id}"]`,er?'think':'point'];
+  case 'drag':return['Schieb es an den richtigen Platz: Zieh das Gebäude mit dem Finger auf einen freien Platz.',()=>DRAG.classList.contains('on')?DRAG:document.querySelector('#b2ok'),'explain'];
+  case 'blocked':return['Dieser Platz ist belegt (rot) – schieb das Gebäude weiter auf einen freien Platz.',()=>DRAG.classList.contains('on')?DRAG:document.querySelector('#b2ok'),'think'];
+  case 'confirm':return['Gut so! Tippe jetzt auf „✓ Hier bauen“.','#b2ok','point'];
+  case 'speed':return['Der Bau läuft! Unter 5 Minuten Restzeit ist das Fertigstellen gratis – tippe auf „Gratis fertigstellen“.','#panel [data-act=speed][data-k=sub]','point']}}
+function buildFlow(id,open,tg){const tgt=tg||qLv(id)+1;let key=null;return new Promise(res=>{let iv=0;const fin=ok=>{clearInterval(iv);dragHint(false);spot(null);res(ok)};
+ const tick=()=>{if(abort)return fin(false);const st=bStage(id,tgt,open);dragHint(st==='drag'||st==='blocked');if(st==='done')return fin(true);
+  const t=bText(st,id);const k=st+'|'+t[0];if(k!==key){key=k;spot(t[1]);say(t[0],{p:t[2],btns:[['Überspringen','skip']]}).then(v=>{if(v==='skip')abort=true})}};
+ iv=setInterval(tick,150);tick()})}
+// Bau bis Stufe L (jede fehlende Stufe einzeln über das Menü), danach ggf. gratis fertigstellen
+async function buildTo(id,L){while(qLv(id)<L){if(!await buildFlow(id))return false}
+ const p=pl();const q=p.bq.find(x=>x.id===id);if(q&&E.lv(p,id)<L){if(q.end-Date.now()<=E.FREE_MS&&p.bq[0]===q){if(!await buildFlow(id,'speed',L))return false}}
+ return true}
 const GUIDE={
  0:[['Deine Willkommensbelohnung wartet. Tippe auf mein Bild.','#aries .ariescard',panelIs('aries'),{p:'pointdl'}],['Tippe auf „Abholen“.','#panel [data-act=cp-claim][data-id="0"]',()=>C().cl[0]]],
- 1:[padStep('metal_mine'),buildOn('metal_mine'),['Der Bau läuft! Unter 5 Minuten Restzeit stellst du ihn mit dem Blitz gratis fertig – tippe darauf.','#queues .qsp',()=>E.lv(pl(),'metal_mine')>0,{p:'explain'}],padStep('crystal_mine'),buildOn('crystal_mine'),placeStep('crystal_mine')],
- 2:[padStep('metal_mine'),buildOn('metal_mine'),placeStep('metal_mine')],3:[padStep('power'),buildOn('power'),placeStep('power')],4:[padStep('gas_mine'),buildOn('gas_mine'),placeStep('gas_mine')],
- 5:[padStep('gas_mine'),['Schiebe den Regler „Produktionsleistung“ auf 60 %.','#panel [data-act=pct]',()=>E.COND[5]()],['__info2','Gut! Merke: Unter 100 % fördert die Mine weniger, spart aber Energie. Nach der Belohnung stelle ich sie für dich wieder auf 100 %.']],
- 6:[padStep('robotics'),buildOn('robotics'),placeStep('robotics')],
+ 1:[['__build','metal_mine',1],['__build','crystal_mine',1]],
+ 2:[['__build','metal_mine',2]],3:[['__build','power',2]],4:[['__build','gas_mine',1]],
+ 5:[['__open','gas_mine'],['Schiebe den Regler „Produktionsleistung“ auf 60 %.','#panel [data-act=pct]',()=>E.COND[5]()],['__info2','Gut! Merke: Unter 100 % fördert die Mine weniger, spart aber Energie. Nach der Belohnung stelle ich sie für dich wieder auf 100 %.']],
+ 6:[['__build','robotics',2]],
+ 10:[['__build','store',1]],
  8:[['Tippe auf den Blitz an der Bau-Kachel: unter 5 Minuten Restzeit gratis, darüber kostet es Dunkle Materie.','#queues .qsp',()=>!!S.flags.speedup,{p:'point'}]],
  9:[['Der Space Store – hier in der Leiste.','#rail [data-p=store]',()=>!!S.flags.store]],
- 13:[['Hier geht es zur Forschung.','#rail [data-p=research]',panelIs('research')],['Erforsche „Energietechnik“.','#panel [data-act=research][data-id=energy]',()=>!!S.rq||E.tl('energy')>0]],
- 7:[['Die Werft findest du hier – oder baue sie auf einem freien Bauplatz.','#rail [data-p=yard]',()=>!!GAME.panel]],
+ 13:[['__build','lab',2],['Hier geht es zur Forschung.','#rail [data-p=research]',panelIs('research')],['Erforsche „Energietechnik“.','#panel [data-act=research][data-id=energy]',()=>!!S.rq||E.tl('energy')>0]],
+ 7:[['__build','shipyard',1],['Die Abwehr (Raketenwerfer) baust du hier.','#rail [data-p=defense],#rail [data-p=yard]',()=>!!GAME.panel]],
  15:[['Öffne die Galaxie-Ansicht.','#nav [data-v=galaxy],#nav [data-v=system]',()=>document.querySelector('#v-galaxy.active,#v-system.active')]],
  17:[['Schicke Schiffe über die Flotten-Ansicht in den Nebel (Position 16).','#nav [data-v=fleet]',()=>document.querySelector('#v-fleet.active')]],
  26:[['Galactonit verwaltest du hier.','#rail [data-p=galacto]',()=>!!GAME.panel]],
- 12:[['Hier geht es zur Allianz.','#nav [data-v=ally]',()=>document.querySelector('#v-ally.active')]],
+ 12:[['__build','alliance',1],['Hier geht es zur Allianz.','#nav [data-v=ally]',()=>document.querySelector('#v-ally.active')]],
  20:[['Bevor du kolonisierst: Öffne die System-Ansicht.','#nav [data-v=system]',()=>document.querySelector('#v-system.active'),{p:'pointdl'}],
   ['Tippe auf eine freie Position.',()=>{const o=document.querySelector('#sysstrip .orbit.empty');if(o&&!o.dataset.cps){o.dataset.cps=1;o.scrollIntoView({inline:'center',block:'nearest'})}return o},()=>!!document.querySelector('#pop'),{p:'point'}],
   ['__pg'],
@@ -223,8 +258,8 @@ async function pgSeq(){const pop=document.querySelector('#pop .pi-box');if(pop){
  await card(`<div class="cc-k">Wissen</div><div class="cc-t">🪐 Planeten-Guide</div>${PI.guideHTML(hl)}<button class="btn" data-cc style="margin-top:10px">Verstanden</button>`,'wide')}
 window.CAMP.pgSeq=pgSeq;
 async function guide(i){if(busy)return;busy=true;abort=false;closePanelSafe();const g=GUIDE[i]||[];
- for(const s of g){if(s[0]==='__pg'){S.camp.seen.pg=1;save();await pgSeq();if(abort)break;continue}if(s[0]==='__info2'){spot(null);await say(s[1],{p:'explain'});continue}if(s[1]==='__info'){spot(null);await say(s[0],{p:'explain',btns:[['Verstanden',null]]});continue}if(!await step(...s))break}
- spot(null);const c=C();if(!abort&&!c.cl[i]&&safe(()=>done(i))){c.seen['d'+i]=1;hide();pose('cheer');await claimFx(i)}hide();busy=false;setTimeout(loop,300)}
+ for(const s of g){if(s[0]==='__build'){if(!await buildTo(s[1],s[2]))break;continue}if(s[0]==='__open'){if(!await buildFlow(s[1],true))break;continue}if(s[0]==='__pg'){S.camp.seen.pg=1;save();await pgSeq();if(abort)break;continue}if(s[0]==='__info2'){spot(null);await say(s[1],{p:'explain'});continue}if(s[1]==='__info'){spot(null);await say(s[0],{p:'explain',btns:[['Verstanden',null]]});continue}if(!await step(...s))break}
+ spot(null);const c=C();if(!abort&&!c.cl[i]&&safe(()=>done(i))){c.seen['d'+i]=1;hide();closePanelSafe();pose('cheer');await claimFx(i)}hide();busy=false;setTimeout(loop,300)}
 function closePanelSafe(){if(window.GAME&&GAME.panel&&GAME.closePanel)GAME.closePanel()}
 window.CAMP.guide=guide;
 // ---------- Kapitelkarten ----------
@@ -243,7 +278,7 @@ async function loop(){if(looping||busy||!S||!S.camp||S.camp.skip)return;if(docum
   const v=await say(`Erste Mission: „${t.t}“ – ${t.d}`,{p:'explain',until:()=>done(i),btns:GUIDE[i]?[['Zeig es mir','g'],['Selbst machen',null]]:[['Verstanden',null]]});
   hide();if(v==='g'){looping=false;return guide(i)}}
  // Hinweis: negative Energie
- {const pi=E.prodInfo(pl());const now=Date.now();if(c.cl[3]&&!pl().moon&&pi.eUse>pi.eProd+0.5&&now-(c.eh||0)>8*60e3&&!GAME.panel){c.eh=now;save();const v=await say('Achtung: Deine Energie ist negativ – Minen fördern dann weniger. Baue das Kraftwerk aus.',{p:'alert',btns:[['Zeig es mir','g'],['Später',null]]});hide();if(v==='g'){busy=true;looping=false;for(const st of[padStep('solar'),buildOn('solar'),placeStep('solar')])if(!await step(...st))break;spot(null);hide();busy=false}return}}
+ {const pi=E.prodInfo(pl());const now=Date.now();if(c.cl[3]&&!pl().moon&&pi.eUse>pi.eProd+0.5&&now-(c.eh||0)>8*60e3&&!GAME.panel){c.eh=now;save();const v=await say('Achtung: Deine Energie ist negativ – Minen fördern dann weniger. Baue das Kraftwerk aus.',{p:'alert',btns:[['Zeig es mir','g'],['Später',null]]});hide();if(v==='g'){busy=true;looping=false;abort=false;await buildFlow('power');spot(null);hide();busy=false}return}}
  // erfüllte Mission melden
  const i=curMain();if(i!=null&&!c.cl[i]&&safe(()=>done(i))&&!GAME.panel&&!(window.B2&&B2.placing)){c.seen['d'+i]=1;save();pose('cheer');await claimFx(i);
   // gleich die nächste Mission ankündigen

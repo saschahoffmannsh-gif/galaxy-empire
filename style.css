@@ -847,3 +847,8 @@ video.pimg{border-radius:50%;object-fit:cover;mix-blend-mode:screen;background:t
 #rwd.fly .rw-rays{opacity:.35}
 body.rw-flying #panel{opacity:0;transition:opacity .25s;pointer-events:none}
 body.rw-flying #aries-h{opacity:0}
+#aries-h.fitmini .ah-fig{height:26vh}
+#aries-h.fitmini .ah-bub{margin-bottom:2vh}
+.qsp.free{border-color:rgba(92,242,160,.8);background:rgba(20,70,45,.9);color:#bfffd9;font-weight:800;font-size:10px;box-shadow:0 0 10px rgba(92,242,160,.45);animation:freeP 1.6s ease-in-out infinite}
+@keyframes freeP{50%{box-shadow:0 0 16px rgba(92,242,160,.8)}}
+.freefin{box-shadow:0 0 12px rgba(92,242,160,.5)}

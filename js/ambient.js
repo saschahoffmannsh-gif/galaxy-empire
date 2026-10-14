@@ -48,7 +48,7 @@ void main(){vec2 p=off+uv*sz;vec2 tu=p/PS;vec3 m=texture2D(msk,tu).rgb;
 const A={ok:false};window.AMBIENT=A;
 function load(src){return new Promise((r,j)=>{const i=new Image();i.onload=()=>r(i);i.onerror=j;i.src=src})}
 A.init=async function(world){try{
- const cv=document.createElement('canvas');cv.id='ambcv';const gl=cv.getContext('webgl',{alpha:false,antialias:false,powerPreference:'low-power',preserveDrawingBuffer:false});if(!gl)return;
+ const cv=document.createElement('canvas');cv.id='ambcv';const gl=cv.getContext('webgl',{alpha:true,premultipliedAlpha:true,antialias:false,powerPreference:'low-power',preserveDrawingBuffer:false});if(!gl)return;
  const [ti,mi]=await Promise.all([load($('#terrain').currentSrc||'assets/base_pano3.webp'),load('assets/ambient_m.png')]);
  const sh=(ty,s)=>{const o=gl.createShader(ty);gl.shaderSource(o,s);gl.compileShader(o);if(!gl.getShaderParameter(o,gl.COMPILE_STATUS))throw gl.getShaderInfoLog(o);return o};
  const pr=gl.createProgram();gl.attachShader(pr,sh(gl.VERTEX_SHADER,VS));gl.attachShader(pr,sh(gl.FRAGMENT_SHADER,FS));gl.linkProgram(pr);gl.useProgram(pr);
@@ -58,15 +58,16 @@ A.init=async function(world){try{
   for(const [k,v] of [[gl.TEXTURE_MIN_FILTER,gl.LINEAR],[gl.TEXTURE_MAG_FILTER,gl.LINEAR],[gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE],[gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE]])gl.texParameteri(gl.TEXTURE_2D,k,v)});
  gl.uniform1i(gl.getUniformLocation(pr,'tex'),0);gl.uniform1i(gl.getUniformLocation(pr,'msk'),1);
  Object.assign(A,{ok:true,cv,gl,ut:gl.getUniformLocation(pr,'t'),uo:gl.getUniformLocation(pr,'off'),us:gl.getUniformLocation(pr,'sz')});
- $('#terrain').after(cv);A.place();$('#pano').addEventListener('scroll',()=>A.place(),{passive:true});requestAnimationFrame(loop)}catch(e){console.warn('Ambient-Shader aus:',e)}};
+ cv.addEventListener('webglcontextlost',e=>{e.preventDefault();A.ok=false;cv.style.display='none'});$('#terrain').after(cv);A.place();$('#pano').addEventListener('scroll',()=>A.place(),{passive:true});requestAnimationFrame(loop)}catch(e){console.warn('Ambient-Shader aus:',e)}};
 // Leinwand deckt nur den sichtbaren Ausschnitt ab (Welt-Koordinaten), Auflösung = Geräte-Pixel (max. 1,5; adaptiv runter auf 1,0 bei langsamen Frames).
 A.place=function(){if(!A.ok)return;const pano=$('#pano'),wd=$('#world');const s=window.panoS||1;const y0=window.PANO_Y0v||60;
  const x0=Math.max(0,(pano.scrollLeft-wd.offsetLeft)/s-2),w=Math.min(PW-x0,pano.clientWidth/s+4),hgt=Math.min(PH-y0,pano.clientHeight/s);
  Object.assign(A.cv.style,{left:x0+'px',top:y0+'px',width:w+'px',height:hgt+'px'});A.box=[x0,y0,w,hgt];
- const d=Math.min(A.q||1.5,devicePixelRatio||1);const cw=Math.round(w*s*d),ch=Math.round(hgt*s*d);if(A.cv.width!==cw||A.cv.height!==ch){A.cv.width=cw;A.cv.height=ch;A.gl.viewport(0,0,cw,ch)}A.dirty=1};
+ const d=Math.min(A.q||1.5,devicePixelRatio||1);const cw=Math.round(w*s*d),ch=Math.round(hgt*s*d);if(A.cv.width!==cw||A.cv.height!==ch){A.cv.width=cw;A.cv.height=ch;A.gl.viewport(0,0,cw,ch);draw(performance.now())}A.dirty=1};
 const t0=performance.now();let last=0,prev=0;const dts=[];
 function loop(now){requestAnimationFrame(loop);const pano=document.getElementById('pano');if(document.hidden||!pano||pano.classList.contains('paused'))return;
  if(prev&&!pano.classList.contains('paused')){dts.push(now-prev);if(dts.length>90){dts.shift();if(!A.q||A.q>1){const m=dts.slice().sort((a,b)=>a-b)[45];if(m>34){A.q=1;dts.length=0;A.place();document.body.classList.add('lowfx')}}}}prev=now;
- if(now-last<31&&!A.dirty)return;last=now;A.dirty=0;const gl=A.gl,[x0,y0,w,h]=A.box;
+ if(now-last<31&&!A.dirty)return;last=now;A.dirty=0;draw(now)}
+function draw(now){if(!A.ok)return;const gl=A.gl,[x0,y0,w,h]=A.box;
  gl.uniform1f(A.ut,((now-t0)/1000)%3000);gl.uniform2f(A.uo,x0,y0);gl.uniform2f(A.us,w,h);gl.drawArrays(gl.TRIANGLE_STRIP,0,4)}
 })();

@@ -181,14 +181,15 @@ function progressYard(pl,t){
    let st=sqEnd(q);for(const n of pl.sq){n.start=st;st=sqEnd(n)}}else break;}
 }
 // ---------- Beschleunigen (1 DM je angefangene 15 Min) ----------
-E.FREE_MS=0;
-E.speedCost=ms=>ms<=0?0:Math.max(1,Math.ceil(Math.pow(ms/MIN,.9)*.75));
+E.FREE_MS=10*MIN; // wie im Original: Restzeit unter 10 Min. gratis fertigstellen
+E.speedCost=ms=>ms<=E.FREE_MS?0:Math.max(1,Math.ceil(Math.pow((ms-E.FREE_MS)/MIN,.9)*.75));
+E.isFree=ms=>ms>0&&ms<=E.FREE_MS;
 E.speedupBuild=function(pid){const pl=S.planets[pid];const q=pl.bq[0];if(!q)return;const rem=q.end-now();const c=E.speedCost(rem);
  if(S.dm<c)return 'Zu wenig Dunkle Materie';S.dm-=c;const shift=q.end-now();q.end=now();
  for(let i=1;i<pl.bq.length;i++){pl.bq[i].start-=shift;pl.bq[i].end-=shift}
- if(c>0)S.flags.speedup=1; E.tick();return null};
-E.speedupResearch=function(){const q=S.rq;if(!q)return;const c=E.speedCost(q.end-now());if(S.dm<c)return 'Zu wenig Dunkle Materie';S.dm-=c;q.end=now();if(c>0)S.flags.speedup=1;E.tick();return null};
-E.speedupYard=function(pid){const pl=S.planets[pid];if(!pl.sq.length)return;const rem=sqEnd(pl.sq[pl.sq.length-1])-now();const c=Math.max(1,E.speedCost(rem));
+ S.flags.speedup=1;if(c===0)S.flags.freeFin=(S.flags.freeFin||0)+1; E.tick();return null};
+E.speedupResearch=function(){const q=S.rq;if(!q)return;const c=E.speedCost(q.end-now());if(S.dm<c)return 'Zu wenig Dunkle Materie';S.dm-=c;q.end=now();S.flags.speedup=1;if(c===0)S.flags.freeFin=(S.flags.freeFin||0)+1;E.tick();return null};
+E.speedupYard=function(pid){const pl=S.planets[pid];if(!pl.sq.length)return;const rem=sqEnd(pl.sq[pl.sq.length-1])-now();const c=E.speedCost(rem);
  if(S.dm<c)return 'Zu wenig Dunkle Materie';S.dm-=c;for(const q of pl.sq){q.start=now()-q.ut*q.n}S.flags.speedup=1;E.tick();return null};
 
 // ---------- Galaxie ----------

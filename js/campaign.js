@@ -1,22 +1,36 @@
 // v22 Story-Kampagne mit Aries (Kapitel, Haupt-/Nebenmissionen, Freischaltungen, Hologramm-Guide mit Spotlight)
 (function(){
 const CH=[
- {t:'Ankunft',ic:'🪐',intro:'Willkommen auf deiner neuen Heimatwelt, Kommandant. Alles beginnt mit Rohstoffen: Metall, Kristall, Gas – und der Energie, um sie zu fördern.',outro:'Die ersten Minen laufen, die Energie fließt. Deine Kolonie lebt!',main:[0,1,2,3,4,5],
+ {t:'Ankunft',ic:'🪐',intro:'Willkommen auf deiner neuen Heimatwelt, Kommandant. Alles beginnt mit Rohstoffen: Metall, Kristall, Gas – und der Energie, um sie zu fördern.',outro:'Die ersten Minen laufen, die Energie fließt. Deine Kolonie lebt!',main:[0,1,2,3,4,5,'c1a','c1b'],
   side:[{id:'s1a',t:'Fleißige Bergleute',d:'Metallmine auf Stufe 4.',c:()=>E.maxB('metal_mine')>=4,r:{m:1500,k:600}},{id:'s1b',t:'Volle Kraft',d:'Solarkraftwerk auf Stufe 4.',c:()=>E.maxB('solar')>=4,r:{m:1200,k:800,dm:2}}],bonus:{dm:5}},
- {t:'Wachstum',ic:'🏗️',intro:'Eine Kolonie, die wächst, braucht Lager, Automatisierung und Wissen. Zeit, dein Fundament auszubauen.',outro:'Lager, Roboter und dein erstes Labor – das Fundament eines Imperiums steht.',main:[6,10,13,9,8,11],
+ {t:'Wachstum',ic:'🏗️',intro:'Eine Kolonie, die wächst, braucht Lager, Automatisierung und Wissen. Zeit, dein Fundament auszubauen.',outro:'Lager, Roboter und dein erstes Labor – das Fundament eines Imperiums steht.',main:[6,10,13,9,8,11,'c2a','c2b'],
   side:[{id:'s2a',t:'Kristallklar',d:'Kristallmine auf Stufe 5.',c:()=>E.maxB('crystal_mine')>=5,r:{m:3000,k:3000}},{id:'s2b',t:'Forscherdrang',d:'Spionagetechnik Stufe 2.',c:()=>E.tl('espionage')>=2,r:{k:4000,g:2000}}],bonus:{dm:8}},
- {t:'Flotte',ic:'🚀',intro:'Der Weltraum ist weit – und nicht jeder dort ist freundlich. Bauen wir eine Werft und die ersten Schiffe.',outro:'Deine ersten Schiffe stehen bereit. Jetzt können wir hinausfliegen.',main:[7,14],
-  side:[{id:'s3a',t:'Staffel',d:'Baue insgesamt 10 Leichte Jäger.',c:()=>(S.built.lf||0)>=10,r:{m:6000,k:3000,g:1000}},{id:'s3b',t:'Bollwerk',d:'Baue insgesamt 10 Raketenwerfer.',c:()=>(S.built.rl||0)>=10,r:{m:5000,k:2000}}],bonus:{dm:8}},
- {t:'Erster Kontakt',ic:'🛰️',intro:'Unsere Sensoren melden fremde Planeten im System. Erst spionieren, dann zuschlagen – und die Trümmer verwerten.',outro:'Die Nachbarn kennen jetzt deinen Namen. Gut gemacht, Kommandant.',main:[15,16,24,23,25],
+ {t:'Flotte',ic:'🚀',intro:'Der Weltraum ist weit – und nicht jeder dort ist freundlich. Bauen wir eine Werft und die ersten Schiffe.',outro:'Deine ersten Schiffe stehen bereit. Jetzt können wir hinausfliegen.',main:[7,14,'c3a','c3b'],
+  side:[{id:'s3a',t:'Staffel',d:'Baue insgesamt 10 Leichte Jäger.',c:()=>(S.built.lf||0)>=10,r:{m:6000,k:3000,g:1000}},{id:'s3b',t:'Bollwerk',d:'Besitze 25 Raketenwerfer.',c:()=>(S.planets[S.home].def.rl||0)>=25,r:{m:5000,k:2000}}],bonus:{dm:8}},
+ {t:'Erster Kontakt',ic:'🛰️',intro:'Unsere Sensoren melden fremde Planeten im System. Erst spionieren, dann zuschlagen – und die Trümmer verwerten.',outro:'Die Nachbarn kennen jetzt deinen Namen. Gut gemacht, Kommandant.',main:[15,16,23,25,'c4a'],
   side:[{id:'s4a',t:'Plünderer',d:'Gewinne 3 Angriffe gegen NPC-Planeten.',c:()=>(S.flags.npcWins||0)>=3,r:{m:15000,k:10000,g:5000}},{id:'s4b',t:'Augen überall',d:'Baue insgesamt 5 Spionagesonden.',c:()=>(S.built.pr||0)>=5,r:{k:5000,g:5000}}],bonus:{dm:10}},
- {t:'Nebel',ic:'🌌',intro:'Am Rand des Systems wabert ein mysteriöser Nebel. Dort finden Mutige Schätze – und Galactonit.',outro:'Galactonit glüht in deinen Sockeln. Der Nebel hat dir seine Geheimnisse gezeigt.',main:[17,26,27,28],
+ {t:'Nebel',ic:'🌌',intro:'Am Rand des Systems wabert ein mysteriöser Nebel. Dort finden Mutige Schätze – und Galactonit.',outro:'Galactonit glüht in deinen Sockeln. Der Nebel hat dir seine Geheimnisse gezeigt.',main:[17,26,27,28,'c5a'],
   side:[{id:'s5a',t:'Nebelläufer',d:'Schicke 3 Expeditionen in den Nebel.',c:()=>(S.flags.nebN||0)>=3,r:{m:20000,k:20000,g:10000}}],bonus:{dm:10,gal:6}},
- {t:'Kolonie',ic:'🌍',intro:'Ein Planet allein ist zu klein für deine Pläne. Mit Astrophysik erreichst du neue Welten.',outro:'Deine zweite Welt ist bewohnt – dein Reich erstreckt sich über die Sterne.',main:[20,21,22],
+ {t:'Kolonie',ic:'🌍',intro:'Ein Planet allein ist zu klein für deine Pläne. Mit Astrophysik erreichst du neue Welten.',outro:'Deine zweite Welt ist bewohnt – dein Reich erstreckt sich über die Sterne.',main:[20,21,22,24],
   side:[{id:'s6a',t:'Kolonialreich',d:'Besitze 2 Kolonien.',c:()=>E.colonies()>=2,r:{m:40000,k:40000,g:20000}}],bonus:{dm:15}},
- {t:'Allianz',ic:'🤝',intro:'Gemeinsam ist man stärker. Gründe eine Allianz und miss dich mit den Besten der Galaxie.',outro:'Deine Allianz steht, dein Name steht in den Ranglisten.',main:[12,'rank',18,19],
+ {t:'Allianz',ic:'🤝',intro:'Gemeinsam ist man stärker. Gründe eine Allianz und miss dich mit den Besten der Galaxie.',outro:'Deine Allianz steht, dein Name steht in den Ranglisten.',main:[12,'rank',18,19,'c7a'],
   side:[{id:'s7a',t:'Aufsteiger',d:'Erreiche 5.000 Punkte.',c:()=>(S.pts?Object.values(S.pts).reduce((a,b)=>a+(+b||0),0):0)>=5000,r:{dm:10}}],bonus:{dm:20}}
 ];
-const EXTRA={rank:{t:'Ruhmeshalle',d:'Öffne die Rangliste (Pokal oben rechts).',c:()=>!!S.flags.rankSeen,r:{m:5000,k:5000,dm:3}}};
+const mB=o=>Object.entries(o).every(([k,v])=>E.maxB(k)>=v);const eBal=()=>{const pi=E.prodInfo(S.planets[S.home]);return pi.eProd>=pi.eUse};
+const EXTRA={rank:{t:'Ruhmeshalle',d:'Öffne die Rangliste (Pokal oben rechts).',c:()=>!!S.flags.rankSeen,r:{m:5000,k:5000,dm:3}},
+ c1a:{t:'Solide Basis',d:'Metallmine Stufe 4, Kristallmine Stufe 3 und Solarkraftwerk Stufe 4.',c:()=>mB({metal_mine:4,crystal_mine:3,solar:4}),r:{m:1500,k:800,g:300}},
+ c1b:{t:'Im Gleichgewicht',d:'Gasförderung Stufe 2, Solarkraftwerk Stufe 5 – und keine negative Energie.',c:()=>mB({gas_mine:2,solar:5})&&eBal(),r:{m:2000,k:1200,g:600,dm:5}},
+ c2a:{t:'Industrie',d:'Metallmine 7, Kristallmine 6 und Gasförderung 4.',c:()=>mB({metal_mine:7,crystal_mine:6,gas_mine:4}),r:{m:8000,k:5000,g:2500}},
+ c2b:{t:'Automatisierung',d:'Roboterfabrik Stufe 3 und Solarkraftwerk Stufe 9.',c:()=>mB({robotics:3,solar:9}),r:{m:6000,k:4000,g:2000,dm:5}},
+ c3a:{t:'Schutzschild',d:'Werft Stufe 3 und 10 Raketenwerfer auf dem Heimatplaneten.',c:()=>E.maxB('shipyard')>=3&&(S.planets[S.home].def.rl||0)>=10,r:{m:12000,k:6000,g:3000}},
+ c3b:{t:'Aufklärung',d:'Forschungslabor Stufe 4 und Spionagetechnik Stufe 2.',c:()=>E.maxB('lab')>=4&&E.tl('espionage')>=2,r:{m:10000,k:15000,g:5000,dm:5}},
+ c4a:{t:'Schwerindustrie',d:'Metallmine 10, Kristallmine 9 und Gasförderung 7.',c:()=>mB({metal_mine:10,crystal_mine:9,gas_mine:7}),r:{m:40000,k:25000,g:15000,dm:5}},
+ c5a:{t:'Rohstoffmacht',d:'Metallmine 11 und Kristallmine 10.',c:()=>mB({metal_mine:11,crystal_mine:10}),r:{m:80000,k:50000,g:30000,dm:10}},
+ c7a:{t:'Imperiale Größe',d:'Roboterfabrik Stufe 5 und Forschungslabor Stufe 6.',c:()=>E.maxB('robotics')>=5&&E.maxB('lab')>=6,r:{m:100000,k:80000,g:40000,dm:15}}};
+// v24: Belohnungen wachsen mit der Produktion (mind. Basiswert, sonst ~45 Min. aktuelle Förderung, max. 10×)
+function scaleR(r,h=0.75){const o=Object.assign({},r);try{const pi=E.prodInfo(S.planets[S.home]);const nice=x=>{const e=Math.pow(10,Math.max(1,Math.floor(Math.log10(x))-1));return Math.round(x/e)*e};
+ for(const [k,v] of [['m',pi.m],['k',pi.k],['g',pi.g]]){if(!r[k])continue;const d=Math.max(0,v)*h;if(d>r[k])o[k]=nice(Math.min(r[k]*10,d))}}catch(e){}return o}
+window.CAMP_SCALE=scaleR;
 const T=i=>typeof i==='string'?EXTRA[i]:GE.TASKS[i];
 const done=i=>typeof i==='string'?EXTRA[i].c():E.COND[i]();
 // Freischaltungen: Kapitel-Index (1-basiert), ab dem verfügbar
@@ -25,15 +39,19 @@ const FEATN={research:'Forschung',store:'Space Store',cmd:'Offiziere',inv:'Inven
 const BLOCK={lab:2,shipyard:3,radar:4,galacto:5,stargate:6,alliance:7};
 window.CAMP={CH,FEAT,BLOCK};
 const C=()=>S.camp;
-function init(){if(S.camp)return;const c={ch:0,cl:{},side:{},seen:{},skip:0};
+function init(){if(S.camp){migrate24();return}const c={ch:0,cl:{},side:{},seen:{},skip:0,v24:(S.task||0)>0?0:1};
  // Bestehender Spielstand: bisherige Aries-Aufgaben übernehmen, bereits erfüllte nachtragen
  for(let i=0;i<Math.min(S.task||0,GE.TASKS.length);i++)c.cl[i]=1;
  if((S.task||0)>=GE.TASKS.length){c.cl.rank=1;c.seen.fin=1}
  S.camp=c;let gave=0;
  if((S.task||0)>0){for(const ch of CH)for(const i of ch.main)if(!c.cl[i]&&safe(()=>done(i))){E.giveReward(T(i).r);c.cl[i]=1;gave++}
   if(gave)toast(`Aries: ${gave} bereits erfüllte Missionen nachgetragen`,'ok',4000)}
- c.ch=chapterFrom(c);for(let k=0;k<c.ch;k++){c.seen['i'+k]=1;c.seen['o'+k]=1}if(c.ch>0)c.seen['i'+c.ch]=0;save()}
+ c.ch=chapterFrom(c);for(let k=0;k<c.ch;k++){c.seen['i'+k]=1;c.seen['o'+k]=1}if(c.ch>0)c.seen['i'+c.ch]=0;save();migrate24()}
 function safe(f){try{return f()}catch(e){return false}}
+function migrate24(){const c=S.camp;if(!c||c.v24)return;
+ // Kapitel, deren ursprüngliche Missionen schon erledigt sind, bekommen die neuen Zusatzmissionen geschenkt (kein Rückfall)
+ for(let k=0;k<CH.length;k++){const num=CH[k].main.filter(i=>typeof i==='number'||i==='rank');if(!num.every(i=>c.cl[i]))break;if(k>=c.ch&&!num.length)break;CH[k].main.forEach(i=>{if(typeof i==='string'&&i!=='rank')c.cl[i]=1})}
+ const nc=chapterFrom(c);if(nc>c.ch){for(let k=c.ch;k<nc;k++){c.seen['i'+k]=1;c.seen['o'+k]=1}c.ch=nc}c.v24=1;save()}
 function chapterFrom(c){for(let k=0;k<CH.length;k++)if(CH[k].main.some(i=>!c.cl[i]))return k;return CH.length}
 const free=()=>!S.camp||S.camp.skip||S.camp.ch>=CH.length;
 const chN=()=>S.camp?S.camp.ch+1:99;
@@ -41,22 +59,23 @@ const locked=f=>!free()&&FEAT[f]&&chN()<FEAT[f];
 const bLocked=id=>!free()&&BLOCK[id]&&chN()<BLOCK[id];
 window.CAMP.locked=locked;window.CAMP.bLocked=bLocked;
 function curMain(){const c=C();if(!c||c.ch>=CH.length)return null;return CH[c.ch].main.find(i=>!c.cl[i])}
-function claim(i,paid){const c=C();if(c.cl[i]||!safe(()=>done(i)))return 'Mission noch nicht erfüllt';if(!paid)E.giveReward(T(i).r);c.cl[i]=1;S.task=Object.keys(c.cl).filter(k=>/^\d+$/.test(k)).length;
+function claim(i,paid){const c=C();if(c.cl[i]||!safe(()=>done(i)))return 'Mission noch nicht erfüllt';if(i===5)setTimeout(()=>{for(const id of S.order){const p=S.planets[id];if(p.pct.gas_mine===60)p.pct.gas_mine=100}renderAll();toast('Gasförderung wieder auf 100 %','ok')},1500);if(!paid)E.giveReward(scaleR(T(i).r));c.cl[i]=1;S.task=Object.keys(c.cl).filter(k=>/^\d+$/.test(k)).length;
  (E.addLog||(()=>{}))(`Aries: Mission „${T(i).t}“ abgeschlossen – Belohnung erhalten!`,'task');toast('Belohnung: '+E.rewardText(T(i).r),'ok',3500);
  const ch=CH[c.ch];if(ch&&ch.main.every(k=>c.cl[k])){E.giveReward(ch.bonus);c.seen['o'+c.ch]=0;c.ch++;if(c.ch<CH.length)c.seen['i'+c.ch]=0}
  save();renderAll();return null}
-function claimSide(id,paid){const c=C();const m=CH.flatMap(x=>x.side).find(x=>x.id===id);if(!m||c.side[id]||!m.c())return 'Noch nicht erfüllt';if(!paid)E.giveReward(m.r);c.side[id]=1;toast('Nebenmission: '+E.rewardText(m.r),'ok',3500);save();renderAll();return null}
+function claimSide(id,paid){const c=C();const m=CH.flatMap(x=>x.side).find(x=>x.id===id);if(!m||c.side[id]||!m.c())return 'Noch nicht erfüllt';if(!paid)E.giveReward(scaleR(m.r,0.5));c.side[id]=1;toast('Nebenmission: '+E.rewardText(m.r),'ok',3500);save();renderAll();return null}
 // ---------- Missionslog ----------
 const rw=r=>`<span class="cp-rw">${E.rewardText(r)}</span>`;
 PANELS.camp=()=>{init();const c=C();let h=`<div class="cp-head">${holo('p3','cp-av')}<div><div class="cp-k">${free()?'Freies Spiel':`Kapitel ${c.ch+1} von ${CH.length}`}</div><b>${free()?'Das Universum gehört dir':CH[c.ch].t}</b><div class="cp-prog"><i style="width:${Math.round(CH.slice(0,c.ch).length/CH.length*100+(c.ch<CH.length?CH[c.ch].main.filter(i=>c.cl[i]).length/CH[c.ch].main.length/CH.length*100:0))}%"></i></div></div></div>`;
  CH.forEach((ch,k)=>{const st=k<c.ch?'done':k===c.ch?'cur':'todo';
   h+=`<div class="cp-ch ${st}"><div class="cp-cht"><span class="cp-n">${st==='done'?'✓':k+1}</span>${ch.ic} ${esc(ch.t)}<span class="spacer"></span><span class="mut">${st==='todo'?'🔒 gesperrt':ch.main.filter(i=>c.cl[i]).length+'/'+ch.main.length}</span></div>`;
   if(st==='cur'||(st==='done'&&k===c.ch-1)){
-   h+=ch.main.map(i=>{const t=T(i),cl=c.cl[i],d=!cl&&safe(()=>done(i)),cur=i===curMain();return`<div class="cp-m ${cl?'cl':''} ${cur?'cur':''}"><div class="cp-mi">${cl?'✓':d?'!':'•'}</div><div class="ft"><b>${esc(t.t)}</b><div>${esc(t.d)}</div>${rw(t.r)}</div>${cl?'':d?`<button class="btn sm green" data-act="cp-claim" data-id="${i}">Abholen</button>`:cur&&GUIDE[i]?`<button class="btn sm ghost" data-act="cp-guide" data-id="${i}">Zeig es mir</button>`:''}</div>`}).join('');
-   h+=`<div class="cp-sub">Nebenmissionen</div>`+ch.side.map(m=>{const cl=c.side[m.id],d=!cl&&m.c();return`<div class="cp-m side ${cl?'cl':''}"><div class="cp-mi">${cl?'✓':'◇'}</div><div class="ft"><b>${esc(m.t)}</b><div>${esc(m.d)}</div>${rw(m.r)}</div>${cl?'':d?`<button class="btn sm green" data-act="cp-side" data-id="${m.id}">Abholen</button>`:''}</div>`}).join('');
+   h+=ch.main.map(i=>{const t=T(i),cl=c.cl[i],d=!cl&&safe(()=>done(i)),cur=i===curMain();return`<div class="cp-m ${cl?'cl':''} ${cur?'cur':''}"><div class="cp-mi">${cl?'✓':d?'!':'•'}</div><div class="ft"><b>${esc(t.t)}</b><div>${esc(t.d)}</div>${rw(scaleR(t.r))}</div>${cl?'':d?`<button class="btn sm green" data-act="cp-claim" data-id="${i}">Abholen</button>`:cur&&GUIDE[i]?`<button class="btn sm ghost" data-act="cp-guide" data-id="${i}">Zeig es mir</button>`:''}</div>`}).join('');
+   h+=`<div class="cp-sub">Nebenmissionen</div>`+ch.side.map(m=>{const cl=c.side[m.id],d=!cl&&m.c();return`<div class="cp-m side ${cl?'cl':''}"><div class="cp-mi">${cl?'✓':'◇'}</div><div class="ft"><b>${esc(m.t)}</b><div>${esc(m.d)}</div>${rw(scaleR(m.r,0.5))}</div>${cl?'':d?`<button class="btn sm green" data-act="cp-side" data-id="${m.id}">Abholen</button>`:''}</div>`}).join('');
    if(st==='cur')h+=`<div class="cp-sub">Kapitelbonus: ${rw(ch.bonus)}</div>`}
   h+='</div>'});
  if(c.ch>=5||free())h+=`<div class="cp-sub">Wissen</div><div class="cp-m side"><div class="cp-mi">📘</div><div class="ft"><b>Planeten-Guide</b><div>Bauplätze, Temperatur und ihre Wirkung auf Gas und Energie – nach Position.</div></div><button class="btn sm ghost" data-act="open" data-p="pguide">Lesen</button></div>`;
+ h+=`<div class="cp-sub">Tutorial</div><div class="row" style="gap:6px;margin:4px 0 8px"><button class="btn sm ghost" data-act="cp-restart">↻ Kapitel-Tutorial neu starten</button>${c.skip?'<button class="btn sm" data-act="cp-skip">Tutorial fortsetzen</button>':''}</div>`;
  return['Missionslog',`<div class="camp">${h}</div>`]};
 PANELS.tasks=PANELS.camp;
 // ---------- HUD-Kachel ----------
@@ -73,7 +92,7 @@ const CARD=document.createElement('div');CARD.id='cp-card';document.body.appendC
 let typer=null,hshow=false,curPose=-1;
 function pose(n){const k=POSE[n]??n;if(k===curPose)return;curPose=k;H.querySelectorAll('.ah-fig img').forEach(im=>im.classList.toggle('on',+im.dataset.p===k))}
 let pend=null;
-function say(text,{p='explain',btns=[['Weiter',null]],side}={}){if(pend){const f=pend;pend=null;f(null)}return new Promise(res0=>{const res=v=>{if(pend===res)pend=null;res0(v)};pend=res;pose(p);H.classList.toggle('right',side==='right');H.classList.add('show');hshow=true;
+function say(text,{p='explain',btns=[['Weiter',null]],side}={}){if(pend){const f=pend;pend=null;f(null)}if(S&&S.camp&&S.camp.skip){H.classList.remove('show');return Promise.resolve(null)}return new Promise(res0=>{const res=v=>{if(pend===res)pend=null;res0(v)};pend=res;pose(p);H.classList.toggle('right',side==='right');H.classList.add('show');hshow=true;
  const tx=H.querySelector('.ah-txt');tx.textContent='';clearInterval(typer);let n=0;const full=text;
  typer=setInterval(()=>{n+=2;tx.textContent=full.slice(0,n);if(n>=full.length)clearInterval(typer)},22);
  const bb=H.querySelector('.ah-btns');bb.innerHTML=btns.map((b,i)=>`<button class="btn sm ${i?'ghost':''}" data-cpb="${i}">${b[0]}</button>`).join('');
@@ -86,12 +105,30 @@ window.CAMP.say=say;window.CAMP.hide=hide;
 // ---------- Spotlight ----------
 let spotSel=null,spotEl=null;
 function spot(sel){spotSel=sel;SP.classList.toggle('on',!!sel);document.body.classList.toggle('cp-guided',!!sel);placeSpot()}
-function placeSpot(){if(!spotSel){document.querySelectorAll('.cp-target').forEach(e=>e.classList.remove('cp-target'));return}const el=typeof spotSel==='function'?spotSel():document.querySelector(spotSel);if(spotEl&&spotEl!==el)spotEl.classList.remove('cp-target');spotEl=el;if(el)el.classList.add('cp-target');if(!el){SP.classList.add('wait');return}SP.classList.remove('wait');
+function placeSpot(){if(!spotSel){document.querySelectorAll('.cp-target').forEach(e=>e.classList.remove('cp-target'));if(lastFit){lastFit='';H.style.bottom='';H.classList.remove('fitmini')}return}const el=typeof spotSel==='function'?spotSel():document.querySelector(spotSel);if(spotEl&&spotEl!==el)spotEl.classList.remove('cp-target');spotEl=el;if(el)el.classList.add('cp-target');if(!el){SP.classList.add('wait');return}SP.classList.remove('wait');
  const r=el.getBoundingClientRect();const pad=6;const hole=SP.querySelector('.sp-hole'),ring=SP.querySelector('.sp-ring'),ar=SP.querySelector('.sp-arrow');
  Object.assign(hole.style,{left:r.left-pad+'px',top:r.top-pad+'px',width:r.width+pad*2+'px',height:r.height+pad*2+'px'});for(const k of['left','top','width','height'])ring.style[k]=hole.style[k];
  const right=r.left+r.width/2>innerWidth/2;ar.style.left=(right?r.left-46:r.right+8)+'px';ar.style.top=r.top+r.height/2-16+'px';ar.classList.toggle('flip',right);
  // Aries weicht auf die andere Seite aus
- H.classList.toggle('right',r.left+r.width/2<innerWidth*0.5)}
+ fitAries(r)}
+// Aries + Sprechblase so platzieren, dass sie den Spotlight-Ausschnitt nie schneiden
+let lastFit='';
+function fitAries(r){const key=[r.left,r.top,r.width,r.height,innerWidth,innerHeight,H.classList.contains('show'),H.classList.contains('mini'),H.querySelector('.ah-bub').offsetHeight].map(Math.round).join(',');if(key===lastFit)return;lastFit=key;
+ const pad=10,hole={l:r.left-pad,t:r.top-pad,r:r.right+pad,b:r.bottom+pad};
+ const hit=el=>{const q=el.getBoundingClientRect();return!(q.right<hole.l||q.left>hole.r||q.bottom<hole.t||q.top>hole.b)};
+ const fig=H.querySelector('.ah-fig'),bub=H.querySelector('.ah-bub');const nav=($('#nav')||{getBoundingClientRect:()=>({top:innerHeight})}).getBoundingClientRect().top;
+ const pref=r.left+r.width/2<innerWidth*0.5?'right':'left',alt=pref==='right'?'left':'right';
+ const base=innerHeight-nav+6;
+ const cands=[[pref,null,0],[alt,null,0],[pref,null,1],[alt,null,1]];
+ // oberhalb bzw. unterhalb des Ziels
+ const above=innerHeight-hole.t+4,below=Math.max(4,innerHeight-hole.b-4-(bub.offsetHeight+10));
+ for(const sd of[pref,alt])for(const m of[0,1]){cands.push([sd,above,m]);cands.push([sd,null,m,below])}
+ for(const [sd,bt,mini,bl] of cands){H.classList.toggle('right',sd==='right');H.classList.toggle('fitmini',!!mini);
+  let b=bt!=null?bt:bl!=null?bl:null;H.style.bottom=b!=null?Math.max(4,Math.min(innerHeight-60,b))+'px':'';
+  const q=H.getBoundingClientRect();if(q.top<4&&b!=null)continue;
+  if(!hit(bub)&&!hit(fig))return}
+ // Notfall: Figur ausblenden, Blase an freie Ecke
+ H.classList.add('fitmini');H.style.bottom='';H.classList.toggle('right',pref==='right')}
 setInterval(()=>{const pn=!!(window.GAME&&GAME.panel);H.classList.toggle('mini',pn);if(pn&&!spotSel)H.classList.add('right');placeSpot()},120);addEventListener('resize',placeSpot);
 // Eingaben während geführter Schritte blockieren (außer Ziel und Aries)
 for(const ev of['click','pointerdown','touchstart','mousedown'])document.addEventListener(ev,e=>{if(!spotSel)return;if(e.target.closest('#aries-h,#rwd'))return;if(spotEl&&spotEl.contains(e.target))return;e.stopPropagation();if(ev==='click')e.preventDefault()},true);
@@ -107,11 +144,11 @@ const padStep=id=>[`Tippe auf diesen Bauplatz.`,()=>document.querySelector(`#pad
 const buildOn=id=>[`Wähle „${GE.BUILD[id].n}“ und tippe auf „Hier bauen“ bzw. „Ausbauen“.`,()=>document.querySelector(`#panel [data-act=padbuild][data-id="${id}"],#panel [data-act=build][data-id="${id}"]`),()=>pl().bq.some(q=>q.id===id)||E.lv(pl(),id)>0&&!GAME.panel];
 const GUIDE={
  0:[['Deine Willkommensbelohnung wartet. Öffne den Missionslog über meine Kachel.','#aries .ariescard',panelIs('camp'),{p:'pointdl'}],['Tippe auf „Abholen“.','#panel [data-act=cp-claim][data-id="0"]',()=>C().cl[0]]],
- 1:[padStep('metal_mine'),buildOn('metal_mine'),['Der Bau läuft! Warte kurz – oder tippe auf den Blitz, um mit Dunkler Materie zu beschleunigen.','#queues .qsp',()=>E.lv(pl(),'metal_mine')>0,{p:'explain'}],padStep('crystal_mine'),buildOn('crystal_mine')],
+ 1:[padStep('metal_mine'),buildOn('metal_mine'),['Der Bau läuft! Unter 10 Minuten Restzeit stellst du ihn mit dem Blitz gratis fertig – tippe darauf.','#queues .qsp',()=>E.lv(pl(),'metal_mine')>0,{p:'explain'}],padStep('crystal_mine'),buildOn('crystal_mine')],
  2:[padStep('metal_mine'),buildOn('metal_mine')],3:[padStep('solar'),buildOn('solar')],4:[padStep('gas_mine'),buildOn('gas_mine')],
- 5:[padStep('gas_mine'),['Schiebe den Regler „Produktionsleistung“ auf 60 %.','#panel [data-act=pct]',()=>E.COND[5]()]],
+ 5:[padStep('gas_mine'),['Schiebe den Regler „Produktionsleistung“ auf 60 %.','#panel [data-act=pct]',()=>E.COND[5]()],['__info2','Gut! Merke: Unter 100 % fördert die Mine weniger, spart aber Energie. Nach der Belohnung stelle ich sie für dich wieder auf 100 %.']],
  6:[padStep('robotics'),buildOn('robotics')],
- 8:[['Während ein Bau läuft: Tippe auf den Blitz an der Bau-Kachel, um mit Dunkler Materie zu beschleunigen.','#queues .qsp',()=>!!S.flags.speedup,{p:'point'}]],
+ 8:[['Tippe auf den Blitz an der Bau-Kachel: unter 10 Minuten Restzeit gratis, darüber kostet es Dunkle Materie.','#queues .qsp',()=>!!S.flags.speedup,{p:'point'}]],
  9:[['Der Space Store – hier in der Leiste.','#rail [data-p=store]',()=>!!S.flags.store]],
  13:[['Hier geht es zur Forschung.','#rail [data-p=research]',panelIs('research')],['Erforsche „Energietechnik“.','#panel [data-act=research][data-id=energy]',()=>!!S.rq||E.tl('energy')>0]],
  7:[['Die Werft findest du hier – oder baue sie auf einem freien Bauplatz.','#rail [data-p=yard]',()=>!!GAME.panel]],
@@ -133,7 +170,7 @@ async function pgSeq(){const pop=document.querySelector('#pop .pi-box');if(pop){
  await card(`<div class="cc-k">Wissen</div><div class="cc-t">🪐 Planeten-Guide</div>${PI.guideHTML(hl)}<button class="btn" data-cc style="margin-top:10px">Verstanden</button>`,'wide')}
 window.CAMP.pgSeq=pgSeq;
 async function guide(i){if(busy)return;busy=true;abort=false;closePanelSafe();const g=GUIDE[i]||[];
- for(const s of g){if(s[0]==='__pg'){S.camp.seen.pg=1;save();await pgSeq();if(abort)break;continue}if(s[1]==='__info'){spot(null);await say(s[0],{p:'explain',btns:[['Verstanden',null]]});continue}if(!await step(...s))break}
+ for(const s of g){if(s[0]==='__pg'){S.camp.seen.pg=1;save();await pgSeq();if(abort)break;continue}if(s[0]==='__info2'){spot(null);await say(s[1],{p:'explain'});continue}if(s[1]==='__info'){spot(null);await say(s[0],{p:'explain',btns:[['Verstanden',null]]});continue}if(!await step(...s))break}
  spot(null);const c=C();if(!abort&&!c.cl[i]&&safe(()=>done(i))){c.seen['d'+i]=1;await say('Genau so! Mission erfüllt – hier ist deine Belohnung.',{p:'cheer',btns:[['Belohnung abholen','claim'],['Später',null]]}).then(v=>{if(v==='claim')return claimFx(i)})}else if(!abort&&c.cl[i])await say('Sehr gut, Kommandant! Belohnung erhalten.',{p:'cheer'});hide();busy=false;setTimeout(loop,400)}
 function closePanelSafe(){if(window.GAME&&GAME.panel&&GAME.closePanel)GAME.closePanel()}
 window.CAMP.guide=guide;
@@ -152,6 +189,8 @@ async function loop(){if(looping||busy||!S||!S.camp||S.camp.skip)return;if(docum
   if(c.ch===0)await say('Hallo, Kommandant! Ich bin Aries, deine Bordintelligenz. Ich führe dich Schritt für Schritt durch den Aufbau deines Imperiums.',{p:'wave'});
   const v=await say(`Erste Mission: „${t.t}“ – ${t.d}`,{p:'explain',btns:GUIDE[i]?[['Zeig es mir','g'],['Selbst machen',null]]:[['Verstanden',null]]});
   hide();if(v==='g'){looping=false;return guide(i)}}
+ // Hinweis: negative Energie
+ {const pi=E.prodInfo(pl());const now=Date.now();if(c.cl[3]&&!pl().moon&&pi.eUse>pi.eProd+0.5&&now-(c.eh||0)>8*60e3&&!GAME.panel){c.eh=now;save();const v=await say('Achtung: Deine Energie ist negativ – Minen fördern dann weniger. Baue das Solarkraftwerk aus.',{p:'alert',btns:[['Zeig es mir','g'],['Später',null]]});hide();if(v==='g'){busy=true;looping=false;for(const st of[padStep('solar'),buildOn('solar')])if(!await step(...st))break;spot(null);hide();busy=false}return}}
  // erfüllte Mission melden
  const i=curMain();if(i!=null&&!c.seen['d'+i]&&safe(()=>done(i))){c.seen['d'+i]=1;save();const v=await say(`Mission „${T(i).t}“ erfüllt! Hervorragend.`,{p:'cheer',btns:[['Belohnung abholen','c'],['Später',null]]});
   hide();if(v==='c')await claimFx(i);return}
@@ -169,15 +208,16 @@ document.addEventListener('click',e=>{const b=e.target.closest('.cp-lock');if(b)
  if(a==='cp-claim'){e.stopPropagation();const id=/^\d+$/.test(t.dataset.id)?+t.dataset.id:t.dataset.id;claimFx(id)}
  if(a==='cp-side'){e.stopPropagation();claimSideFx(t.dataset.id)}
  if(a==='cp-guide'){e.stopPropagation();const id=/^\d+$/.test(t.dataset.id)?+t.dataset.id:t.dataset.id;guide(id)}
- if(a==='cp-skip'){e.stopPropagation();init();S.camp.skip=S.camp.skip?0:1;save();hide();renderAll();if(GAME.panel)renderPanel(true);toast(S.camp.skip?'Tutorial übersprungen – alle Funktionen frei':'Tutorial wieder aktiv','ok')}
+ if(a==='cp-restart'){e.stopPropagation();init();const c=C();c.skip=0;abort=true;busy=false;looping=false;spot(null);hide();if(c.ch<CH.length){delete c.seen['i'+c.ch];CH[c.ch].main.forEach(k=>{delete c.seen['a'+k];delete c.seen['d'+k]})}save();closePanelSafe();renderAll();toast('Tutorial startet neu – Kapitel '+(c.ch+1),'ok');setTimeout(()=>{abort=false;loop()},700);return}
+ if(a==='cp-skip'){e.stopPropagation();init();S.camp.skip=S.camp.skip?0:1;abort=true;busy=false;looping=false;spot(null);save();hide();if(!S.camp.skip){const n=curMain();if(n!=null){delete S.camp.seen['a'+n];delete S.camp.seen['d'+n]}save()}setTimeout(()=>{abort=false;if(!S.camp.skip){closePanelSafe();loop()}},600);renderAll();if(GAME.panel)renderPanel(true);toast(S.camp.skip?'Tutorial übersprungen – alle Funktionen frei':'Tutorial wieder aktiv','ok')}
 },true);
 // Nebel-Zähler
 E.on&&E.on((ev)=>{});
 const _sf=E.send;if(_sf)E.send=function(...a){const r=_sf.apply(this,a);if(!r&&a[3]==='explore')S.flags.nebN=(S.flags.nebN||0)+1;return r};
 // Einstellungen: Tutorial überspringen
 const _st=PANELS.settings;PANELS.settings=()=>{const r=_st();init();r[1]=`<div class="box" style="margin-bottom:8px"><div class="row"><b>Kampagne / Tutorial</b><span class="spacer"></span><button class="btn sm ${S.camp.skip?'':'ghost'}" data-act="cp-skip">${S.camp.skip?'Tutorial fortsetzen':'Tutorial überspringen'}</button></div><div class="mut" style="font-size:11px">${S.camp.skip?'Alle Funktionen frei, Aries ist stumm.':'Überspringen schaltet sofort alle Funktionen frei. Missionen und Belohnungen bleiben im Missionslog abholbar.'}</div></div>`+r[1];return r};
-async function claimFx(i){const c=C();if(c.cl[i]||!safe(()=>done(i)))return err('Mission noch nicht erfüllt');if(window.RWD){const ok=await RWD.flow(T(i).r,T(i).t);if(!ok)return;err(claim(i,true))}else err(claim(i));if(GAME.panel)renderPanel(true)}
-async function claimSideFx(id){const c=C();const m=CH.flatMap(x=>x.side).find(x=>x.id===id);if(!m||c.side[id]||!m.c())return err('Noch nicht erfüllt');if(window.RWD){const ok=await RWD.flow(m.r,'Nebenmission: '+m.t);if(!ok)return;err(claimSide(id,true))}else err(claimSide(id));if(GAME.panel)renderPanel(true)}
+async function claimFx(i){const c=C();if(c.cl[i]||!safe(()=>done(i)))return err('Mission noch nicht erfüllt');if(window.RWD){const ok=await RWD.flow(scaleR(T(i).r),T(i).t);if(!ok)return;err(claim(i,true))}else err(claim(i));if(GAME.panel)renderPanel(true)}
+async function claimSideFx(id){const c=C();const m=CH.flatMap(x=>x.side).find(x=>x.id===id);if(!m||c.side[id]||!m.c())return err('Noch nicht erfüllt');if(window.RWD){const ok=await RWD.flow(scaleR(m.r,0.5),'Nebenmission: '+m.t);if(!ok)return;err(claimSide(id,true))}else err(claimSide(id));if(GAME.panel)renderPanel(true)}
 window.CAMP.claimFx=claimFx;
 window.CAMP.init=init;window.CAMP.claim=claim;window.CAMP.loop=loop;
 })();

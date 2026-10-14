@@ -29,7 +29,7 @@ R.init=function(cv){const gl=cv.getContext('webgl2',{antialias:false,alpha:false
   gl.enableVertexAttribArray(lp);gl.enableVertexAttribArray(lt);gl.vertexAttribPointer(lp,2,gl.FLOAT,false,16,0);gl.vertexAttribPointer(lt,2,gl.FLOAT,false,16,8);
   R.tiles=[];const aniso=gl.getExtension('EXT_texture_filter_anisotropic');
   for(let j=0;j<2;j++)for(let i=0;i<4;i++){const t={i,j,tex:null};R.tiles.push(t);const im=new Image();im.onload=()=>{const tx=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,tx);
-    gl.texImage2D(gl.TEXTURE_2D,0,gl.RGB,gl.RGB,gl.UNSIGNED_BYTE,im);gl.generateMipmap(gl.TEXTURE_2D);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR_MIPMAP_LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
+    let src=im;if(document.documentElement.classList.contains('lite')){const c=document.createElement('canvas');c.width=im.naturalWidth>>1;c.height=im.naturalHeight>>1;c.getContext('2d').drawImage(im,0,0,c.width,c.height);src=c}gl.texImage2D(gl.TEXTURE_2D,0,gl.RGB,gl.RGB,gl.UNSIGNED_BYTE,src);if(src!==im){src.width=src.height=0}im.src='';gl.generateMipmap(gl.TEXTURE_2D);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR_MIPMAP_LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);if(aniso)gl.texParameterf(gl.TEXTURE_2D,aniso.TEXTURE_MAX_ANISOTROPY_EXT,4);
     t.tex=tx;R.loaded=(R.loaded||0)+1;R.onload&&R.onload()};im.src=`assets/gal/t${j}${i}.webp`}
   R.cv=cv;R.ok=true;return true}catch(e){console.warn('Galaxie-GL aus:',e);return false}};

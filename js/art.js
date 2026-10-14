@@ -79,7 +79,7 @@ A.sun=function(){if(A.cache._sun)return A.cache._sun;const c=document.createElem
  let g=x.createRadialGradient(200,200,0,200,200,200);g.addColorStop(0,'rgba(255,250,230,1)');g.addColorStop(.25,'rgba(255,210,120,1)');g.addColorStop(.36,'rgba(255,150,40,.9)');g.addColorStop(.6,'rgba(255,100,20,.25)');g.addColorStop(1,'rgba(255,80,0,0)');x.fillStyle=g;x.fillRect(0,0,400,400);
  x.globalCompositeOperation='lighter';const r=R(5);for(let i=0;i<60;i++){const a=r()*7,l=90+r()*90;x.strokeStyle=`rgba(255,200,120,${.05+r()*.08})`;x.lineWidth=1+r()*3;x.beginPath();x.moveTo(200+Math.cos(a)*60,200+Math.sin(a)*60);x.lineTo(200+Math.cos(a)*l,200+Math.sin(a)*l);x.stroke()}
  return A.cache._sun=c.toDataURL()};
-A.stars=function(cv){const d=devicePixelRatio||1;cv.width=innerWidth*d;cv.height=innerHeight*d;const x=cv.getContext('2d');const r=R(3);
+A.stars=function(cv){const d=Math.min(1.5,devicePixelRatio||1);cv.width=innerWidth*d;cv.height=innerHeight*d;const x=cv.getContext('2d');const r=R(3);
  const g=x.createRadialGradient(cv.width*.7,cv.height*.3,0,cv.width*.7,cv.height*.3,cv.width*.8);g.addColorStop(0,'#13183a');g.addColorStop(.5,'#070a1a');g.addColorStop(1,'#020308');x.fillStyle=g;x.fillRect(0,0,cv.width,cv.height);
  x.globalCompositeOperation='lighter';for(let i=0;i<6;i++){const px=r()*cv.width,py=r()*cv.height,rad=(100+r()*250)*d;const gg=x.createRadialGradient(px,py,0,px,py,rad);gg.addColorStop(0,i%2?'rgba(120,60,255,.10)':'rgba(40,200,255,.07)');gg.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=gg;x.fillRect(0,0,cv.width,cv.height)}
  for(let i=0;i<700;i++){const s=r()*1.5*d;x.fillStyle=`rgba(${200+r()*55|0},${210+r()*45|0},255,${r()*.9})`;x.fillRect(r()*cv.width,r()*cv.height,s,s)}};

@@ -1062,3 +1062,10 @@ body.raid:has(#panel:not(.hidden)) #raidbar{top:auto;bottom:8px;z-index:41}
 .ev.skyfx{width:3000px;height:400px}
 .lite .ev.neb,.lite .ev.side,.lite .ev.mote:nth-child(odd){display:none!important}
 .lite .b2fx .fx.smoke:nth-of-type(3n),.lite .b2fx .fx.dust{display:none!important}
+/* v40: Canvas-Renderer */
+#b2::before{display:none!important}
+#b2c{position:absolute;left:0;top:0;display:block;touch-action:none}
+#b2ui{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+#b2ui .b2pill{position:absolute;left:0;top:0;display:flex}
+#aries-h:not(.show) .ah-fig,#aries-h:not(.show) .ah-fig img{animation:none!important}
+.lite #aries-h .ah-fig{filter:none!important}

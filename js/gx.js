@@ -15,14 +15,26 @@ function info(g){const c=GX.cache[g];if(c&&Date.now()-c.t<8000)return c.d;const 
 const spr={};function sprite(col,r){const k=col+r;if(spr[k])return spr[k];const c=document.createElement('canvas');const n=Math.ceil(r*4);c.width=c.height=n*2;const x=c.getContext('2d');
  const gr=x.createRadialGradient(n,n,0,n,n,n);gr.addColorStop(0,'#fff');gr.addColorStop(.12,col);gr.addColorStop(.35,col.replace('1)','.35)'));gr.addColorStop(1,col.replace('1)','0)'));x.fillStyle=gr;x.fillRect(0,0,n*2,n*2);return spr[k]=c}
 function colFor(i){if(i.own)return'rgba(56,225,255,1)';const t=Math.min(1,i.lv/22);return`rgba(${Math.round(175+80*t)},${Math.round(200-95*t)},${Math.round(255-190*t)},1)`}
-function fit(){const m=$('#gxmap');const W=m.clientWidth,H=m.clientHeight;return Math.max(W/GW,H/GH)*0.98}
-function clampCam(){const m=$('#gxmap'),W=m.clientWidth,H=m.clientHeight,c=GX.cam;const kf=fit();c.k=Math.min(kf*7,Math.max(kf,c.k));
- c.x=Math.min(0,Math.max(W-GW*c.k,c.x));c.y=Math.min(0,Math.max(H-GH*c.k,c.y))}
-function apply(){clampCam();const c=GX.cam;$('#gximg').style.transform=`translate(${c.x}px,${c.y}px) scale(${c.k})`;draw()}
+const PAD={t:104,b:70,l:58,r:10};
+function fit(){const m=$('#gxmap');const W=m.clientWidth-PAD.l-PAD.r,H=m.clientHeight-PAD.t-PAD.b;return Math.max(W/GW,H/GH)}
+function clampCam(){const m=$('#gxmap'),W=m.clientWidth,H=m.clientHeight,c=GX.cam;const kf=fit();c.k=Math.min(kf*8,Math.max(kf*.92,c.k));
+ const x0=PAD.l,x1=W-PAD.r-GW*c.k,y0=PAD.t,y1=H-PAD.b-GH*c.k;c.x=x1>x0?(x0+x1)/2:Math.min(x0,Math.max(x1,c.x));c.y=y1>y0?(y0+y1)/2:Math.min(y0,Math.max(y1,c.y))}
+function apply(){clampCam();const c=GX.cam;$('#gximg').style.transform=`translate(${c.x}px,${c.y}px) scale(${c.k})`;const zr=c.k/fit();$('#gximg').style.opacity=zr>2.5?Math.max(.72,1-(zr-2.5)*.08).toFixed(2):'1';draw()}
 GX.focus=function(s,k){const m=$('#gxmap');const [x,y]=GX.pos(GX.g,s);const c=GX.cam;c.k=k||c.k;c.x=m.clientWidth/2-x*c.k;c.y=m.clientHeight/2-y*c.k;apply()};
+// Helligkeitskarte der Galaxie (für prozedurale Detailsterne)
+let LUM=null;function lum(){if(LUM)return LUM;const im=$('#gximginner');if(!im||!im.complete||!im.naturalWidth)return null;const c=document.createElement('canvas');c.width=256;c.height=144;const x=c.getContext('2d');x.drawImage(im,0,0,256,144);
+ const d=x.getImageData(0,0,256,144).data;LUM={l:new Float32Array(256*144),c:new Uint8ClampedArray(256*144*3)};for(let i=0;i<256*144;i++){const r=d[i*4],g=d[i*4+1],b=d[i*4+2];LUM.l[i]=(r+g+b)/765;LUM.c[i*3]=r;LUM.c[i*3+1]=g;LUM.c[i*3+2]=b}return LUM}
+const hsh=(a,b,n)=>{let h=(a*374761393+b*668265263+n*1442695041)|0;h=(h^(h>>>13))*1274126177|0;return((h^(h>>>16))>>>0)/4294967296};
+function detail(x,W,H,c,zr){const L=lum();if(!L||zr<1.5)return;const a=Math.min(1,(zr-1.5)/1.5);const v=(GX.g-1)%4;
+ const cell=16;const wx0=Math.max(0,Math.floor((-c.x)/c.k/cell)),wx1=Math.min(GW/cell,Math.ceil((W-c.x)/c.k/cell)),wy0=Math.max(0,Math.floor((-c.y)/c.k/cell)),wy1=Math.min(GH/cell,Math.ceil((H-c.y)/c.k/cell));
+ for(let cy=wy0;cy<wy1;cy++)for(let cx=wx0;cx<wx1;cx++){let sx=cx*cell+8,sy=cy*cell+8;if(v===1)sx=GW-sx;if(v===2){sx=GW-sx;sy=GH-sy}if(v===3)sy=GH-sy;
+  const li=Math.min(143,Math.max(0,Math.floor(sy/GH*144)))*256+Math.min(255,Math.max(0,Math.floor(sx/GW*256)));const b=L.l[li];const n=Math.floor(b*b*7+hsh(cx,cy,9)*1.6);
+  for(let k=0;k<n;k++){const px=(cx+hsh(cx,cy,k*3))*cell,py=(cy+hsh(cx,cy,k*3+1))*cell;const X=c.x+px*c.k,Y=c.y+py*c.k;const br=hsh(cx,cy,k*3+2);
+   const r=.45+br*br*1.3;x.globalAlpha=a*(.35+br*.65);x.fillStyle=br>.93?'#fff6e0':br>.75?'#dfe8ff':'#cbd5ff';x.beginPath();x.arc(X,Y,r,0,6.283);x.fill()}}
+ x.globalAlpha=1}
 function draw(){const cv=$('#gxcv'),m=$('#gxmap');if(!cv||!GX.cam)return;const d=Math.min(2,devicePixelRatio||1),W=m.clientWidth,H=m.clientHeight;
  if(cv.width!==Math.round(W*d)||cv.height!==Math.round(H*d)){cv.width=Math.round(W*d);cv.height=Math.round(H*d)}
- const x=cv.getContext('2d');x.setTransform(d,0,0,d,0,0);x.clearRect(0,0,W,H);const c=GX.cam,g=GX.g,inf=info(g);const zr=c.k/fit();
+ const x=cv.getContext('2d');x.setTransform(d,0,0,d,0,0);x.clearRect(0,0,W,H);const c=GX.cam,g=GX.g,inf=info(g);const zr=c.k/fit();detail(x,W,H,c,zr);
  const now=E.now();
  // Flotten
  for(const f of S.fleets){if(f.npc)continue;const a=f.fromC,b=f.to;if(a.g!==g||b.g!==g)continue;let [x1,y1]=GX.pos(g,a.s),[x2,y2]=GX.pos(g,b.s);if(f.phase==='back')[x1,y1,x2,y2]=[x2,y2,x1,y1];
@@ -60,7 +72,7 @@ function chrome(){const g=GX.g;
  <form class="gsearch" data-gx="search"><input id="gxq" placeholder="g:s oder g:s:p" inputmode="numeric" autocomplete="off"><button class="iconbtn sm" type="submit" aria-label="Springen">➜</button></form>
  <button class="btn sm ghost ${GX.list?'on':''}" data-gx="list">☰ Liste</button>`;
  $('#gximg').style.filter=hue(g)+' brightness(.9)';$('#gximg').dataset.tf=imgTf(g);}
-function setGal(g){GX.g=g;GX.sel=null;GX.slot=null;chrome();const m=$('#gxmap');GX.cam={k:fit(),x:0,y:0};const c=GX.cam;c.x=(m.clientWidth-GW*c.k)/2;c.y=(m.clientHeight-GH*c.k)/2;
+function setGal(g){GX.g=g;GX.sel=null;GX.slot=null;chrome();const m=$('#gxmap');GX.cam={k:fit(),x:0,y:0};const c=GX.cam;c.x=(m.clientWidth-GW*c.k)/2;c.y=PAD.t+(m.clientHeight-PAD.t-PAD.b-GH*c.k)/2;
  $('#gximg').style.transformOrigin='0 0';const tf=imgTf(g);$('#gximginner').style.transform=tf;apply();card()}
 GX.render=function(){const p=pl();if(!$('#gxmap'))return;if(GX.g==null){setGal(p.g);GX.focus(p.s,fit()*2.2)}
  $('#v-galaxy').classList.toggle('listmode',GX.list);if(GX.list){galG=GX.g;galS=GX.sel||galS||p.s;renderGalList()}draw();loopOn()};
@@ -68,10 +80,10 @@ let raf=0;function loopOn(){if(raf)return;const step=()=>{raf=0;if(view!=='galax
  if(GX.vel){GX.cam.x+=GX.vel.x;GX.cam.y+=GX.vel.y;GX.vel.x*=.92;GX.vel.y*=.92;if(Math.abs(GX.vel.x)+Math.abs(GX.vel.y)<.3)GX.vel=null;apply()}
  else if(S.fleets.some(f=>!f.npc&&f.to.g===GX.g))draw();
  raf=requestAnimationFrame(step)};raf=requestAnimationFrame(step)}
-function zoomAt(f,cx,cy){const c=GX.cam;const nk=Math.min(fit()*7,Math.max(fit(),c.k*f));const r=nk/c.k;c.x=cx-(cx-c.x)*r;c.y=cy-(cy-c.y)*r;c.k=nk;apply()}
+function zoomAt(f,cx,cy){const c=GX.cam;const nk=Math.min(fit()*8,Math.max(fit()*.92,c.k*f));const r=nk/c.k;c.x=cx-(cx-c.x)*r;c.y=cy-(cy-c.y)*r;c.k=nk;apply()}
 // Zoom animiert
 function animZoom(f,cx,cy){let n=0;const st=()=>{zoomAt(Math.pow(f,1/10),cx,cy);if(++n<10)requestAnimationFrame(st)};st()}
-function bind(){const m=$('#gxmap');const pts=new Map();let st=null;
+function bind(){const m=$('#gxmap');$('#gximginner').addEventListener('load',()=>{LUM=null;draw()});const pts=new Map();let st=null;
  m.addEventListener('pointerdown',e=>{m.setPointerCapture(e.pointerId);pts.set(e.pointerId,{x:e.clientX,y:e.clientY});GX.vel=null;
   if(pts.size===1)st={x:e.clientX,y:e.clientY,t:performance.now(),moved:0,lx:e.clientX,ly:e.clientY,vx:0,vy:0};
   else if(pts.size===2){const [a,b]=[...pts.values()];st.pinch={d:Math.hypot(a.x-b.x,a.y-b.y),k:GX.cam.k};st.moved=99}});

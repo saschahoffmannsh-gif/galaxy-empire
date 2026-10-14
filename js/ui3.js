@@ -76,6 +76,8 @@ document.addEventListener('click',ev=>{const t=ev.target.closest('[data-act]');i
  case 'open':openPanel(t.dataset.p,null,!!t.dataset.push&&panelStack.length>0);break;
  case 'pclose':closePanel();break;case 'pback':backPanel();break;
  case 'bld':openPanel('bld',id);break;
+ case 'pad':{const pp=pl();const bid=t.dataset.id;if(bid&&placed(pp,bid))openPanel('bld',bid);else openPanel('padbuild',+t.dataset.i);break}
+ case 'padbuild':{const i=+t.dataset.i;if(!err(E.build(p.id,id))){p.pads=p.pads||{};p.pads[i]=id;toast(`${GE.BUILD[id].n} wird gebaut`,'ok');closePanel();after()}break}
  case 'bldopen':openPanel('bld',id);break;
  case 'pbld':openPanel('bld',id,panelStack.length>0);break;
  case 'ptech':openPanel('tech',id,true);break;

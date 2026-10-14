@@ -54,50 +54,49 @@ function updRes(){const p=pl(),pi=E.prodInfo(p);const els=$$('#res .rc');if(els.
  const e=pi.eProd-pi.eUse;els[3].querySelector('.rv').textContent=fmt(e);els[3].querySelector('.rr').textContent=fmt(pi.eProd)+' erz.';els[3].classList.toggle('neg',e<0);els[4].querySelector('.rv').textContent=fmt(S.dm)}
 const TABS=[['base','Base',IC.base],['system','System',IC.sys],['galaxy','Galaxie',IC.gal],['fleet','Flotte',IC.fleet],['ally','Allianz',IC.ally],['chat','Chat',IC.chat]];
 function renderNav(){$('#nav').innerHTML=TABS.map(t=>`<button data-act="tab" data-v="${t[0]}" class="${view===t[0]?'on':''}">${t[2]}${t[1]}</button>`).join('')}
-function setView(v){view=v;$$('.view').forEach(e=>e.classList.remove('active'));$('#v-'+v).classList.add('active');$('#pano').classList.toggle('paused',v!=='base');if(v==='base'){layoutPano();if(!placePlates._ok)baseKey=null}renderNav();renderView()}
+function setView(v){view=v;$$('.view').forEach(e=>e.classList.remove('active'));$('#v-'+v).classList.add('active');$('#pano').classList.toggle('paused',v!=='base');if(v==='base'){layoutPano()}renderNav();renderView()}
 document.addEventListener('visibilitychange',()=>$('#pano').classList.toggle('paused',document.hidden||view!=='base'));
 function renderView(){({base:renderBase,system:renderSystem,galaxy:renderGalaxy,fleet:renderFleet,ally:renderAlly,chat:renderChat})[view]()}
 // Basis: Gelände mit 12 Plattformen (Pad-Zentren per Bildanalyse ermittelt, Quelle 1280×720)
-// Basis-Panorama 2340×720 (zwei Hälften, weich überblendet). Pad-Zentren per Bildanalyse.
-// Basis-Panorama 2360×720 mit Horizont (zwei Hälften, farbangeglichen + weich überblendet). Pads per Bildanalyse.
-// [Bild, cx, cy(Oberseite Pad), Pad-Breite]  Ökonomie links am Fluss · Technik Mitte · Militär/Allianz rechts am See
-const PADS=[
- ['Bergbau',390,502,187],['Schmiede',453,415,108],['Raffinerie',680,415,103],['Kraftwerk',610,378,80],['@fusion',828,460,146],
- ['Forschung',922,410,107],['Roboter_Labor',939,600,308],['KI_Center',1162,468,167],['Lager',1418,467,147],
- ['Waffen',1522,404,106],['Verteidigung',1672,448,136],['Werft',1544,565,202],['Allianzzentrum',1922,568,212],['@stargate',2166,428,128],['@radar',2125,504,176]];
-const BIMG={Bergbau:[600,450],Schmiede:[460,346],Raffinerie:[480,371],Kraftwerk:[500,374],Forschung:[420,292],Roboter_Labor:[480,357],KI_Center:[460,384],Lager:[500,374],Werft:[600,476],Verteidigung:[500,366],Waffen:[500,372],Allianzzentrum:[500,385]};
-const SHORTN={metal_mine:'Metall',crystal_mine:'Kristall',gas_mine:'Gas',solar:'Solar',fusion:'Fusion',lab:'Labor',nanite:'Naniten',robotics:'Roboter','@store':'Lager',shipyard:'Werft','@defense':'Abwehr',galacto:'Galactonit',alliance:'Allianz',radar:'Radar',stargate:'Sternentor',moon_base:'Mondbasis',pioneer:'Pionier',eux:'EUX',wormhole:'Wurmloch'};
+// Basis-Panorama 2360×720. 18 Pads per Bildanalyse: [cx, cy (Mitte Oberseite), Breite, Höhe der Oberseite].
+const PADS=[[390,502,187,47],[453,415,108,20],[680,415,103,20],[610,378,80,13],[828,460,146,32],[922,410,107,19],[939,600,308,93],[1162,468,167,34],[1002,378,83,15],
+ [1418,467,147,40],[1522,404,106,24],[1672,448,136,35],[1544,565,202,72],[1922,568,212,78],[2166,428,128,30],[2125,504,176,54],[2070,378,91,19],[1914,395,105,24]];
+const PAD_PREF={metal_mine:0,crystal_mine:1,gas_mine:2,solar:3,fusion:4,lab:5,robotics:8,nanite:7,crystal_store:16,metal_store:9,galacto:10,gas_store:17,shipyard:12,alliance:13,stargate:14,radar:15,
+ moon_base:0,pioneer:5,eux:4,wormhole:14};
+const RIMG={metal_store:'store',crystal_store:'store',gas_store:'store',moon_base:'store',pioneer:'lab',eux:'fusion',wormhole:'stargate'};
+const rimg=id=>RIMG[id]||id;
 const PANO_W=2360,PANO_H=720,PANO_Y0=40,PANO_Y1=720;let baseKey=null,panoS=1,panoCentered=false;
 function navH(){const n=$('#nav');return n?n.offsetHeight+10:64}
 function layoutPano(){const H=($('#pano').clientHeight||innerHeight);panoS=H/(PANO_Y1-PANO_Y0);
- $('#world').style.transform=`translate(0,${-PANO_Y0*panoS}px) scale(${panoS})`;$('#world').style.setProperty('--ps',panoS);placePlates._ok&&placePlates();$('#sizer').style.width=PANO_W*panoS+'px';
+ $('#world').style.transform=`translate(0,${-PANO_Y0*panoS}px) scale(${panoS})`;$('#sizer').style.width=PANO_W*panoS+'px';
  if(!panoCentered&&$('#pano').clientWidth){panoCentered=true;$('#pano').scrollLeft=Math.max(0,1080*panoS-$('#pano').clientWidth/2)}
  if(window.WATER)WATER.resize(panoS)}
-function placePlates(){if(!$('#pano').clientWidth){placePlates._ok=0;return}const ymax=PANO_Y0+(($('#pano').clientHeight||innerHeight)-navH()-4)/panoS;
- const ps=[...$$('#blds .plate')].map(el=>({el,x:+el.dataset.x,y:+el.dataset.y,w:el.offsetWidth+10,h:el.offsetHeight+6}));
- ps.sort((a,b)=>a.y-b.y);const done=[];
- for(const p of ps){p.y=Math.min(p.y,ymax-p.h/2);let tries=0,o;const hit=()=>done.find(q=>Math.abs(q.x-p.x)<(q.w+p.w)/2&&Math.abs(q.y-p.y)<(q.h+p.h)/2);
-  while((o=hit())&&tries++<24){const down=o.y+(o.h+p.h)/2;if(down+p.h/2<=ymax)p.y=down;else{p.x+=(p.x>=o.x?1:-1)*((o.w+p.w)/2-Math.abs(p.x-o.x)+2)}}
-  p.el.style.left=p.x+'px';p.el.style.top=p.y+'px';done.push(p)}}
-function buildBase(p){const moonMap={Werft:'shipyard',Roboter_Labor:'robotics',Lager:'moon_base',Forschung:'pioneer',Verteidigung:'@defense',Kraftwerk:'eux',KI_Center:'wormhole','@stargate':'stargate','@radar':'radar'};
- let h='';for(const [img,cx,cy,pw] of PADS){const id=p.moon?moonMap[img]:(img[0]==='@'?img.slice(1):GE.PANO[img]);if(!id)continue;
-  const ico=img[0]==='@';let w,hh,src;if(ico){w=Math.min(pw*1.3,200);hh=w;src=`assets/img/${img.slice(1)}.png`}else{const [iw,ih]=BIMG[img];w=Math.min(pw*1.18,215);hh=w*ih/iw;src=`assets/b/${img}.webp`}
-  const base=cy+pw*0.16;const top=base-hh*(ico?0.86:0.97);
-  h+=`<div class="bld" data-act="bld" data-id="${id}" style="left:${cx-w/2}px;top:${top}px;width:${w}px;height:${hh}px"><div class="shadow" style="width:${pw*1.25}px;height:${pw*0.34}px;left:${(w-pw*1.25)/2+pw*0.14}px;top:${base-top-pw*0.2}px"></div><img src="${src}" alt="" draggable="false"><div class="hint">Bauen</div></div>
-  <div class="plate" data-pl="${id}" data-act="bld" data-id="${id}" data-x="${cx}" data-y="${base+16}"><b></b><span></span><div class="prog"><i></i></div></div>`}
+// Perspektiv-Variante wählen: Seitenverhältnis der Pad-Oberseite ↔ vorgerenderte Elevationsstufen
+function padGeo(i,name){const [cx,cy,w,h]=PADS[i];const r=h/w;let vi=0,bd=9;B2.rt.forEach((t,j)=>{if(Math.abs(t-r)<bd){bd=Math.abs(t-r);vi=j}});
+ const v=B2.v[name][vi];const s=w*1.04/B2.pw;const sy=Math.max(.85,Math.min(1.15,r/B2.rt[vi]));
+ return{src:`assets/b2/${name}_${vi}.webp`,left:cx-v[2]*s,top:cy-v[3]*s*sy,width:v[0]*s,height:v[1]*s*sy,cx,cy,w,h:Math.max(h,w*.16)}}
+function busyOf(p,id){return p.bq.find(q=>q.id===id)}
+function placed(p,id){return E.lv(p,id)>0||!!busyOf(p,id)}
+function ensurePads(p){if(!p.pads)p.pads={};const P=p.pads;let ch=false;
+ for(const k in P)if(!placed(p,P[k])){delete P[k];ch=true}
+ const list=p.moon?GE.MOON_B:GE.PLANET_B;const used=new Set(Object.values(P));
+ for(const id of list){if(!placed(p,id)||used.has(id))continue;let i=PAD_PREF[id];if(i==null||P[i]!=null){i=PADS.findIndex((_,j)=>P[j]==null)}if(i<0)continue;P[i]=id;used.add(id);ch=true}
+ return ch}
+function buildBase(p){let h='';PADS.forEach(([cx,cy,w,hh],i)=>{const g={cx,cy,w,h:Math.max(hh,w*.16)};
+  h+=`<div class="pad" data-act="pad" data-i="${i}" style="z-index:${Math.round(cy)}"><div class="shadow"></div><img class="pb" alt="" draggable="false"><img class="pg" alt="" draggable="false"><svg class="ring" viewBox="0 0 100 100" preserveAspectRatio="none"><ellipse cx="50" cy="50" rx="47" ry="44" class="rbg"/><ellipse cx="50" cy="50" rx="47" ry="44" class="rfg" pathLength="100"/></svg><div class="hit" style="left:${cx-w*.55}px;top:${cy-w*.62}px;width:${w*1.1}px;height:${w*.62+g.h*.9}px"></div></div>`});
  $('#blds').innerHTML=h;}
-function renderBase(){const p=pl();const key=p.id+(p.moon?'m':'');
- if(baseKey!==key){baseKey=key;$('#world').classList.toggle('moon',!!p.moon);buildBase(p);layoutPano();var _np=1}
- for(const el of $$('#blds .bld')){const id=el.dataset.id;let lv,name,busy=null;
-  if(id==='@store'){lv=Math.max(E.lv(p,'metal_store'),E.lv(p,'crystal_store'),E.lv(p,'gas_store'));busy=p.bq.find(q=>GE.BUILD[q.id].grp==='store')}
-  else if(id==='@defense'){lv=Object.values(p.def).reduce((a,b)=>a+b,0);busy=p.sq.find(q=>q.kind==='def')}
-  else{lv=E.lv(p,id);busy=p.bq.find(q=>q.id===id)}name=SHORTN[id]||GE.BUILD[id].n;
-  const ghost=!lv&&!busy;el.classList.toggle('ghost',ghost);el.classList.toggle('busy',!!busy);
-  const pl_=$(`#blds .plate[data-pl="${id}"]`);pl_.classList.toggle('ghost',ghost);const b=pl_.querySelector('b'),sp=pl_.querySelector('span');
-  const bt=ghost?'+':id==='@defense'?fmt(lv):String(lv);if(b.textContent!==bt)b.textContent=bt;if(sp.textContent!==name)sp.textContent=name;
-  const pr=pl_.querySelector('.prog i');const act=busy&&busy===p.bq[0]&&busy.end;pl_.classList.toggle('run',!!act);
-  if(act){pr.dataset.pstart=busy.start;pr.dataset.pend=busy.end}else{delete pr.dataset.pstart;delete pr.dataset.pend}}
- if(typeof _np!=='undefined'||!placePlates._ok){placePlates._ok=1;placePlates()}renderRail();renderQueues();renderAries();updTimers();}
+function renderBase(){const p=pl();const key=p.id+(p.moon?'m':'');if(ensurePads(p))save();
+ if(baseKey!==key){baseKey=key;$('#world').classList.toggle('moon',!!p.moon);buildBase(p);layoutPano()}
+ const pads=$$('#blds .pad');PADS.forEach((pd,i)=>{const el=pads[i];const id=p.pads[i];const lv=id?E.lv(p,id):0;const busy=id?busyOf(p,id):null;
+  const state=!id?'empty':busy&&!lv?'new':busy?'up':'done';const k=(id||'')+state;
+  if(el.dataset.k!==k){el.dataset.k=k;el.dataset.id=id||'';el.className='pad '+state;const pb=el.querySelector('.pb'),pg=el.querySelector('.pg');const sh=el.querySelector('.shadow');
+   if(!id){pb.removeAttribute('src');pg.removeAttribute('src')}
+   else{const gb=padGeo(i,rimg(id));const set=(im,g)=>{if(im.getAttribute('src')!==g.src)im.src=g.src;Object.assign(im.style,{left:g.left+'px',top:g.top+'px',width:g.width+'px',height:g.height+'px'})};
+    if(state==='new'){set(pb,padGeo(i,'pad'));set(pg,gb)}else{set(pb,gb);pg.removeAttribute('src')}
+    Object.assign(sh.style,{left:gb.cx-gb.w*.62+gb.w*.1+'px',top:gb.cy-gb.h*.2+'px',width:gb.w*1.24+'px',height:gb.h*1.9+gb.w*.06+'px'})}
+   const r=el.querySelector('.ring');const [cx,cy,w,hh]=PADS[i];const h2=Math.max(hh,w*.16);Object.assign(r.style,{left:cx-w*.56+'px',top:cy-h2*.62+'px',width:w*1.12+'px',height:h2*1.24+'px'})}
+  const fg=el.querySelector('.rfg');if(busy&&busy===p.bq[0]&&busy.end){const pr=Math.max(0,Math.min(1,(E.now()-busy.start)/(busy.end-busy.start)));fg.style.strokeDashoffset=(100-pr*100).toFixed(1)}else fg.style.strokeDashoffset='100'});
+ renderRail();renderQueues();renderAries();updTimers();}
 function renderRail(){const it=[['buildings','Gebäude',IC.bld],['research','Forschung',IC.res],['yard','Werft',IC.yard],['defense','Abwehr',IC.def],['store','Store',IC.store],['cmd','Offiziere',IC.cmd],['galacto','Galact.',IC.gem],['inv','Inventar',IC.inv]];
  setHTML($('#rail'),it.map(i=>`<button data-act="open" data-p="${i[0]}">${i[2]}${i[1]}${i[0]==='store'&&E.giftReady()?'<span class="dot ok" style="top:-2px;right:6px">1</span>':''}</button>`).join(''))}
 const qimg=id=>GE.BUILD[id]&&GE.BUILD[id].img?`<img src="assets/b/${GE.BUILD[id].img}.webp">`:A.img(id);

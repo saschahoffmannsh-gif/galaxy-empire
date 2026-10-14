@@ -125,3 +125,11 @@ PANELS.resinfo=()=>{const p=pl(),pi=E.prodInfo(p);const P=pi.parts||{};return['R
  <tr class="cur"><td>Gesamt</td><td>${fmt(pi.m)}</td><td>${fmt(pi.k)}</td><td>${fmt(pi.g)}</td><td>${fmt(pi.eProd-pi.eUse)}</td></tr></table>
  <div class="desc" style="margin-top:8px">Energieversorgung ${Math.round(pi.f*100)} % · Temperatur ${p.temp} °C · Spieltempo ${S.speed}×${E.cmdActive('geologist')?' · Geologe +10 %':''}</div>
  <div class="cat">Lager</div>${['m','k','g'].map(r=>`<div class="row" style="font-size:12px">${IC[r]} ${GE.RES[r]}<span class="spacer"></span>${fmt(p.r[r])} / ${fmt(E.storeCap(p,r))}</div>`).join('')}`]};
+
+PANELS.padbuild=i=>{const p=pl();const all=p.moon?GE.MOON_B:GE.PLANET_B;const list=all.filter(id=>!placed(p,id)).concat(all.filter(id=>placed(p,id)));const [cx]=PADS[i];const padOf=id=>{for(const k in p.pads)if(p.pads[k]===id)return +k+1};
+ const zone=cx<1080?(cx<760?'Flusstal':'Hochebene'):'Seeufer';
+ const rows=list.map(id=>{const d=GE.BUILD[id];if(placed(p,id))return`<div class="unitrow done"><img class="gi" src="assets/b2/${rimg(id)}_2.webp" alt="" style="object-fit:contain"><div style="flex:1;min-width:0"><div class="row"><span class="un">${d.n}</span><span class="mut">Stufe ${E.lv(p,id)}</span></div><div class="desc" style="font-size:11px">Steht bereits auf Bauplatz ${padOf(id)||'–'}</div></div><button class="btn sm ghost" data-act="bld" data-id="${id}">Öffnen</button></div>`;const nl=E.nextLevel(p,id),c=E.bCost(id,nl),ok=E.reqOk(d.req,p),er=E.canBuild(p,id);
+  return`<div class="unitrow ${ok?'':'lock'}"><img class="gi" src="assets/b2/${rimg(id)}_2.webp" alt="" style="object-fit:contain"><div style="flex:1;min-width:0"><div class="row"><span class="un">${d.n}</span><span class="mut">${ok?'⏱ '+ft(E.bTime(p,id,nl)*1000):'Gesperrt'}</span></div>
+  <div class="desc" style="font-size:11px;margin:2px 0">${esc(d.d||'')}</div>${ok?costHTML(c,p):reqHTML(E.reqList(d.req,p))}</div>
+  <button class="btn sm" ${er?'disabled title="'+esc(er)+'"':''} data-act="padbuild" data-i="${i}" data-id="${id}">Hier bauen</button></div>`}).join('');
+ return[`Bauplatz ${i+1} <span class="mut" style="font-size:12px">${zone} · frei</span>`,`<div class="padlist">${rows}</div>`]};

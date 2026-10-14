@@ -4,13 +4,14 @@ const GW=1280,GH=720;const GX={g:null,sel:null,slot:null,list:false,cam:null,cac
 const $=s=>document.querySelector(s);
 function vmap(g,[x,y]){const v=(g-1)%4;if(v===1)x=GW-x;if(v===2){x=GW-x;y=GH-y}if(v===3)y=GH-y;return[x,y]}
 const imgTf=g=>{const v=(g-1)%4;return v===1?'scaleX(-1)':v===2?'rotate(180deg)':v===3?'scaleY(-1)':''};
+const HUE=[0,55,-40,120,190,-95,250,30,-150];
 const hue=g=>`hue-rotate(${[0,55,-40,120,190,-95,250,30,-150][g-1]}deg) saturate(${g%2?1.05:1.2})`;
 GX.pos=(g,s)=>vmap(g,window.GXPOS[s-1]);
-function info(g){const c=GX.cache[g];if(c&&Date.now()-c.t<8000)return c.d;const d=[];
+function info(g){const c=GX.cache[g];const sig=Object.keys(S.debris).length+':'+S.order.length;if(c&&c.sig===sig&&Date.now()-c.t<120000)return c.d;const d=[];
  for(let s=1;s<=499;s++){const sys=E.system(g,s);let own=0,moon=0,ina=0,lv=0,deb=0;
   for(const sl of sys){if(sl.kind==='own'){own++;if(sl.pl.moonId)moon=1}if(sl.kind==='inactive')ina++;if(sl.kind==='npc')lv=Math.max(lv,sl.lv||0);if(S.debris[E.ck(g,s,sl.p)])deb=1}
   d.push({own,moon,ina,lv,deb})}
- GX.cache[g]={t:Date.now(),d};return d}
+ GX.cache[g]={t:Date.now(),d,sig};return d}
 // Leuchtsprites einmalig vorrendern
 const spr={};function sprite(col,r){const k=col+r;if(spr[k])return spr[k];const c=document.createElement('canvas');const n=Math.ceil(r*4);c.width=c.height=n*2;const x=c.getContext('2d');
  const gr=x.createRadialGradient(n,n,0,n,n,n);gr.addColorStop(0,'#fff');gr.addColorStop(.12,col);gr.addColorStop(.35,col.replace('1)','.35)'));gr.addColorStop(1,col.replace('1)','0)'));x.fillStyle=gr;x.fillRect(0,0,n*2,n*2);return spr[k]=c}
@@ -19,7 +20,7 @@ const PAD={t:104,b:70,l:58,r:10};
 function fit(){const m=$('#gxmap');const W=m.clientWidth-PAD.l-PAD.r,H=m.clientHeight-PAD.t-PAD.b;return Math.max(W/GW,H/GH)}
 function clampCam(){const m=$('#gxmap'),W=m.clientWidth,H=m.clientHeight,c=GX.cam;const kf=fit();c.k=Math.min(kf*8,Math.max(kf*.92,c.k));
  const x0=PAD.l,x1=W-PAD.r-GW*c.k,y0=PAD.t,y1=H-PAD.b-GH*c.k;c.x=x1>x0?(x0+x1)/2:Math.min(x0,Math.max(x1,c.x));c.y=y1>y0?(y0+y1)/2:Math.min(y0,Math.max(y1,c.y))}
-function apply(){clampCam();const c=GX.cam;$('#gximg').style.transform=`translate(${c.x}px,${c.y}px) scale(${c.k})`;const zr=c.k/fit();$('#gximg').style.opacity=zr>2.5?Math.max(.72,1-(zr-2.5)*.08).toFixed(2):'1';draw()}
+function apply(){clampCam();const c=GX.cam;if(window.GXGL&&GXGL.ok){const zr=c.k/fit();const now=performance.now();const lo=now-(GX.lastMove||0)<140;GXGL.draw(c,GX.g,HUE[GX.g-1],GX.g%2?1.05:1.2,Math.max(0,Math.min(1,(zr-2)/2.5)),lo);if(lo){clearTimeout(GX._hq);GX._hq=setTimeout(()=>{GX.lastMove=0;apply()},160)}draw();return}$('#gximg').style.transform=`translate(${c.x}px,${c.y}px) scale(${c.k})`;const zr=c.k/fit();$('#gximg').style.opacity=zr>2.5?Math.max(.72,1-(zr-2.5)*.08).toFixed(2):'1';draw()}
 GX.focus=function(s,k){const m=$('#gxmap');const [x,y]=GX.pos(GX.g,s);const c=GX.cam;c.k=k||c.k;c.x=m.clientWidth/2-x*c.k;c.y=m.clientHeight/2-y*c.k;apply()};
 // Helligkeitskarte der Galaxie (für prozedurale Detailsterne)
 let LUM=null;function lum(){if(LUM)return LUM;const im=$('#gximginner');if(!im||!im.complete||!im.naturalWidth)return null;const c=document.createElement('canvas');c.width=256;c.height=144;const x=c.getContext('2d');x.drawImage(im,0,0,256,144);
@@ -77,19 +78,19 @@ function setGal(g){GX.g=g;GX.sel=null;GX.slot=null;chrome();const m=$('#gxmap');
 GX.render=function(){const p=pl();if(!$('#gxmap'))return;if(GX.g==null){setGal(p.g);GX.focus(p.s,fit()*2.2)}
  $('#v-galaxy').classList.toggle('listmode',GX.list);if(GX.list){galG=GX.g;galS=GX.sel||galS||p.s;renderGalList()}draw();loopOn()};
 let raf=0;function loopOn(){if(raf)return;const step=()=>{raf=0;if(view!=='galaxy'||document.hidden)return;
- if(GX.vel){GX.cam.x+=GX.vel.x;GX.cam.y+=GX.vel.y;GX.vel.x*=.92;GX.vel.y*=.92;if(Math.abs(GX.vel.x)+Math.abs(GX.vel.y)<.3)GX.vel=null;apply()}
+ if(GX.vel){GX.lastMove=performance.now();GX.cam.x+=GX.vel.x;GX.cam.y+=GX.vel.y;GX.vel.x*=.92;GX.vel.y*=.92;if(Math.abs(GX.vel.x)+Math.abs(GX.vel.y)<.3)GX.vel=null;apply()}
  else if(S.fleets.some(f=>!f.npc&&f.to.g===GX.g))draw();
  raf=requestAnimationFrame(step)};raf=requestAnimationFrame(step)}
 function zoomAt(f,cx,cy){const c=GX.cam;const nk=Math.min(fit()*8,Math.max(fit()*.92,c.k*f));const r=nk/c.k;c.x=cx-(cx-c.x)*r;c.y=cy-(cy-c.y)*r;c.k=nk;apply()}
 // Zoom animiert
 function animZoom(f,cx,cy){let n=0;const st=()=>{zoomAt(Math.pow(f,1/10),cx,cy);if(++n<10)requestAnimationFrame(st)};st()}
-function bind(){const m=$('#gxmap');$('#gximginner').addEventListener('load',()=>{LUM=null;draw()});const pts=new Map();let st=null;
+function bind(){const m=$('#gxmap');{const cv=document.createElement('canvas');cv.id='gxgl';m.insertBefore(cv,m.firstChild);if(window.GXGL&&GXGL.init(cv)){$('#gximg').style.display='none';GXGL.onload=()=>{if(GX.cam)apply()}}else cv.remove()}$('#gximginner').addEventListener('load',()=>{LUM=null;draw()});const pts=new Map();let st=null;
  m.addEventListener('pointerdown',e=>{m.setPointerCapture(e.pointerId);pts.set(e.pointerId,{x:e.clientX,y:e.clientY});GX.vel=null;
   if(pts.size===1)st={x:e.clientX,y:e.clientY,t:performance.now(),moved:0,lx:e.clientX,ly:e.clientY,vx:0,vy:0};
   else if(pts.size===2){const [a,b]=[...pts.values()];st.pinch={d:Math.hypot(a.x-b.x,a.y-b.y),k:GX.cam.k};st.moved=99}});
  m.addEventListener('pointermove',e=>{if(!pts.has(e.pointerId)||!st)return;pts.set(e.pointerId,{x:e.clientX,y:e.clientY});const r=m.getBoundingClientRect();
-  if(pts.size>=2&&st.pinch){const [a,b]=[...pts.values()];const d=Math.hypot(a.x-b.x,a.y-b.y);const tk=st.pinch.k*d/st.pinch.d;zoomAt(tk/GX.cam.k,(a.x+b.x)/2-r.left,(a.y+b.y)/2-r.top);return}
-  const dx=e.clientX-st.lx,dy=e.clientY-st.ly;st.lx=e.clientX;st.ly=e.clientY;st.moved+=Math.abs(dx)+Math.abs(dy);if(st.moved>6){GX.cam.x+=dx;GX.cam.y+=dy;st.vx=dx;st.vy=dy;apply()}});
+  if(pts.size>=2&&st.pinch){const [a,b]=[...pts.values()];const d=Math.hypot(a.x-b.x,a.y-b.y);const tk=st.pinch.k*d/st.pinch.d;GX.lastMove=performance.now();zoomAt(tk/GX.cam.k,(a.x+b.x)/2-r.left,(a.y+b.y)/2-r.top);return}
+  const dx=e.clientX-st.lx,dy=e.clientY-st.ly;st.lx=e.clientX;st.ly=e.clientY;st.moved+=Math.abs(dx)+Math.abs(dy);if(st.moved>6){GX.lastMove=performance.now();GX.cam.x+=dx;GX.cam.y+=dy;st.vx=dx;st.vy=dy;apply()}});
  const up=e=>{if(!pts.has(e.pointerId))return;pts.delete(e.pointerId);if(pts.size||!st)return;const r=m.getBoundingClientRect();
   if(st.moved<=6&&performance.now()-st.t<500){const s=hit(e.clientX-r.left,e.clientY-r.top);GX.sel=s;GX.slot=null;draw();card()}
   else if(Math.abs(st.vx)+Math.abs(st.vy)>2){GX.vel={x:st.vx,y:st.vy};loopOn()}st=null};

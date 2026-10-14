@@ -82,18 +82,20 @@ const timg=(id,lv)=>{const b=id==='@defense'?'defense':id;return TIERED.has(b)?`
 const PANO_W=2360,PANO_Y0=84,PANO_VIS1=714;let baseKey=null,panoS=1,panoCentered=false;
 function navH(){const n=$('#nav');return n?n.offsetHeight+10:64}
 // Basis-Trefferflächen: mind. 46×36 Bildschirm-Pixel, damit auch kleine, weit hinten liegende Pads sicher antippbar sind
-function sizeHits(){const k=1/(panoS||1);$$('#padhits .bh').forEach(e=>{const [cx,cy,w,hh]=PADS[+e.dataset.i];const g=Math.max(hh,w*.16);const W=Math.max(w*.84,46*k),H=Math.max(g*.85,36*k);
+function sizeHits(){const k=1/(panoS||1);$$('#padhits .bh').forEach(e=>{const [cx,cy,w,hh]=PADS[+e.dataset.i];const g=Math.max(hh,w*.16);const W=Math.max(w*1.05,52*k),H=Math.max(g*1.05,40*k);
  Object.assign(e.style,{left:cx-W/2+'px',top:cy-g*.1-H/2+'px',width:W+'px',height:H+'px'})})}
 function layoutPano(){const H=($('#pano').clientHeight||innerHeight);const vis=H-navH();panoS=vis/(PANO_VIS1-PANO_Y0);window.panoS=panoS;window.PANO_Y0v=PANO_Y0;
  $('#world').style.transform=`translate(0,${-PANO_Y0*panoS}px) scale(${panoS})`;$('#sizer').style.width=PANO_W*panoS+'px';
  if(!panoCentered&&$('#pano').clientWidth){panoCentered=true;$('#pano').scrollLeft=Math.max(0,1080*panoS-$('#pano').clientWidth/2)}
  sizeHits();if(window.WATER)WATER.resize(panoS);if(window.AMBIENT)AMBIENT.place()}
 // Perspektiv-Variante: Gebäude ohne eigenes Pad, Fuß per Spalte auf die Pad-Neigung verschoben (Aufbau bleibt unverzerrt).
-const IMP={terraformer:1.3,lab:1.32,shipyard:1.3,robotics:1.3,fusion:1.32,alliance:1.28,stargate:1.34,nanite:1.34,galacto:1.18,radar:1.2,defense:1.15,solar:1.0,metal_mine:1.06,crystal_mine:1.06,gas_mine:1.06,store:1.0,moon_base:1.3,pioneer:1.3,eux:1.18,wormhole:1.32};
+const IMP={terraformer:1.38,lab:1.4,shipyard:1.38,robotics:1.38,fusion:1.4,alliance:1.36,stargate:1.42,nanite:1.42,galacto:1.28,radar:1.3,defense:1.22,solar:1.12,metal_mine:1.18,crystal_mine:1.18,gas_mine:1.18,store:1.12,moon_base:1.36,pioneer:1.36,eux:1.26,wormhole:1.4};
 // Freiraum je Pad: Oberkante darf die Vorderkante (Basis) überlappender, weiter hinten liegender Pads nicht verdecken.
 const PAD_HMAX=PADS.map(([cx,cy,w,h],i)=>{let m=1e9;PADS.forEach(([cx2,cy2,w2,h2],j)=>{if(j===i||cy2>=cy)return;if(Math.abs(cx2-cx)<(w*.8+w2)/2)m=Math.min(m,cy-(cy2+Math.max(h2,w2*.16)*.55))});return m});
-function padGeo(i,name,lv){const [cx,cy,w,h]=PADS[i];const r=h/w;let vi=0,bd=9;B3.rt.forEach((t,j)=>{if(Math.abs(t-r)<bd){bd=Math.abs(t-r);vi=j}});
- const v=B3.v[name][vi];const bn=name.replace(/_t\d$/,'');let s=w/288*(IMP[bn]||IMP[rimg(bn)]||1)*(1+Math.min(lv||0,20)*.008);const hm=PAD_HMAX[i];if(v[3]*s>hm)s=Math.max(w/288*.8,hm/v[3]);const half=cx<1180?640:1720;const sk=-Math.max(-1,Math.min(1,(cx-half)/640))*7;
+// v33: geringere Tiefenstaffelung (hinten nur moderat kleiner), Breite gegen Nachbarn begrenzt (max. ~12 % Überlappung)
+const EW=(()=>{const W=PADS.map(([,,w])=>1.28*170*Math.pow(w/170,.45));for(let it=0;it<10;it++)PADS.forEach(([cx,cy],i)=>PADS.forEach(([cx2,cy2],j)=>{if(j<=i||Math.abs(cy-cy2)>=70)return;const dx=Math.abs(cx-cx2),need=(W[i]+W[j])*.8*1.2/2;if(need>dx*1.4){const k=dx*1.4/need;W[i]*=Math.sqrt(k);W[j]*=Math.sqrt(k)}}));return W.map((v,i)=>Math.max(v,PADS[i][2]*1.08))})();
+function padGeo(i,name,lv){const [cx,cy,w,h]=PADS[i];const vi=2;
+ const v=B3.v[name][vi];const bn=name.replace(/_t\d$/,'');const ew=EW[i];let s=ew/288*(IMP[bn]||IMP[rimg(bn)]||1)*(1+Math.min(lv||0,20)*.008);const hm=PAD_HMAX[i]*1.35;if(v[3]*s>hm)s=Math.max(ew/288*.9,hm/v[3]);const sk=0;
  return{vi,src:`assets/b3/${name}_${vi}.webp`,left:cx-v[2]*s,top:cy-v[3]*s,width:v[0]*s,height:v[1]*s,ox:v[2]*s,oy:v[3]*s,sk,cx,cy,w,h:Math.max(h,w*.16)}}
 
 // v22: Leben je Ausbaustufe (bewegliche Teile, Leuchtschicht, Masken-Effekte, Signallichter, Dampf, Kran, Drohnen)
@@ -146,7 +148,7 @@ function renderBase(){const p=pl();const key=p.id+(p.moon?'m':'');if(ensurePads(
   const state=!id?'empty':busy&&!lv?'new':busy?'up':'done';const k=(id||'')+state+Math.min(lv,20);el.classList.toggle('t5',!!id&&lv>=20);el.classList.toggle('t4',!!id&&lv>=15&&lv<20);const pb=el.querySelector('.pb');
   if(el.dataset.k!==k){el.dataset.k=k;el.dataset.id=id||'';el.className='pad '+state;const sh=el.querySelector('.shadow');
    if(!id){pb.removeAttribute('src');const fx=el.querySelector('.fx');fx.innerHTML='';fx.dataset.n=''}
-   else{const tk=timg(id,lv);const g=padGeo(i,tk,lv);const TF=window.TFX&&TFX[tk]&&state!=='new'?TFX[tk][g.vi]:null;const PT=!TF&&window.B3P&&B3P[tk]&&state!=='new'?B3P[tk][g.vi]:null;const src=(PT||(TF&&TF.p.length))?g.src.replace('.webp','b.webp'):g.src;if(pb.getAttribute('src')!==src)pb.src=src;const bs={left:g.left+'px',top:g.top+'px',width:g.width+'px',height:g.height+'px',transformOrigin:`${g.ox}px ${g.oy}px`,transform:`skewX(${g.sk.toFixed(2)}deg)`};Object.assign(pb.style,bs);
+   else{const tk=timg(id,lv);const g=padGeo(i,tk,lv);const TF=window.TFX&&TFX[tk]&&state!=='new'?TFX[tk][g.vi]:null;const PT=!TF&&window.B3P&&B3P[tk]&&state!=='new'?B3P[tk][g.vi]:null;const src=(PT||(TF&&TF.p.length))?g.src.replace('.webp','b.webp'):g.src;if(pb.getAttribute('src')!==src)pb.src=src;const bs={left:g.left+'px',top:g.top+'px',width:g.width+'px',height:g.height+'px',transformOrigin:`${g.ox}px ${g.oy}px`,transform:'none'};Object.assign(pb.style,bs);
     const fx=el.querySelector('.fx');Object.assign(fx.style,bs);fx.style.setProperty('--m',`url(${g.src})`);fx.style.fontSize=(g.width/25).toFixed(2)+'px';const fh=state==='new'?'':TF?tfxHTML(TF,g.src,tierOf(Math.max(1,lv))):(PT?partsHTML(PT,g.src):'')+(window.BFX?BFX.html(rimg(id),g.oy/g.height):'');if(fx.dataset.n!==tk+state+g.vi){fx.dataset.n=tk+state+g.vi;fx.innerHTML=fh}
     const ht=el.querySelector('.hit');ht.style.setProperty('--t1',g.top+g.height*.08+'px');ht.style.setProperty('--h1',(g.cy+g.h*.55)-(g.top+g.height*.08)+'px');ht.style.setProperty('--l1',g.left+g.width*.12+'px');ht.style.setProperty('--w1',g.width*.76+'px');
     Object.assign(sh.style,{left:g.cx-g.w*.5+g.w*.08+'px',top:g.cy-g.h*.45+'px',width:g.w*1.08+'px',height:g.h*1.5+'px'})}

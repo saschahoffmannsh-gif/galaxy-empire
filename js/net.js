@@ -23,7 +23,11 @@ function breakdown(){const S=GS();let f=0,d=0;const add=(o,T)=>{let v=0;for(cons
 NET.breakdown=breakdown;
 NET.sync=async function(withSave){if(!NET.on||!GS())return;const S=GS();
  try{const planets=S.order.map(id=>S.planets[id]).map(p=>({g:p.g,s:p.s,p:p.p,name:p.name,type:p.type,moon:!!p.moon}));
-  NET.uni=await api('pub',{body:{pts:breakdown(),tag:S.ally?S.ally.tag:null,ally:S.ally?S.ally.name:null,planets}});NET.lastSync=Date.now();NET.err=null;
+  const snap=S.order.map(id=>S.planets[id]).filter(p=>!p.moon).map(p=>({g:p.g,s:p.s,p:p.p,r:{m:Math.floor(p.r.m),k:Math.floor(p.r.k),g:Math.floor(p.r.g)},ships:{...p.ships},def:{...p.def}}));
+  NET.uni=await api('pub',{body:{pts:breakdown(),tag:S.ally?S.ally.tag:null,ally:S.ally?S.ally.name:null,planets,snap,tech:ENGINE.techOf()}});
+  NET.incoming=NET.uni.incoming||[];NET.ally=NET.uni.ally||null;const evs0=NET.uni.events||[];delete NET.uni.events;
+  if(NET.ally)S.ally={name:NET.ally.name,tag:NET.ally.tag,created:S.ally&&S.ally.tag===NET.ally.tag?S.ally.created:Date.now(),mp:1};else if(S.ally&&S.ally.mp)S.ally=null;
+  if(evs0.length&&applyEvents(evs0)){await api('ack',{body:{ids:evs0.map(e=>e.id)}});try{save()}catch(e){}if(!NET._re){NET._re=1;try{await NET.sync(false)}finally{NET._re=0}}}NET.lastSync=Date.now();NET.err=null;
   try{localStorage.setItem('ge_mp_uni',JSON.stringify({...NET.uni,players:NET.uni.players,npcs:NET.uni.npcs}))}catch(e){}
   if(window.RANK)RANK.g=null;
   if(withSave||Date.now()-NET.lastSave>10*60e3){await NET.pushSave()}
@@ -41,16 +45,94 @@ NET.logout=async function(){try{await NET.pushSave()}catch(e){}localStorage.remo
 const h32=s=>{let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0};
 function index(){const U=NET.uni;if(!U)return{};if(U._idx)return U._idx;const idx={};const me=String(NET.cfg.name||'').toLowerCase();
  for(const p of U.players||[]){if(String(p.name).toLowerCase()===me)continue;const tot=p.pts.b+p.pts.t+p.pts.f+p.pts.d;for(const pl of p.planets||[]){if(pl.moon)continue;idx[pl.g+':'+pl.s+':'+pl.p]={kind:'player',player:p.name,pts:tot,ally:p.tag,name:pl.name||'Planet',real:1}}}
- for(const x of U.npcs||[]){const tot=x.pts.b+x.pts.t+x.pts.f+x.pts.d;idx[x.home.join(':')]={kind:'player',player:x.n,pts:Math.max(50,tot),ally:x.tag,name:'Heimatplanet',npcp:x.type}}
+ for(const x of U.npcs||[]){const tot=x.pts.b+x.pts.t+x.pts.f+x.pts.d;idx[x.home.join(':')]={kind:'player',player:x.n,pts:Math.max(50,tot),ally:x.tag,name:'Heimatplanet',npcp:x.type,npcid:x.id}}
  Object.defineProperty(U,'_idx',{value:idx,enumerable:false});return idx}
 NET.slotHook=(g,s,p)=>index()[g+':'+s+':'+p]||null;
 // ---------- Rangliste ----------
 NET.rankList=function(){const U=NET.uni||{ranking:[]};const me=String(NET.cfg.name||'').toLowerCase();const out=[];
  for(const x of U.ranking||[]){if(!x.npc&&String(x.n).toLowerCase()===me)continue;const p=x.pts||{};out.push({id:x.id,n:x.n+(x.npc?'':' 👤'),tag:x.tag,act:x.npc?!(x.type==='pausing'&&false):(Date.now()-(x.seen||0)<7*864e5),home:x.home,hue:h32(x.n)%360,tot:x.tot,b:p.b||0,t:p.t||0,f:p.f||0,d:p.d||0,real:!x.npc})}
  const S=GS();const b=breakdown();const home=S.planets[S.home];out.push({id:'me',n:S.cmdName,tag:S.ally?S.ally.tag:null,act:true,me:1,home:[home.g,home.s,home.p],hue:190,...b,tot:b.b+b.t+b.f+b.d});return out};
+
+// ---------- Stufe 2: Angriffe / Spionage / Transporte zwischen Spielern (Kampf auf dem Server) ----------
+const fmtR=o=>['m','k','g'].filter(r=>o&&o[r]>0).map(r=>(window.fmt?fmt(Math.floor(o[r])):Math.floor(o[r]))+' '+({m:'Metall',k:'Kristall',g:'Gas'})[r]).join(', ')||'nichts';
+function planetAt(S,c){for(const id of S.order){const p=S.planets[id];if(!p.moon&&p.g===c.g&&p.s===c.s&&p.p===c.p)return p}return null}
+function applyEvents(evs){const S=GS();const E=ENGINE;if(!S)return false;let any=false;
+ for(const ev of evs){any=true;const c=ev.to||{};const pl=planetAt(S,c);const where=pl?`${pl.name} [${c.g}:${c.s}:${c.p}]`:`[${c.g}:${c.s}:${c.p}]`;
+  try{if(ev.kind==='attacked'){if(pl){for(const k in ev.lossShips||{})pl.ships[k]=Math.max(0,(pl.ships[k]||0)-ev.lossShips[k]);for(const k in ev.lossDef||{})pl.def[k]=Math.max(0,(pl.def[k]||0)-ev.lossDef[k]);
+     for(const k in pl.ships)if(!pl.ships[k])delete pl.ships[k];for(const r of['m','k','g'])pl.r[r]=Math.max(0,pl.r[r]-((ev.loot||{})[r]||0))}
+    E.report('combat',`Angriff von ${ev.from} auf ${where}`,{battle:ev.battle});toast(`⚔️ ${ev.from} hat ${where} angegriffen`,'err',5000)}
+   else if(ev.kind==='spied'){E.report('info',`Spionage von ${ev.from}`,{text:`${ev.from} hat ${where} ausspioniert.`+(ev.lost?' Die Sonden wurden abgeschossen.':'')})}
+   else if(ev.kind==='transport'){if(pl)for(const r of['m','k','g'])pl.r[r]+=(+(ev.res||{})[r]||0);E.report('transport',`Lieferung von ${ev.from}`,{text:`${ev.from} hat dir ${fmtR(ev.res)} nach ${where} geliefert.`})}
+   else if(ev.kind==='allyapp'){E.report('info',`Bewerbung von ${ev.from}`,{text:`${ev.from} möchte deiner Allianz [${ev.tag}] beitreten.`+(ev.msg?` Nachricht: „${ev.msg}“`:'')});toast(`Neue Allianz-Bewerbung von ${ev.from}`,'ok',4000)}
+   else if(ev.kind==='allydecision'){E.report('info',ev.accept?`Aufgenommen in [${ev.tag}]`:`Bewerbung bei [${ev.tag}] abgelehnt`,{text:ev.accept?`Du bist jetzt Mitglied der Allianz ${ev.name} [${ev.tag}].`:`Die Allianz ${ev.name} [${ev.tag}] hat deine Bewerbung abgelehnt.`})}
+   else if(ev.kind==='allykick'){E.report('info',`Aus [${ev.tag}] entfernt`,{text:`Du wurdest aus der Allianz [${ev.tag}] entfernt.`})}
+  }catch(e){console.error(e)}}
+ return any}
+NET.applyEvents=applyEvents;
+function onSend(f){const S=GS();if(!NET.on||f.npc||!['attack','spy','transport'].includes(f.mission)||f.to.moon)return;const sl=NET.slotHook(f.to.g,f.to.s,f.to.p);if(!sl)return;
+ let target=null;if(sl.real)target={name:sl.player};else if(sl.npcp&&sl.npcid&&f.mission!=='transport')target={npc:sl.npcid};if(!target)return;
+ f.pvp={...target,who:sl.player};const E=ENGINE;
+ api('fleet',{body:{mission:f.mission,target,to:{g:f.to.g,s:f.to.s,p:f.to.p},fromC:f.fromC,ships:f.ships,cargo:f.cargo,tech:E.techOf(),esp:E.tl('espionage'),arrive:Date.now()+(f.arrive-S.t),depart:Date.now(),cid:f.id}})
+  .then(r=>{f.pvp.sid=r.id;try{save()}catch(e){}}).catch(e=>{f.pvp.err=e.message;toast('Server: '+e.message+' – Flotte kehrt bei Ankunft um','err',4000)})}
+let busy=false;
+async function resolveLoop(){const S=GS();if(!S||busy||!NET.on)return;const list=S.fleets.filter(f=>f.phase==='pvp');if(!list.length)return;busy=true;
+ try{for(const f of list){if(!f.pvp.sid){if(f.pvp.err||S.t-f.pvpAt>60e3){f.phase='back';f.arrive=S.t+f.dur;ENGINE.report('info','Mission abgebrochen',{text:'Der Server hat die Flotte nicht angenommen. Sie kehrt zurück.'})}continue}
+   let r;try{r=await api('fleet/resolve',{body:{id:f.pvp.sid}})}catch(e){if(/unbekannt/.test(e.message)){f.phase='back';f.arrive=S.t+f.dur}continue}
+   if(!r.result)continue;applyResult(f,r.result)}}
+ finally{busy=false;try{after()}catch(e){}}}
+function applyResult(f,x){const S=GS();const E=ENGINE;const to=f.to;const c=`[${to.g}:${to.s}:${to.p}]`;const who=f.pvp.who||'Spieler';
+ if(x.kind==='attack'){f.ships={};for(const k in x.endShips||{})if(x.endShips[k]>0)f.ships[k]=x.endShips[k];for(const r of['m','k','g'])f.cargo[r]+=(x.loot||{})[r]||0;
+  const d=x.debris||{};if((d.m||0)+(d.k||0)>0){const k=E.ck(to.g,to.s,to.p);const o=S.debris[k]||(S.debris[k]={m:0,k:0});o.m+=d.m||0;o.k+=d.k||0}
+  E.report('combat',`Kampf bei ${who} ${c}`,{battle:x.battle})}
+ else if(x.kind==='spy'){if(x.lostProbes){f.ships={}}E.report('spy',`Spionagebericht ${who} ${c}`,{spy:x.spy})}
+ else if(x.kind==='transport'){E.report('transport','Transport angekommen',{text:`Deine Flotte hat ${fmtR(f.cargo)} an ${who} ${c} geliefert.`});f.cargo={m:0,k:0,g:0}}
+ else E.report('info','Mission fehlgeschlagen',{text:(x.msg||'Unbekannter Fehler')+' – die Flotte kehrt zurück.'});
+ if(!Object.keys(f.ships).length){S.fleets=S.fleets.filter(y=>y!==f);return}
+ f.phase='back';f.arrive=S.t+f.dur;delete f.pvp}
+NET.extIncoming=()=>{const S=GS();if(!S)return[];return(NET.incoming||[]).filter(i=>i.mission==='attack').map(i=>{const pl=planetAt(S,i.to||{});return pl?{id:'x'+i.id,target:S.order.find(id=>S.planets[id]===pl),arrive:S.t+(i.arrive-Date.now()),who:i.from,phase:'out',ext:1,ships:{}}:null}).filter(Boolean)};
+// ---------- Stufe 3: Allianzen + Chat ----------
+const AL={tab:'ally',list:null,chat:{},last:{},ch:'global'};NET.AL=AL;
+async function alLoad(){try{AL.list=(await api('ally/list')).allies||[]}catch(e){AL.err=e.message}}
+async function chatLoad(ch){const arr=AL.chat[ch]||(AL.chat[ch]=[]);const since=arr.length?arr[arr.length-1].id:0;try{const r=await api('chat?ch='+encodeURIComponent(ch)+'&since='+since);if(r.msgs&&r.msgs.length){arr.push(...r.msgs);if(arr.length>200)arr.splice(0,arr.length-200);return true}}catch(e){AL.err=e.message}return false}
+const rk={founder:'Gründer',officer:'Offizier',member:'Mitglied'};
+function mpAlly(){const b=$('#allybody');b.className='vbody glass';const A=NET.ally;const me=NET.cfg.name;let h='<div class="disp"><div>';
+ if(!AL.list){alLoad().then(()=>{if(view==='ally')renderAlly()})}
+ if(!A){h+=`<div class="box"><b>Allianz gründen</b><div class="row" style="margin-top:6px"><input id="mpan" placeholder="Name (3–30)" maxlength="30" style="flex:1"><input id="mpat" placeholder="Kürzel" maxlength="5" style="width:80px"></div><button class="btn" style="margin-top:8px" data-act="mpa-create">${IC.ally} Gründen</button></div>`;
+  h+=`<div class="box" style="margin-top:8px"><b>Allianzen im Universum</b>${AL.list?AL.list.length?`<table class="tbl" style="margin-top:4px">${AL.list.map(a=>`<tr><td><span class="badge">${esc(a.tag)}</span></td><td>${esc(a.name)}<div class="mut" style="font-size:11px">${a.members.length} Mitglieder · Gründer ${esc(a.founder)}</div></td><td style="text-align:right">${(a.apps||[]).some(x=>x.n===me)?'<span class="mut">beworben</span>':`<button class="btn sm" data-act="mpa-apply" data-id="${esc(a.tag)}">Bewerben</button>`}</td></tr>`).join('')}</table>`:'<div class="mut">Noch keine Allianzen.</div>':'<div class="mut">Lädt…</div>'}</div>`}
+ else{const my=A.members.find(m=>m.n===me)||{};const boss=my.rank==='founder'||my.rank==='officer';
+  h+=`<div class="box"><div class="row">${IC.ally}<b style="font-size:16px">${esc(A.name)}</b><span class="badge own">${esc(A.tag)}</span><span class="spacer"></span><span class="mut">${rk[my.rank]||''}</span></div>${A.descr?`<div class="desc" style="margin-top:6px">${esc(A.descr)}</div>`:''}
+   ${my.rank==='founder'?`<div class="row" style="margin-top:6px"><input id="mpad" placeholder="Beschreibung" maxlength="300" style="flex:1" value="${esc(A.descr||'')}"><button class="btn sm" data-act="mpa-descr">Speichern</button></div>`:''}</div>`;
+  h+=`<div class="box" style="margin-top:8px"><b>Mitglieder (${A.members.length})</b><table class="tbl" style="margin-top:4px">${A.members.map(m=>`<tr><td>${esc(m.n)}${m.n===me?' (Du)':''}</td><td class="mut">${rk[m.rank]||m.rank}</td><td style="text-align:right">${my.rank==='founder'&&m.rank!=='founder'?`<button class="btn sm ghost" data-act="mpa-rank" data-id="${esc(m.n)}" data-r="${m.rank==='officer'?'member':'officer'}">${m.rank==='officer'?'Zum Mitglied':'Zum Offizier'}</button>`:''}${boss&&m.rank!=='founder'&&m.n!==me?` <button class="btn sm ghost" data-act="mpa-kick" data-id="${esc(m.n)}">Entfernen</button>`:''}</td></tr>`).join('')}</table></div>`;
+  if(boss)h+=`<div class="box" style="margin-top:8px"><b>Bewerbungen (${(A.apps||[]).length})</b>${(A.apps||[]).length?`<table class="tbl" style="margin-top:4px">${A.apps.map(x=>`<tr><td>${esc(x.n)}${x.msg?`<div class="mut" style="font-size:11px">„${esc(x.msg)}“</div>`:''}</td><td style="text-align:right"><button class="btn sm green" data-act="mpa-acc" data-id="${esc(x.n)}">Annehmen</button> <button class="btn sm ghost" data-act="mpa-rej" data-id="${esc(x.n)}">Ablehnen</button></td></tr>`).join('')}</table>`:'<div class="mut">Keine offenen Bewerbungen.</div>'}</div>`;
+  h+=`<button class="btn sm ghost" style="margin-top:8px" data-act="mpa-leave">Allianz verlassen</button>`}
+ h+='</div><div>';const rows=NET.rankList().sort((a,b)=>b.tot-a.tot);h+=`<div class="box"><b>Rangliste</b><table class="tbl" style="margin-top:4px">${rows.slice(0,15).map((r,i)=>`<tr class="${r.me?'cur':''}"><td>${i+1}</td><td>${esc(r.n)}${r.tag?` <span class="badge">${esc(r.tag)}</span>`:''}</td><td style="text-align:right">${fmt(r.tot)}</td></tr>`).join('')}</table></div></div></div>`;
+ setHTML(b,h)}
+function mpChat(){const b=$('#chatbody');b.className='vbody glass';const A=NET.ally;if(AL.ch!=='global'&&!(A&&AL.ch==='ally:'+A.tag))AL.ch='global';const ch=AL.ch;const arr=AL.chat[ch]||[];const me=NET.cfg.name;
+ const keep=document.getElementById('mpct');const draft=keep?keep.value:'';
+ b.innerHTML=`<div class="row" style="margin-bottom:8px;gap:6px"><button class="btn sm ${ch==='global'?'':'ghost'}" data-act="mpc-ch" data-id="global">🌐 Universum</button>${A?`<button class="btn sm ${ch!=='global'?'':'ghost'}" data-act="mpc-ch" data-id="ally:${esc(A.tag)}">${IC.ally} [${esc(A.tag)}]</button>`:''}<span class="spacer"></span><span class="mut" style="font-size:11px">Mehrspieler-Chat</span></div>
+ <div id="mpcl" style="max-height:52vh;overflow:auto">${arr.length?arr.map(m=>`<div class="chatmsg"><div class="cav">${m.name==='System'?'!':esc(m.name[0]||'?')}</div><div class="cb"><small>${esc(m.name)}${m.name===me?' (Du)':''} · ${new Date(m.t).toLocaleString('de-DE',{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit'})}</small>${esc(m.txt)}</div></div>`).join(''):'<div class="mut">Noch keine Nachrichten.</div>'}</div>
+ <div class="row" style="margin-top:8px;gap:6px"><input id="mpct" maxlength="300" placeholder="Nachricht…" style="flex:1"><button class="btn sm" data-act="mpc-send">Senden</button></div>`;
+ const i=document.getElementById('mpct');i.value=draft;i.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();sendChat()}};const l=document.getElementById('mpcl');l.scrollTop=l.scrollHeight;
+ if(AL.last[ch]!==-1){AL.last[ch]=-1;chatLoad(ch).then(n=>{if(n&&view==='chat')mpChat()})}}
+async function sendChat(){const i=document.getElementById('mpct');const txt=(i&&i.value||'').trim();if(!txt)return;i.value='';try{await api('chat',{body:{ch:AL.ch,txt}});await chatLoad(AL.ch);if(view==='chat')mpChat()}catch(e){toast(e.message,'err')}}
+async function allyAct(a,t){const v=id=>(document.getElementById(id)||{}).value||'';const id=t.dataset.id;
+ if(a==='mpa-create')await api('ally/create',{body:{name:v('mpan').trim(),tag:v('mpat').trim()}});
+ else if(a==='mpa-apply'){const msg=prompt('Nachricht an die Allianz (optional):','')||'';await api('ally/apply',{body:{tag:id,msg}});toast('Bewerbung gesendet','ok')}
+ else if(a==='mpa-acc'||a==='mpa-rej')await api('ally/decide',{body:{name:id,accept:a==='mpa-acc'}});
+ else if(a==='mpa-rank')await api('ally/rank',{body:{name:id,rank:t.dataset.r}});
+ else if(a==='mpa-kick'){if(!confirm(id+' aus der Allianz entfernen?'))return;await api('ally/kick',{body:{name:id}})}
+ else if(a==='mpa-leave'){if(!confirm('Allianz wirklich verlassen?'))return;await api('ally/leave',{body:{}})}
+ else if(a==='mpa-descr')await api('ally/descr',{body:{descr:v('mpad')}});
+ AL.list=null;await NET.sync(false);renderAll()}
 // ---------- UI (nach dem Laden der Oberfläche) ----------
 function ui(){const E=window.ENGINE;
- if(NET.on){E.slotHook=NET.slotHook;const ss=E.setSpeed;E.setSpeed=function(sp){if(sp!==(NET.cfg.speed||10)){toast('Im Mehrspieler-Universum ist das Tempo fest ('+(NET.cfg.speed||10)+'×)','err');return}return ss.call(this,sp)};
+ if(NET.on){E.slotHook=NET.slotHook;E.onSend=onSend;E.pvpArrive=f=>{setTimeout(resolveLoop,300)};E.extIncoming=NET.extIncoming;
+  const rc=E.recall;E.recall=function(fid){const S=GS();const f=S&&S.fleets.find(x=>x.id===fid);if(f&&f.phase==='pvp')return;if(f&&f.pvp&&f.pvp.sid&&f.phase==='out'){api('fleet/recall',{body:{id:f.pvp.sid}}).catch(()=>{});delete f.pvp}return rc.call(this,fid)};
+  setInterval(resolveLoop,5000);setInterval(()=>{if(document.visibilityState==='visible'&&view==='chat'){const ch=AL.ch;chatLoad(ch).then(n=>{if(n&&view==='chat')mpChat()})}},8000);
+  window.renderAlly=mpAlly;window.renderChat=mpChat;
+  document.addEventListener('click',async e=>{const t=e.target.closest('[data-act^="mpa-"],[data-act^="mpc-"]');if(!t)return;e.stopPropagation();const a=t.dataset.act;
+   try{if(a==='mpc-ch'){AL.ch=t.dataset.id;AL.last[AL.ch]=0;mpChat()}else if(a==='mpc-send')await sendChat();else{t.disabled=true;await allyAct(a,t)}}catch(err){t.disabled=false;toast(err.message,'err',4000)}},true);
+const ss=E.setSpeed;E.setSpeed=function(sp){if(sp!==(NET.cfg.speed||10)){toast('Im Mehrspieler-Universum ist das Tempo fest ('+(NET.cfg.speed||10)+'×)','err');return}return ss.call(this,sp)};
   setTimeout(()=>NET.sync(true).then(()=>{if(NET.err)toast('Server nicht erreichbar: '+NET.err,'err',4000);else{try{renderAll()}catch(e){}}}),1500);
   setInterval(()=>{if(document.visibilityState==='visible')NET.sync(false)},120e3);
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')NET.pushSave(true).catch(()=>{})})}

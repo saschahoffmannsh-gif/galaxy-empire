@@ -271,7 +271,7 @@ E.missionsFor=function(g,s,p,kindHint){
  const sl=E.slot(g,s,p);const m=[];const deb=S.debris[ck(g,s,p)];
  if(sl.kind==='nebula')m.push('explore');
  if(sl.kind==='npc'||sl.kind==='inactive')m.push('attack','spy');
- if(sl.kind==='player')m.push('spy');
+ if(sl.kind==='player')m.push(...(sl.real?['attack','spy','transport']:sl.npcp?['attack','spy']:['spy']));
  if(sl.kind==='own')m.push('transport','deploy');
  if(sl.kind==='empty')m.push('colonize');
  if(deb&&(deb.m+deb.k)>0)m.push('recycle');
@@ -301,7 +301,7 @@ E.send=function(pid,ships,to,mission,pct,cargo){
  pl.r.g-=fuel+cargo.g;pl.r.m-=cargo.m;pl.r.k-=cargo.k;for(const id in ships){pl.ships[id]-=ships[id];if(!pl.ships[id])delete pl.ships[id]}
  const f={id:S.nextFleet++,mission,from:pid,fromC:{g:pl.g,s:pl.s,p:pl.p,moon:!!pl.moon},to:{g:to.g,s:to.s,p:to.p,moon:!!to.moon},ships,cargo,pct,depart:now(),arrive:now()+dur,dur,phase:'out'};
  if(mission==='explore'){f.hold=30*MIN/S.speed;S.flags.nebula=1}
- S.fleets.push(f);emit('change');return null};
+ S.fleets.push(f);if(E.onSend)try{E.onSend(f)}catch(e){}emit('change');return null};
 function findOwn(c){for(const id of S.order){const p=S.planets[id];if(!p.moon&&p.g===c.g&&p.s===c.s&&p.p===c.p)return id}return null}
 E.findOwn=findOwn;
 E.recall=function(fid){const f=S.fleets.find(x=>x.id===fid);if(!f||f.phase==='back'||f.npc)return;const t=now();
@@ -316,6 +316,7 @@ function processFleet(f){
  if(f.npc){return raidArrive(f)}
  if(f.phase==='back'){returnFleet(f);return}
  if(f.phase==='hold'){nebulaResolve(f);return}
+ if(f.pvp&&E.pvpArrive){f.phase='pvp';f.pvpAt=f.arrive;f.arrive=Infinity;E.pvpArrive(f);return}
  // Ankunft
  const to=f.to,k=ck(to.g,to.s,to.p);
  const goBack=()=>{f.phase='back';f.arrive=t+f.dur;};
@@ -400,7 +401,7 @@ function lootCalc(res,cap){const av={m:res.m/2,k:res.k/2,g:res.g/2};const out={m
  out.m=Math.min(av.m,c/3);c-=out.m;out.k=Math.min(av.k,c/2);c-=out.k;out.g=Math.min(av.g,c);c-=out.g;
  const m2=Math.min(av.m-out.m,c/2);out.m+=m2;c-=m2;const k2=Math.min(av.k-out.k,c);out.k+=k2;c-=k2;
  for(const r in out)out[r]=Math.floor(out[r]);return out}
-E.lootCalc=lootCalc;
+E.lootCalc=lootCalc;E.splitUnits=(...a)=>splitUnits(...a);E.packBattle=(...a)=>packBattle(...a);
 function attackArrive(f){const to=f.to;const sl=E.slot(to.g,to.s,to.p);const st=E.target(to.g,to.s,to.p);const k=ck(to.g,to.s,to.p);
  if(!st){report('info','Angriff abgebrochen',{text:'Dieser Planet steht unter Anfängerschutz.'});return}
  const src=S.planets[f.from];
@@ -482,7 +483,7 @@ function launchRaid(t){const cands=S.order.filter(id=>!S.planets[id].moon);const
  for(const ty of types){const d=GE.SHIP[ty];const v=d.c[0]+d.c[1]+d.c[2];const n=Math.floor(b/types.length/v);if(n>0)ships[ty]=n}ships.lc=Math.max(1,Math.round(budget/400000));
  const dur=Math.max(12*MIN,rnd(40,80)*MIN/Math.sqrt(S.speed));const f={id:S.nextFleet++,npc:true,mission:'attack',from:null,fromC:{g:pl.g,s:pl.s,p:16},to:{g:pl.g,s:pl.s,p:pl.p},target:pl.id,ships,cargo:{m:0,k:0,g:0},depart:t,arrive:t+dur,dur,phase:'out',tech:{weapons:Math.max(0,E.tl('weapons')-1),shielding:Math.max(0,E.tl('shielding')-1),armour:Math.max(0,E.tl('armour')-1)}};
  S.fleets.push(f);addLog(`⚠ ${E.lv(pl,'radar')>0?'Radar':'Frühwarnung'}: Piratenflotte im Anflug auf ${pl.name}!`,'warn');emit('raidwarn',f)}
-E.raidsIncoming=()=>S.fleets.filter(f=>f.npc&&f.phase==='out'&&f.arrive>S.t);
+E.raidsIncoming=()=>S.fleets.filter(f=>f.npc&&f.phase==='out'&&f.arrive>S.t).concat(E.extIncoming?E.extIncoming():[]);
 E.fleetSave=function(pid){const pl=S.planets[pid];const f=E.raidsIncoming().find(x=>x.target===pid);if(!f)return 'Kein Angriff im Anflug';
  const sh={};let n=0;for(const k in pl.ships)if(k!=='ss'&&GE.SHIP[k]&&!GE.SHIP[k].stat&&pl.ships[k]>0){sh[k]=pl.ships[k];n+=sh[k]}if(!n)return 'Keine flugfähigen Schiffe';
  const fuel=Math.min(pl.r.g,Math.ceil(n*2));pl.r.g-=fuel;for(const k in sh)delete pl.ships[k];S.saves=S.saves||[];S.saves.push({pid,ships:sh,ret:f.arrive+15*MIN/Math.sqrt(S.speed)});

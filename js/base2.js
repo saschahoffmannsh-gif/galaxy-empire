@@ -43,7 +43,7 @@ function apply(){clamp();wld.style.transform=`translate3d(${cam.x}px,${cam.y}px,
 let cullRaf=0;function schedCull(){if(cullRaf)return;cullRaf=requestAnimationFrame(()=>{cullRaf=0;cull()})}
 // v39: Effekte außerhalb des Sichtfelds komplett ausblenden (keine GPU-Ebenen)
 function cull(){if(!root)return;const m0=1,m=120/cam.s+80,x0=-cam.x/cam.s-m,y0=-cam.y/cam.s-m,x1=x0+vw()/cam.s+2*m,y1=y0+vh()/cam.s+2*m;
- const env=root.querySelectorAll('#b2fx .ev');for(const e of env){let r=e._r;if(!r){const w=e.offsetWidth||40,h=e.offsetHeight||40;const p=w<80?80:40;r=e._r=[e.offsetLeft-w-p,e.offsetTop-h-p,e.offsetLeft+w+p,e.offsetTop+h+p]}const v=r[2]>x0&&r[0]<x1&&r[3]>y0&&r[1]<y1;if(e._v!==v){e._v=v;e.style.display=v?'':'none'}}
+ const env=root.querySelectorAll('#b2fx .ev');for(const e of env){let r=e._r;if(!r){const w=e.offsetWidth||40,h=e.offsetHeight||40;const p=w<80?80:40;r=e._r=[e.offsetLeft-p-(w<300?w:0),e.offsetTop-p-(h<300?h:0),e.offsetLeft+w+p,e.offsetTop+h+p]}const v=r[2]>x0&&r[0]<x1&&r[3]>y0&&r[1]<y1;if(e._v!==v){e._v=v;e.style.display=v?'':'none'}}
  for(const id in els){const f=els[id].querySelector('.b2fx');if(!f)continue;const l=parseFloat(f.style.left),t=parseFloat(f.style.top),w=parseFloat(f.style.width),h=parseFloat(f.style.height);const v=!(LITE&&cam.s<.5)&&l+w>x0&&l<x1&&t+h>y0&&t<y1;if(f._v!==v){f._v=v;f.style.display=v?'':'none'}}}
 B2.cull=()=>{if(root)root.querySelectorAll('#b2fx .ev').forEach(e=>{e._r=null;e._v=null});schedCull()};
 function fitAll(){cam.s=minS()*1.35;cam.x=vw()/2-1550*cam.s;cam.y=vh()/2-1150*cam.s;apply()}

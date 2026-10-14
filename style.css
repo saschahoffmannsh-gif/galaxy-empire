@@ -607,3 +607,31 @@ video.pimg{border-radius:50%;object-fit:cover;mix-blend-mode:screen;background:t
 #blds .fx .pw i{position:absolute;left:0;width:100%;background-size:100% 800%;background-repeat:no-repeat;filter:sepia(.16) saturate(1.06) hue-rotate(-5deg) brightness(1.06) contrast(1.02);animation:ptwave 2s ease-in-out infinite alternate}
 @keyframes ptwave{from{transform:translateX(calc(var(--x)*-1))}to{transform:translateX(var(--x))}}
 #padhits{position:absolute;left:0;top:0;width:0;height:0;z-index:5000}#padhits .bh{position:absolute;border-radius:45%;cursor:pointer}
+/* v19 räumliche Effekte */
+.fx-sp{width:0}
+.fx-sp i{position:absolute;left:0;top:0;width:0;height:0;animation:sp3x 1.4s linear infinite,sp3y 1.4s linear infinite}
+.fx-sp i b{position:absolute;left:-.09em;top:-.09em;width:.18em;height:.18em;border-radius:50%;background:#fff;box-shadow:0 0 .2em .08em var(--c),0 0 .5em .1em color-mix(in srgb,var(--c) 40%,transparent)}
+@keyframes sp3x{from{transform:translateX(0)}to{transform:translateX(var(--dx))}}
+@keyframes sp3y{0%{top:0;animation-timing-function:cubic-bezier(.2,.6,.4,1)}18%{top:-9%;animation-timing-function:cubic-bezier(.5,0,.9,.5)}92%{top:100%;opacity:1}100%{top:100%;opacity:0}}
+.fx-sp i{opacity:1}
+.fx-st i{position:absolute;left:0;top:0;width:0;height:0;animation:st3y 5.2s cubic-bezier(.15,.6,.35,1) infinite}
+.fx-st i b{position:absolute;left:-.6em;top:-.6em;width:1.2em;height:1.2em;border-radius:50%;background:radial-gradient(circle at 40% 40%,rgba(240,238,235,.55),rgba(200,196,190,.25) 45%,transparent 70%);opacity:0;animation:st3x 5.2s cubic-bezier(.55,0,.85,.6) infinite}
+@keyframes st3y{from{transform:translateY(0)}to{transform:translateY(-5.5em)}}
+@keyframes st3x{0%{transform:translateX(0) scale(.35);opacity:0}12%{opacity:.75}100%{transform:translateX(3.2em) scale(3.2);opacity:0}}
+.fx-ring3{position:absolute;overflow:visible}
+.fx-ring3 path{fill:none;stroke:var(--c);vector-effect:non-scaling-stroke;stroke-dasharray:3 2 7 3;animation:fxdash3 5s linear infinite}
+.fx-ring3 .bk{stroke-width:1.2;opacity:.28}
+.fx-ring3 .fr{stroke-width:2.6;opacity:.95;filter:drop-shadow(0 0 2px var(--c))}
+@keyframes fxdash3{to{stroke-dashoffset:-50}}
+.fx-rs{width:0}.fx-rs i{position:absolute;bottom:0;width:.22em;height:.22em;border-radius:50%;background:#fff;box-shadow:0 0 .3em .12em var(--c);opacity:0;animation:rs3 2.6s cubic-bezier(.3,0,.6,1) infinite}
+@keyframes rs3{0%{transform:translateY(0) scale(1);opacity:0}15%{opacity:.95}100%{transform:translateY(-100%) scale(.45);opacity:0}}
+.fx-rs{display:block}.fx-rs i{bottom:0}
+/* Teile: organische Kurven, Schattierung relativ zum Licht von links, Verkürzung */
+#blds .fx .pt{animation-timing-function:cubic-bezier(.45,.05,.55,.95)!important}
+@keyframes ptrot{0%{transform:rotate(var(--a));filter:sepia(.16) saturate(1.06) brightness(.98)}55%{transform:rotate(calc(var(--a)*-1.08));filter:sepia(.16) saturate(1.06) brightness(1.14)}100%{transform:rotate(calc(var(--a)*-1));filter:sepia(.16) saturate(1.06) brightness(1.12)}}
+@keyframes ptyaw{0%{transform:perspective(400px) rotateY(-14deg) rotate(calc(var(--a)*.6));filter:sepia(.16) brightness(1.16)}50%{transform:perspective(400px) rotateY(0deg) rotate(0deg);filter:sepia(.16) brightness(1.02)}100%{transform:perspective(400px) rotateY(16deg) rotate(calc(var(--a)*-.6));filter:sepia(.16) brightness(.84)}}
+@keyframes ptpump{0%{transform:translateY(0)}38%{transform:translateY(var(--d))}46%{transform:translateY(calc(var(--d)*.92))}54%{transform:translateY(var(--d))}100%{transform:translateY(0)}}
+.pt-turn{animation-name:ptturn!important}
+@keyframes ptturn{0%{transform:perspective(300px) rotateY(-10deg) rotate(calc(var(--a)*.4));filter:sepia(.16) brightness(1.12)}100%{transform:perspective(300px) rotateY(12deg) rotate(calc(var(--a)*-.4));filter:sepia(.16) brightness(.86)}}
+#blds .fx .pw i{animation-name:ptwave3!important;animation-timing-function:cubic-bezier(.45,.05,.55,.95)!important}
+@keyframes ptwave3{0%{transform:translateX(calc(var(--x)*-1)) scaleX(1);filter:sepia(.16) brightness(1.1)}50%{transform:translateX(0) scaleX(.94);filter:sepia(.16) brightness(.86)}100%{transform:translateX(var(--x)) scaleX(1);filter:sepia(.16) brightness(1.05)}}

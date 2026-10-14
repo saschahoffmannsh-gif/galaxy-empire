@@ -114,7 +114,7 @@ document.addEventListener('click',ev=>{const t=ev.target.closest('[data-act]');i
  case 'export':{const box=$('#savebox');box.style.display='block';box.value=btoa(unescape(encodeURIComponent(JSON.stringify(S))));box.select();try{navigator.clipboard.writeText(box.value)}catch(e){}S.flags.exported=1;toast('Spielstand exportiert und kopiert','ok');save();renderTop();break}
  case 'import':{const box=$('#savebox');if(box.style.display!=='block'||!box.value){box.style.display='block';box.value='';box.placeholder='Spielstand-Code hier einfügen und erneut „Importieren“ tippen';box.focus();break}
   try{const o=JSON.parse(decodeURIComponent(escape(atob(box.value.trim()))));if(o.v!==3)throw 0;S=E.load(o);save();toast('Spielstand geladen','ok');closePanel()}catch(e){toast('Ungültiger Code','err')}break}
- case 'reset':if(confirm('Wirklich alles löschen und neu beginnen?')){localStorage.removeItem(KEY);S=E.newGame({speed:10});save();sysG=galG=null;D.to=null;closePanel();toast('Neues Spiel gestartet','ok')}break;
+ case 'reset':if(confirm('Wirklich alles löschen und neu beginnen?')){localStorage.removeItem(KEY);S=E.newGame({speed:10});grantTest(false);save();sysG=galG=null;D.to=null;closePanel();toast('Neues Spiel gestartet','ok')}break;
  case 'resinfo':openPanel('resinfo');break;
  case 'mkally':if(!err(E.createAlly($('#an').value,$('#at').value))){toast('Allianz gegründet!','ok');after()}break;
  case 'sun':toast('Zentralstern – Energiequelle für Solarkraftwerke und Satelliten. Innere Planeten sind heißer.','',4000);break;
@@ -154,4 +154,4 @@ load();A.stars($('#stars'));renderAll();setInterval(loop,250);if(window.WATER)WA
 addEventListener('resize',()=>{A.stars($('#stars'));layoutPano()});addEventListener('orientationchange',()=>setTimeout(layoutPano,300));
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{E.tick();renderAll()}});
 if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
-window.GAME={E,get S(){return S},openPanel,setView,save,toast,dispatch};
+window.GAME={E,get S(){return S},openPanel,setView,save,toast,dispatch,get panel(){return panelStack[panelStack.length-1]||null},closePanel};

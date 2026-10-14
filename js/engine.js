@@ -207,12 +207,14 @@ E.slot=function(g,s,p){
  const k=ck(g,s,p);
  for(const id of S.order){const pl=S.planets[id];if(!pl.moon&&pl.g===g&&pl.s===s&&pl.p===p)return{kind:'own',pl,type:pl.type,name:pl.name,fields:pl.fields}}
  if(p===16)return{kind:'nebula',name:'Mysteriöser Nebel'};
+ if(E.mp&&E.slotHook){const hk=E.slotHook(g,s,p);if(hk&&hk.real)return Object.assign({type:poolPick(k)},hk)}
  const npcPos=E.npcAt(g,s);const ni=npcPos.indexOf(p);
  const r=srng(hash('slot'+S.seed+':'+k));
  if(ni>=0){const N=GE.NPC[ni];return{kind:'npc',lv:N.lv,name:N.n,de:N.de,type:poolPick(k)}}
  if(E.slotHook){const hk=E.slotHook(g,s,p);if(hk)return Object.assign({type:poolPick(k)},hk)}
  if((S.colonized||{})[k])return{kind:'empty',fields:E.colFields(g,s,p),type:poolPick(k)};
  const x=r();
+ if(E.mp){if(x<0.12){const nm=GE.FAKE_NAMES[Math.floor(r()*GE.FAKE_NAMES.length)];return{kind:'inactive',player:nm,pts:Math.floor(r()*3000)+100,ally:null,name:'Verlassene Kolonie',type:poolPick(k)}}return{kind:'empty',fields:E.colFields(g,s,p),type:poolPick(k)}}
  if(x<0.42){const nm=GE.FAKE_NAMES[Math.floor(r()*GE.FAKE_NAMES.length)]+(r()<0.4?Math.floor(r()*99):'');const inactive=r()<0.55;
   const pts=Math.floor(Math.pow(r(),2)*(inactive?60000:900000))+200;const ally=r()<0.5?GE.ALLY_TAGS[Math.floor(r()*GE.ALLY_TAGS.length)]:null;
   return{kind:inactive?'inactive':'player',player:nm,pts,ally,name:['Kolonie','Heimatplanet','Außenposten','Nova','Aegis','Haven'][Math.floor(r()*6)],type:poolPick(k)}}

@@ -30,7 +30,7 @@ function npcPts(x,t){const d=(t-EPOCH)/DAY;const dd=x.act?d:Math.min(d,12);const
 function myBreak(){let f=0,d=0;const add=(o,T)=>{let v=0;for(const k in o){const u=T[k];if(u)v+=o[k]*(u.c[0]+u.c[1]+u.c[2])/1000}return v};
  for(const id of S.order){const p=S.planets[id];f+=add(p.ships,GE.SHIP);d+=add(p.def,GE.DEF)}for(const fl of S.fleets)if(!fl.npc)f+=add(fl.ships,GE.SHIP);
  const b=S.pts.b||0,t=S.pts.t||0;return{b:Math.floor(b),t:Math.floor(t),f:Math.floor(f),d:Math.floor(d),tot:Math.floor(b+t+f+d)}}
-function list(t){const D=data();const out=[];const my=myBreak();const home=S.planets[S.home];
+function list(t){if(window.NET&&NET.on)return NET.rankList(t);const D=data();const out=[];const my=myBreak();const home=S.planets[S.home];
  const ownMem=S.ally&&S.ally.members?S.ally.members.filter(m=>!m.me):[];const skip=new Set(ownMem.map(m=>m.n));
  for(const x of D.npcs){if(skip.has(x.n))continue;const tot=npcPts(x,t);out.push({id:x.id,n:x.n,tag:x.tag,act:x.act,home:x.home,hue:x.hue,tot,b:Math.round(tot*x.fr[0]),t:Math.round(tot*x.fr[1]),f:Math.round(tot*x.fr[2]),d:Math.round(tot*x.fr[3])})}
  for(const m of ownMem){const hh=h32(m.n);const fr=ARCH[hh%4];const tot=Math.round(m.pts*(t<Date.now()-DAY/2?.97:1));out.push({id:'m'+m.id,n:m.n,tag:S.ally.tag,act:true,home:[1+hh%9,1+(hh>>4)%499,4+(hh>>9)%9],hue:hh%360,tot,b:Math.round(tot*fr[0]),t:Math.round(tot*fr[1]),f:Math.round(tot*fr[2]),d:Math.round(tot*fr[3]),mem:1})}

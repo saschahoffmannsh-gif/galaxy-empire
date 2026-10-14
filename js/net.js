@@ -43,7 +43,9 @@ NET.revert=async function(msg){try{const s=await api('save');const key=window.NE
 // Anmeldung: Server-Spielstand holen und lokal ablegen, dann neu laden
 async function enter(res,url){const c={url,token:res.token,name:res.name,home:res.home,speed:res.speed,seed:res.seed||4242};NET.cfg=c;
  const key='ge_mp_save_'+String(res.name).toLowerCase();
- if(res.hasSave){try{const s=await api('save');const local=JSON.parse(localStorage.getItem(key)||'null');if(!local||(local.t||0)<s.t)localStorage.setItem(key,await unzip(s.z))}catch(e){}}
+ if(res.hasSave){try{const s=await api('save');const local=JSON.parse(localStorage.getItem(key)||'null');const raw=await unzip(s.z);let rid=null;try{rid=JSON.parse(raw).rid||null}catch(e){}
+  // v42: nach einem Konto-Reset (rid) gewinnt immer der Server-Stand, auch wenn die lokale Kopie „neuer“ ist
+  if(!local||(local.t||0)<s.t||(local.rid||null)!==rid)localStorage.setItem(key,raw)}catch(e){}}
  localStorage.setItem(LS,JSON.stringify(c));localStorage.removeItem('ge_mp_off');
  if(!window.GE_REBOOT||!NET._ui){location.reload();return}
  NET.on=true;window.NET_KEY=key;ENGINE.mp=true;NET.uni=null;installMP();rkC.t=0;GE_REBOOT(key);setTimeout(()=>{try{renderAll()}catch(e){}},2500)}

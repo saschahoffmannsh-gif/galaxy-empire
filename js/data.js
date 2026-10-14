@@ -11,7 +11,7 @@ GE.BUILD = {
  solar:{n:'Solarkraftwerk',c:[75,30,0],f:1.5,img:'Kraftwerk',d:'Erzeugt Energie für Minen und Anlagen.',prod:'e'},
  fusion:{n:'Fusionskraftwerk',c:[900,360,180],f:1.8,req:{gas_mine:5,energy:3},d:'Erzeugt viel Energie, verbraucht dafür Gas. Energietechnik steigert die Leistung.',prod:'e'},
  robotics:{n:'Roboterfabrik',c:[400,120,200],f:2,img:'Roboter_Labor',d:'Roboter beschleunigen den Bau aller Gebäude.'},
- nanite:{n:'Nanitenfabrik',c:[1000000,500000,100000],f:2,img:'KI_Center',req:{robotics:8,computer:8},d:'Halbiert pro Stufe die Bauzeit von Gebäuden, Schiffen und Verteidigung.'},
+ nanite:{n:'Nanitenfabrik',c:[400000,200000,60000],f:2,img:'KI_Center',req:{robotics:8,computer:8},d:'Halbiert pro Stufe die Bauzeit von Gebäuden, Schiffen und Verteidigung.'},
  shipyard:{n:'Raumschiffwerft',c:[400,200,100],f:2,img:'Werft',req:{robotics:2},d:'Baut Schiffe und Verteidigungsanlagen. Jede Stufe verkürzt die Bauzeit.'},
  lab:{n:'Forschungslabor',c:[200,400,200],f:2,img:'Forschung',d:'Ermöglicht Forschung. Höhere Stufen erforschen schneller und schalten Technologien frei.'},
  metal_store:{n:'Metallspeicher',c:[1000,0,0],f:2,img:'Lager',grp:'store',d:'Erhöht die Lagerkapazität für Metall.'},

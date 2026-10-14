@@ -856,7 +856,24 @@ body.rw-flying #aries-h{opacity:0}
 #res .rc{position:relative}
 .ebadge{position:absolute;top:-5px;right:-4px;min-width:17px;height:17px;border-radius:9px;background:#ff3b55;color:#fff;font:800 11px/17px system-ui;text-align:center;box-shadow:0 0 0 2px rgba(10,14,30,.85),0 0 10px #ff3b55;animation:ebp 1.2s ease-in-out infinite;cursor:pointer;z-index:3}
 @keyframes ebp{50%{transform:scale(1.18);box-shadow:0 0 0 2px rgba(10,14,30,.85),0 0 18px #ff3b55}}
-#raidbar{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 58px);transform:translateX(-50%);z-index:60;padding:8px 10px;border-radius:14px;border:1px solid rgba(255,80,100,.55);box-shadow:0 0 22px rgba(255,60,90,.35);max-width:min(460px,80vw);animation:rbin .35s ease-out}
-#raidbar .rb-row{display:flex;align-items:center;gap:10px}#raidbar .rb-row+.rb-row{margin-top:6px}
-#raidbar .rb-ic{font-size:20px;color:#ff5d73;animation:ebp 1s infinite}#raidbar .rb-t{flex:1;min-width:0;font-size:12px}#raidbar .rb-t b{font-size:13px}
+#raidbar{position:fixed;left:50%;top:calc(var(--top) + 12px);transform:translateX(-50%);z-index:30;padding:3px 4px 3px 10px;border-radius:999px;border:1px solid rgba(255,80,100,.6);box-shadow:0 0 16px rgba(255,60,90,.35);max-width:min(420px,60vw);animation:rbin .35s ease-out}
+body.raid #panel{padding-bottom:46px}
+body.raid:has(#panel:not(.hidden)) #raidbar{top:auto;bottom:8px;z-index:41}
+#raidbar .rb-row{display:flex;align-items:center;gap:8px;white-space:nowrap}#raidbar .rb-row+.rb-row{margin-top:3px}
+#raidbar .rb-ic{font-size:14px;color:#ff5d73;animation:ebp 1s infinite}#raidbar .rb-t{flex:1;min-width:0;font-size:11.5px;overflow:hidden;text-overflow:ellipsis}#raidbar .rb-t b{font-size:12px}
+#raidbar .btn.sm{padding:4px 10px;font-size:11px;border-radius:999px}
 @keyframes rbin{from{opacity:0;transform:translate(-50%,-10px)}}
+/* v27: Terraformer */
+.tm-tring i{background:conic-gradient(from 0deg,transparent 0 55%,rgba(120,255,200,.2) 70%,#e6fff4 80%,rgba(40,230,170,.6) 84%,transparent 92%);animation:tmSpin 2.1s linear infinite}
+.te-tcore{animation-duration:2.6s!important}
+.tf-gr{position:absolute;aspect-ratio:2.6;transform:translate(-50%,-50%) scale(.55);border-radius:50%;background:radial-gradient(closest-side,rgba(120,230,90,.85),rgba(60,180,70,.55) 55%,rgba(40,140,60,0) 100%);mix-blend-mode:screen;filter:blur(.6px);animation:tfGrow 7s ease-in-out infinite;pointer-events:none}
+.tf-gr::after{content:'';position:absolute;inset:22% 30%;border-radius:50%;background:radial-gradient(closest-side,rgba(220,255,160,.7),transparent);animation:tfGrow 3.4s ease-in-out infinite reverse}
+@keyframes tfGrow{0%,100%{transform:translate(-50%,-50%) scale(.55);opacity:.55}50%{transform:translate(-50%,-50%) scale(1);opacity:1}}
+.tf-mi{position:absolute;width:34%;aspect-ratio:1.6;border-radius:50%;background:radial-gradient(closest-side,rgba(200,255,235,.55),rgba(120,230,200,.18) 60%,transparent);filter:blur(3px);transform:translate(-50%,-50%);animation:tfMist 7s ease-out infinite;pointer-events:none}
+@keyframes tfMist{0%{transform:translate(-50%,-30%) scale(.5);opacity:0}15%{opacity:.9}100%{transform:translate(calc(-50% + var(--dx)),-260%) scale(1.7);opacity:0}}
+.tf-rg{position:absolute;aspect-ratio:1;transform:translate(-50%,-50%) scaleY(.3);pointer-events:none}
+.tf-rg i,.tf-rg b{position:absolute;inset:0;border-radius:50%;border:2px solid rgba(90,255,200,.0);border-top-color:rgba(160,255,220,.95);border-left-color:rgba(60,230,170,.55);box-shadow:0 0 10px rgba(60,255,190,.6),inset 0 0 8px rgba(60,255,190,.35);animation:tfSpin 3.2s linear infinite}
+.tf-rg b{inset:12% 9%;border-top-color:rgba(190,255,120,.9);border-left-color:transparent;border-right-color:rgba(120,240,120,.5);animation-duration:2.2s;animation-direction:reverse}
+@keyframes tfSpin{to{transform:rotate(360deg)}}
+.tf-sp{position:absolute;width:1.6%;aspect-ratio:1;border-radius:50%;background:#c8ff9a;box-shadow:0 0 6px 2px rgba(120,255,140,.8);animation:tfSpore 4s linear infinite;pointer-events:none}
+@keyframes tfSpore{0%{transform:translate(0,0);opacity:0}15%{opacity:1}100%{transform:translate(8px,-60px);opacity:0}}

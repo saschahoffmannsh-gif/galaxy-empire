@@ -47,9 +47,9 @@ function morph(a,b){const an=a.childNodes,bn=[...b.childNodes];
  while(an.length>bn.length)a.removeChild(a.lastChild)}
 function setHTML(el,h){if(!el)return;if(el._h!==h){if(el._h==null){el.innerHTML=h}else{const t=document.createElement('template');t.innerHTML=h;morph(el,t.content)}el._h=h;return true}return false}
 function renderRaid(){let b=document.getElementById('raidbar');const L=(E.raidsIncoming?E.raidsIncoming():[]);const pend={};for(const f of L){const t=S.planets[f.target];if(!t)continue;const n=Object.entries(t.ships).filter(([k,v])=>k!=='ss'&&v>0).reduce((a,[,v])=>a+v,0);if(!pend[f.target]||f.arrive<pend[f.target].a)pend[f.target]={a:f.arrive,n,pl:t}}
- const ks=Object.keys(pend);if(!ks.length){if(b)b.remove();return}if(!b){b=document.createElement('div');b.id='raidbar';b.className='glass';document.body.appendChild(b)}
+ const ks=Object.keys(pend);document.body.classList.toggle('raid',!!ks.length);if(!ks.length){if(b)b.remove();return}if(!b){b=document.createElement('div');b.id='raidbar';b.className='glass';document.body.appendChild(b)}
  const sig=ks.map(k=>k+pend[k].n).join();if(b.dataset.sig===sig)return;b.dataset.sig=sig;
- b.innerHTML=ks.map(k=>{const x=pend[k];return`<div class="rb-row"><span class="rb-ic">⚠</span><div class="rb-t"><b>Piratenangriff auf ${esc(x.pl.name)}</b><div>Ankunft in <span data-end="${x.a}"></span></div></div>${x.n?`<button class="btn sm red" data-act="fsave" data-id="${k}">Flotte retten</button>`:'<span class="mut">keine Schiffe</span>'}</div>`}).join('')}
+ b.innerHTML=ks.map(k=>{const x=pend[k];return`<div class="rb-row"><span class="rb-ic">⚠</span><div class="rb-t"><b>Piraten → ${esc(x.pl.name)}</b> <span data-end="${x.a}"></span></div>${x.n?`<button class="btn sm red" data-act="fsave" data-id="${k}">Flotte retten</button>`:'<span class="mut">keine Schiffe</span>'}</div>`}).join('')}
 window.renderRaid=renderRaid;
 function renderTop(){const p=pl();try{renderRaid()}catch(e){}
  setHTML($('#plchip'),`<img src="${A.planetSrc(p.type)}" ${p.moon?'style="filter:grayscale(1)"':''}><div style="min-width:0;text-align:left"><div class="pn">${esc(p.name)}</div><div class="pc">[${p.g}:${p.s}:${p.p}]${p.moon?' Mond':''} ${window.PI?`<span class="pcf">${PI.icF}${E.fieldsUsed(p)}/${E.fieldsMax(p)}</span> <span class="pct">${PI.icT(p.temp)}${p.temp}°</span> `:""}▾</div></div>`);
@@ -73,9 +73,9 @@ const PADS=[[390,502,187,47],[453,415,108,20],[680,415,103,20],[610,378,80,13],[
  [1418,467,147,40],[1522,404,106,24],[1672,448,136,35],[1544,565,202,72],[1922,568,212,78],[2166,428,128,30],[2125,504,176,54],[2070,378,91,19],[1914,395,105,24],[939,600,308,93]];
 const PAD_PREF={metal_mine:0,crystal_mine:2,gas_mine:4,solar:8,fusion:12,lab:10,nanite:9,robotics:5,metal_store:11,galacto:7,'@defense':15,shipyard:6,alliance:1,stargate:13,radar:16,terraformer:17,crystal_store:3,gas_store:14,
  moon_base:6,pioneer:10,eux:16,wormhole:13};
-const RIMG={terraformer:'pioneer',metal_store:'store',crystal_store:'store',gas_store:'store','@defense':'defense'};
+const RIMG={metal_store:'store',crystal_store:'store',gas_store:'store','@defense':'defense'};
 const rimg=id=>RIMG[id]||id;
-const TIERED=new Set(['metal_mine','crystal_mine','gas_mine','solar','fusion','lab','robotics','nanite','shipyard','metal_store','crystal_store','gas_store','defense','galacto','alliance','stargate','radar']);
+const TIERED=new Set(['metal_mine','crystal_mine','gas_mine','solar','fusion','lab','robotics','nanite','shipyard','metal_store','crystal_store','gas_store','defense','galacto','alliance','stargate','radar','terraformer']);
 const tierOf=lv=>lv<5?1:lv<10?2:lv<15?3:lv<20?4:5;const ROMAN=['','I','II','III','IV','V'];
 const timg=(id,lv)=>{const b=id==='@defense'?'defense':id;return TIERED.has(b)?`${b}_t${Math.min(4,tierOf(Math.max(1,lv)))}`:rimg(id)};
 const PANO_W=2360,PANO_Y0=84,PANO_VIS1=714;let baseKey=null,panoS=1,panoCentered=false;
@@ -88,7 +88,7 @@ function layoutPano(){const H=($('#pano').clientHeight||innerHeight);const vis=H
  if(!panoCentered&&$('#pano').clientWidth){panoCentered=true;$('#pano').scrollLeft=Math.max(0,1080*panoS-$('#pano').clientWidth/2)}
  sizeHits();if(window.WATER)WATER.resize(panoS);if(window.AMBIENT)AMBIENT.place()}
 // Perspektiv-Variante: Gebäude ohne eigenes Pad, Fuß per Spalte auf die Pad-Neigung verschoben (Aufbau bleibt unverzerrt).
-const IMP={lab:1.32,shipyard:1.3,robotics:1.3,fusion:1.32,alliance:1.28,stargate:1.34,nanite:1.34,galacto:1.18,radar:1.2,defense:1.15,solar:1.0,metal_mine:1.06,crystal_mine:1.06,gas_mine:1.06,store:1.0,moon_base:1.3,pioneer:1.3,eux:1.18,wormhole:1.32};
+const IMP={terraformer:1.3,lab:1.32,shipyard:1.3,robotics:1.3,fusion:1.32,alliance:1.28,stargate:1.34,nanite:1.34,galacto:1.18,radar:1.2,defense:1.15,solar:1.0,metal_mine:1.06,crystal_mine:1.06,gas_mine:1.06,store:1.0,moon_base:1.3,pioneer:1.3,eux:1.18,wormhole:1.32};
 // Freiraum je Pad: Oberkante darf die Vorderkante (Basis) überlappender, weiter hinten liegender Pads nicht verdecken.
 const PAD_HMAX=PADS.map(([cx,cy,w,h],i)=>{let m=1e9;PADS.forEach(([cx2,cy2,w2,h2],j)=>{if(j===i||cy2>=cy)return;if(Math.abs(cx2-cx)<(w*.8+w2)/2)m=Math.min(m,cy-(cy2+Math.max(h2,w2*.16)*.55))});return m});
 function padGeo(i,name,lv){const [cx,cy,w,h]=PADS[i];const r=h/w;let vi=0,bd=9;B3.rt.forEach((t,j)=>{if(Math.abs(t-r)<bd){bd=Math.abs(t-r);vi=j}});
@@ -110,6 +110,7 @@ function tfxHTML(T,src,tier){const W=T.W,H=T.H,pre=src.replace('.webp','');const
  (T.st||[]).forEach(([x,y],k)=>{for(let j=0;j<3;j++)h+=`<span class="ts" style="left:${X(x)};top:${Y(y)};animation-delay:-${(j*1.3+k*.6).toFixed(1)}s"></span>`});
  if(T.tr){const [[x1,y1],[x2,y2]]=T.tr;h+=`<span class="tt" style="--x1:${X(x1)};--y1:${Y(y1)};--x2:${X(x2)};--y2:${Y(y2)}"><i></i></span><span class="tk" style="left:${X(x1+(x2-x1)*.6)};top:${Y(y1+(y2-y1)*.6+H*.18)}"></span>`}
  if(tier>=2&&T.top){const [x,y]=T.top[0];const n=tier>=4?3:tier>=3?2:1;for(let k=0;k<n;k++)h+=`<span class="td" style="left:${X(x)};top:${Y(Math.max(4,y-H*.08))};--r:${(2.4+k*1.1).toFixed(1)};animation-duration:${(9+k*3.5).toFixed(1)}s;animation-delay:-${(k*2.7).toFixed(1)}s"><i></i></span>`}
+ if(pre.includes('terraformer_')&&window.TERRA_FX)h+=TERRA_FX(T,tier);
  return h}
 // Bewegliche Teile (assets/b3/{name}_{v}_{id}.webp), Pivot in Sprite-Pixeln
 function partsHTML(PT,src){const W=PT.W,H=PT.H;return PT.p.map(p=>{const pos=`left:${p.x/W*100}%;top:${p.y/H*100}%;width:${p.w/W*100}%;height:${p.h/H*100}%`;const u=src.replace('.webp',`_${p.id}.webp`);

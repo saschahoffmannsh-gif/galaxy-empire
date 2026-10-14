@@ -208,8 +208,12 @@ E.slot=function(g,s,p){
   return{kind:inactive?'inactive':'player',player:nm,pts,ally,name:['Kolonie','Heimatplanet','Außenposten','Nova','Aegis','Haven'][Math.floor(r()*6)],type:poolPick(k)}}
  return{kind:'empty',fields:E.colFields(g,s,p),type:poolPick(k)};
 };
-function colFields(g,s,p){const r=srng(hash('f'+S.seed+ck(g,s,p)));const base=p>=3&&p<=7?150:p<=2||p>=13?80:115;return Math.round(base+ (r()*2-1)*(p===4||p===5?130:p>=3&&p<=7?110:60)*0.9+(p===4||p===5?40:0))}
-E.colFields=(g,s,p)=>Math.max(60,Math.min(280,colFields(g,s,p)));
+const FR={1:[40,70],2:[55,90],3:[75,115],4:[105,160],5:[115,170],6:[120,180],7:[150,225],8:[160,240],9:[150,230],10:[120,175],11:[110,165],12:[100,155],13:[70,115],14:[60,105],15:[50,95]};
+E.FIELD_RANGE=FR;E.fieldRange=p=>FR[p]||[60,120];
+function colFields(g,s,p){const r=srng(hash('f'+S.seed+ck(g,s,p)));const[a,b]=E.fieldRange(p);const x=(r()+r())/2;return Math.round(a+(b-a)*x)}
+E.colFields=(g,s,p)=>colFields(g,s,p);
+E.tempOf=tempOf;E.tempRange=p=>{const t=tempOf(p);return[t-40,t]};
+E.gasFactor=T=>1.44-0.004*T;E.satEnergy=T=>Math.max(5,(T+160)/6);
 E.system=function(g,s){const out=[];for(let p=1;p<=16;p++)out.push(Object.assign({p},E.slot(g,s,p)));return out};
 // NPC / inaktive: Zustand
 const NPC_TEMPL=[

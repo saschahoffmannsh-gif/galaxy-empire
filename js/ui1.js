@@ -47,7 +47,7 @@ function morph(a,b){const an=a.childNodes,bn=[...b.childNodes];
  while(an.length>bn.length)a.removeChild(a.lastChild)}
 function setHTML(el,h){if(!el)return;if(el._h!==h){if(el._h==null){el.innerHTML=h}else{const t=document.createElement('template');t.innerHTML=h;morph(el,t.content)}el._h=h;return true}return false}
 function renderTop(){const p=pl();
- setHTML($('#plchip'),`<img src="${A.planetSrc(p.type)}" ${p.moon?'style="filter:grayscale(1)"':''}><div style="min-width:0;text-align:left"><div class="pn">${esc(p.name)}</div><div class="pc">[${p.g}:${p.s}:${p.p}]${p.moon?' Mond':''} ▾</div></div>`);
+ setHTML($('#plchip'),`<img src="${A.planetSrc(p.type)}" ${p.moon?'style="filter:grayscale(1)"':''}><div style="min-width:0;text-align:left"><div class="pn">${esc(p.name)}</div><div class="pc">[${p.g}:${p.s}:${p.p}]${p.moon?' Mond':''} ${window.PI?`<span class="pcf">${PI.icF}${E.fieldsUsed(p)}/${E.fieldsMax(p)}</span> <span class="pct">${PI.icT(p.temp)}${p.temp}°</span> `:""}▾</div></div>`);
  setHTML($('#res'),['m','k','g'].map(r=>`<div class="rc" data-act="resinfo" title="${GE.RES[r]}">${IC[r]}<div><div class="rv"></div><div class="rr"></div></div><div class="rbar"><i></i></div></div>`).join('')+
  `<div class="rc" data-act="resinfo">${IC.e}<div><div class="rv"></div><div class="rr"></div></div></div><div class="rc" data-act="open" data-p="store">${IC.dm}<div><div class="rv"></div><div class="rr">DM</div></div></div>`);
  updRes();

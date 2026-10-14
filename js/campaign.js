@@ -41,11 +41,11 @@ const locked=f=>!free()&&FEAT[f]&&chN()<FEAT[f];
 const bLocked=id=>!free()&&BLOCK[id]&&chN()<BLOCK[id];
 window.CAMP.locked=locked;window.CAMP.bLocked=bLocked;
 function curMain(){const c=C();if(!c||c.ch>=CH.length)return null;return CH[c.ch].main.find(i=>!c.cl[i])}
-function claim(i){const c=C();if(c.cl[i]||!safe(()=>done(i)))return 'Mission noch nicht erfüllt';E.giveReward(T(i).r);c.cl[i]=1;S.task=Object.keys(c.cl).filter(k=>/^\d+$/.test(k)).length;
+function claim(i,paid){const c=C();if(c.cl[i]||!safe(()=>done(i)))return 'Mission noch nicht erfüllt';if(!paid)E.giveReward(T(i).r);c.cl[i]=1;S.task=Object.keys(c.cl).filter(k=>/^\d+$/.test(k)).length;
  (E.addLog||(()=>{}))(`Aries: Mission „${T(i).t}“ abgeschlossen – Belohnung erhalten!`,'task');toast('Belohnung: '+E.rewardText(T(i).r),'ok',3500);
  const ch=CH[c.ch];if(ch&&ch.main.every(k=>c.cl[k])){E.giveReward(ch.bonus);c.seen['o'+c.ch]=0;c.ch++;if(c.ch<CH.length)c.seen['i'+c.ch]=0}
  save();renderAll();return null}
-function claimSide(id){const c=C();const m=CH.flatMap(x=>x.side).find(x=>x.id===id);if(!m||c.side[id]||!m.c())return 'Noch nicht erfüllt';E.giveReward(m.r);c.side[id]=1;toast('Nebenmission: '+E.rewardText(m.r),'ok',3500);save();renderAll();return null}
+function claimSide(id,paid){const c=C();const m=CH.flatMap(x=>x.side).find(x=>x.id===id);if(!m||c.side[id]||!m.c())return 'Noch nicht erfüllt';if(!paid)E.giveReward(m.r);c.side[id]=1;toast('Nebenmission: '+E.rewardText(m.r),'ok',3500);save();renderAll();return null}
 // ---------- Missionslog ----------
 const rw=r=>`<span class="cp-rw">${E.rewardText(r)}</span>`;
 PANELS.camp=()=>{init();const c=C();let h=`<div class="cp-head">${holo('p3','cp-av')}<div><div class="cp-k">${free()?'Freies Spiel':`Kapitel ${c.ch+1} von ${CH.length}`}</div><b>${free()?'Das Universum gehört dir':CH[c.ch].t}</b><div class="cp-prog"><i style="width:${Math.round(CH.slice(0,c.ch).length/CH.length*100+(c.ch<CH.length?CH[c.ch].main.filter(i=>c.cl[i]).length/CH[c.ch].main.length/CH.length*100:0))}%"></i></div></div></div>`;
@@ -56,6 +56,7 @@ PANELS.camp=()=>{init();const c=C();let h=`<div class="cp-head">${holo('p3','cp-
    h+=`<div class="cp-sub">Nebenmissionen</div>`+ch.side.map(m=>{const cl=c.side[m.id],d=!cl&&m.c();return`<div class="cp-m side ${cl?'cl':''}"><div class="cp-mi">${cl?'✓':'◇'}</div><div class="ft"><b>${esc(m.t)}</b><div>${esc(m.d)}</div>${rw(m.r)}</div>${cl?'':d?`<button class="btn sm green" data-act="cp-side" data-id="${m.id}">Abholen</button>`:''}</div>`}).join('');
    if(st==='cur')h+=`<div class="cp-sub">Kapitelbonus: ${rw(ch.bonus)}</div>`}
   h+='</div>'});
+ if(c.ch>=5||free())h+=`<div class="cp-sub">Wissen</div><div class="cp-m side"><div class="cp-mi">📘</div><div class="ft"><b>Planeten-Guide</b><div>Bauplätze, Temperatur und ihre Wirkung auf Gas und Energie – nach Position.</div></div><button class="btn sm ghost" data-act="open" data-p="pguide">Lesen</button></div>`;
  return['Missionslog',`<div class="camp">${h}</div>`]};
 PANELS.tasks=PANELS.camp;
 // ---------- HUD-Kachel ----------
@@ -93,7 +94,7 @@ function placeSpot(){if(!spotSel){document.querySelectorAll('.cp-target').forEac
  H.classList.toggle('right',r.left+r.width/2<innerWidth*0.5)}
 setInterval(()=>{const pn=!!(window.GAME&&GAME.panel);H.classList.toggle('mini',pn);if(pn&&!spotSel)H.classList.add('right');placeSpot()},120);addEventListener('resize',placeSpot);
 // Eingaben während geführter Schritte blockieren (außer Ziel und Aries)
-for(const ev of['click','pointerdown','touchstart','mousedown'])document.addEventListener(ev,e=>{if(!spotSel)return;if(e.target.closest('#aries-h'))return;if(spotEl&&spotEl.contains(e.target))return;e.stopPropagation();if(ev==='click')e.preventDefault()},true);
+for(const ev of['click','pointerdown','touchstart','mousedown'])document.addEventListener(ev,e=>{if(!spotSel)return;if(e.target.closest('#aries-h,#rwd'))return;if(spotEl&&spotEl.contains(e.target))return;e.stopPropagation();if(ev==='click')e.preventDefault()},true);
 const wait=(f,ms=60000)=>new Promise(r=>{const t0=Date.now();const iv=setInterval(()=>{if(safe(f)||Date.now()-t0>ms){clearInterval(iv);r(safe(f))}},150)});
 const panelIs=(k,a)=>()=>window.GAME&&GAME.panel&&GAME.panel[0]===k&&(a===undefined||GAME.panel[1]===a);
 const padOf=id=>{const p=pl();for(const k in p.pads)if(p.pads[k]===id)return +k;return PAD_PREF[id]};
@@ -118,16 +119,26 @@ const GUIDE={
  17:[['Schicke Schiffe über die Flotten-Ansicht in den Nebel (Position 16).','#nav [data-v=fleet]',()=>document.querySelector('#v-fleet.active')]],
  26:[['Galactonit verwaltest du hier.','#rail [data-p=galacto]',()=>!!GAME.panel]],
  12:[['Hier geht es zur Allianz.','#nav [data-v=ally]',()=>document.querySelector('#v-ally.active')]],
+ 20:[['Bevor du kolonisierst: Öffne die System-Ansicht.','#nav [data-v=system]',()=>document.querySelector('#v-system.active'),{p:'pointdl'}],
+  ['Tippe auf eine freie Position.',()=>{const o=document.querySelector('#sysstrip .orbit.empty');if(o&&!o.dataset.cps){o.dataset.cps=1;o.scrollIntoView({inline:'center',block:'nearest'})}return o},()=>!!document.querySelector('#pop'),{p:'point'}],
+  ['__pg'],
+  ['Baue in der Werft ein Kolonieschiff. Dann tippst du hier auf eine freie Position und wählst „Kolonisieren“.','__info',()=>true,{p:'explain'}]],
  rank:[['Der Pokal öffnet die Rangliste.','#topbtns [data-p=rank]',()=>!!S.flags.rankSeen]]
 };
 window.CAMP.GUIDE=GUIDE;
+async function pgSeq(){const pop=document.querySelector('#pop .pi-box');if(pop){spot('#pop .pi-box')}
+ let v=await say('Jede Position hat zwei Werte: Bauplätze – wie viele Gebäudestufen hineinpassen – und die Temperatur.',{p:'explain',btns:[['Weiter',null],['Überspringen','skip']]});if(v==='skip'){abort=true;return}
+ v=await say('Die Temperatur verändert deine Wirtschaft: Kalte Planeten fördern mehr Gas, heiße liefern mehr Energie aus Solarsatelliten.',{p:'think',btns:[['Weiter',null],['Überspringen','skip']]});if(v==='skip'){abort=true;return}
+ spot(null);hide();const p=document.querySelector('#pop');const pn=p&&(p.querySelector('h4 .mut')||{}).textContent;const hl=pn?+pn.split(':')[2]:0;if(typeof closePop==='function')closePop();
+ await card(`<div class="cc-k">Wissen</div><div class="cc-t">🪐 Planeten-Guide</div>${PI.guideHTML(hl)}<button class="btn" data-cc style="margin-top:10px">Verstanden</button>`,'wide')}
+window.CAMP.pgSeq=pgSeq;
 async function guide(i){if(busy)return;busy=true;abort=false;closePanelSafe();const g=GUIDE[i]||[];
- for(const s of g){if(!await step(...s))break}
- spot(null);const c=C();if(!abort&&!c.cl[i]&&safe(()=>done(i))){c.seen['d'+i]=1;await say('Genau so! Mission erfüllt – hier ist deine Belohnung.',{p:'cheer',btns:[['Belohnung abholen','claim'],['Später',null]]}).then(v=>{if(v==='claim')claim(i)})}else if(!abort&&c.cl[i])await say('Sehr gut, Kommandant! Belohnung erhalten.',{p:'cheer'});hide();busy=false;setTimeout(loop,400)}
+ for(const s of g){if(s[0]==='__pg'){S.camp.seen.pg=1;save();await pgSeq();if(abort)break;continue}if(s[1]==='__info'){spot(null);await say(s[0],{p:'explain',btns:[['Verstanden',null]]});continue}if(!await step(...s))break}
+ spot(null);const c=C();if(!abort&&!c.cl[i]&&safe(()=>done(i))){c.seen['d'+i]=1;await say('Genau so! Mission erfüllt – hier ist deine Belohnung.',{p:'cheer',btns:[['Belohnung abholen','claim'],['Später',null]]}).then(v=>{if(v==='claim')return claimFx(i)})}else if(!abort&&c.cl[i])await say('Sehr gut, Kommandant! Belohnung erhalten.',{p:'cheer'});hide();busy=false;setTimeout(loop,400)}
 function closePanelSafe(){if(window.GAME&&GAME.panel&&GAME.closePanel)GAME.closePanel()}
 window.CAMP.guide=guide;
 // ---------- Kapitelkarten ----------
-function card(html){return new Promise(r=>{CARD.innerHTML=`<div class="cc glass">${html}</div>`;CARD.classList.add('on');CARD.querySelector('[data-cc]').onclick=()=>{CARD.classList.remove('on');setTimeout(r,300)}})}
+function card(html,cls){return new Promise(r=>{CARD.innerHTML=`<div class="cc glass ${cls||''}">${html}</div>`;CARD.classList.add('on');CARD.querySelector('[data-cc]').onclick=()=>{CARD.classList.remove('on');setTimeout(r,300)}})}
 async function intro(k){const ch=CH[k];const un=Object.keys(FEAT).filter(f=>FEAT[f]===k+1).map(f=>FEATN[f]).concat(Object.keys(BLOCK).filter(b=>BLOCK[b]===k+1).map(b=>GE.BUILD[b].n));
  await card(`<div class="cc-k">Kapitel ${k+1}</div><div class="cc-t">${ch.ic} ${esc(ch.t)}</div><div class="cc-d">${esc(ch.intro)}</div>${un.length?`<div class="cc-u">🔓 Neu freigeschaltet: <b>${un.join(', ')}</b></div>`:''}<div class="cc-m">${ch.main.map(i=>`<span>${esc(T(i).t)}</span>`).join('')}</div><button class="btn" data-cc>Los geht's</button>`)}
 async function outro(k){const ch=CH[k];await card(`<div class="cc-k">Kapitel ${k+1} abgeschlossen</div><div class="cc-t">✦ ${esc(ch.t)}</div><div class="cc-d">${esc(ch.outro)}</div><div class="cc-u">Kapitelbonus: <b>${E.rewardText(ch.bonus)}</b></div><button class="btn" data-cc>Weiter</button>`)}
@@ -137,12 +148,13 @@ async function loop(){if(looping||busy||!S||!S.camp||S.camp.skip)return;if(docum
  for(let k=0;k<CH.length;k++)if(c.seen['o'+k]===0){c.seen['o'+k]=1;save();pose('cheer');await outro(k);if(k===CH.length-1){c.seen.fin=1;save();await finale()}}
  if(c.ch<CH.length&&!c.seen['i'+c.ch]){c.seen['i'+c.ch]=1;save();await intro(c.ch);
   const i=curMain();const t=T(i);c.seen['a'+i]=1;save();
+  if(c.ch===5){await say('Neue Welten warten! Doch nicht jeder Planet ist gleich – ich zeige dir, worauf du bei der Wahl achten solltest.',{p:'alert'});hide();looping=false;return guide(i)}
   if(c.ch===0)await say('Hallo, Kommandant! Ich bin Aries, deine Bordintelligenz. Ich führe dich Schritt für Schritt durch den Aufbau deines Imperiums.',{p:'wave'});
   const v=await say(`Erste Mission: „${t.t}“ – ${t.d}`,{p:'explain',btns:GUIDE[i]?[['Zeig es mir','g'],['Selbst machen',null]]:[['Verstanden',null]]});
   hide();if(v==='g'){looping=false;return guide(i)}}
  // erfüllte Mission melden
  const i=curMain();if(i!=null&&!c.seen['d'+i]&&safe(()=>done(i))){c.seen['d'+i]=1;save();const v=await say(`Mission „${T(i).t}“ erfüllt! Hervorragend.`,{p:'cheer',btns:[['Belohnung abholen','c'],['Später',null]]});
-  if(v==='c')claim(i);hide();return}
+  hide();if(v==='c')await claimFx(i);return}
  const n=curMain();if(n!=null&&c.seen['i'+c.ch]&&!c.seen['a'+n]){c.seen['a'+n]=1;save();const t=T(n);const w=await say(`Nächste Mission: „${t.t}“ – ${t.d}`,{p:'explain',btns:GUIDE[n]?[['Zeig es mir','g'],['Selbst machen',null]]:[['Verstanden',null]]});hide();if(w==='g'){looping=false;return guide(n)}}
 }finally{looping=false}}
 setInterval(()=>{try{loop()}catch(e){}},1200);
@@ -154,8 +166,8 @@ setInterval(applyLocks,300);
 document.addEventListener('click',e=>{const b=e.target.closest('.cp-lock');if(b){e.stopPropagation();e.preventDefault();const k=b.dataset.lockch;toast(`🔒 Freischaltung in Kapitel ${k}: ${CH[k-1].t}`,'',2600);return}
  const t=e.target.closest('[data-act]');if(!t)return;const a=t.dataset.act;
  if(a==='open'&&t.dataset.p==='rank'){S.flags.rankSeen=1}
- if(a==='cp-claim'){e.stopPropagation();const id=/^\d+$/.test(t.dataset.id)?+t.dataset.id:t.dataset.id;err(claim(id));if(GAME.panel)renderPanel(true)}
- if(a==='cp-side'){e.stopPropagation();err(claimSide(t.dataset.id));if(GAME.panel)renderPanel(true)}
+ if(a==='cp-claim'){e.stopPropagation();const id=/^\d+$/.test(t.dataset.id)?+t.dataset.id:t.dataset.id;claimFx(id)}
+ if(a==='cp-side'){e.stopPropagation();claimSideFx(t.dataset.id)}
  if(a==='cp-guide'){e.stopPropagation();const id=/^\d+$/.test(t.dataset.id)?+t.dataset.id:t.dataset.id;guide(id)}
  if(a==='cp-skip'){e.stopPropagation();init();S.camp.skip=S.camp.skip?0:1;save();hide();renderAll();if(GAME.panel)renderPanel(true);toast(S.camp.skip?'Tutorial übersprungen – alle Funktionen frei':'Tutorial wieder aktiv','ok')}
 },true);
@@ -164,5 +176,8 @@ E.on&&E.on((ev)=>{});
 const _sf=E.send;if(_sf)E.send=function(...a){const r=_sf.apply(this,a);if(!r&&a[3]==='explore')S.flags.nebN=(S.flags.nebN||0)+1;return r};
 // Einstellungen: Tutorial überspringen
 const _st=PANELS.settings;PANELS.settings=()=>{const r=_st();init();r[1]=`<div class="box" style="margin-bottom:8px"><div class="row"><b>Kampagne / Tutorial</b><span class="spacer"></span><button class="btn sm ${S.camp.skip?'':'ghost'}" data-act="cp-skip">${S.camp.skip?'Tutorial fortsetzen':'Tutorial überspringen'}</button></div><div class="mut" style="font-size:11px">${S.camp.skip?'Alle Funktionen frei, Aries ist stumm.':'Überspringen schaltet sofort alle Funktionen frei. Missionen und Belohnungen bleiben im Missionslog abholbar.'}</div></div>`+r[1];return r};
+async function claimFx(i){const c=C();if(c.cl[i]||!safe(()=>done(i)))return err('Mission noch nicht erfüllt');if(window.RWD){const ok=await RWD.flow(T(i).r,T(i).t);if(!ok)return;err(claim(i,true))}else err(claim(i));if(GAME.panel)renderPanel(true)}
+async function claimSideFx(id){const c=C();const m=CH.flatMap(x=>x.side).find(x=>x.id===id);if(!m||c.side[id]||!m.c())return err('Noch nicht erfüllt');if(window.RWD){const ok=await RWD.flow(m.r,'Nebenmission: '+m.t);if(!ok)return;err(claimSide(id,true))}else err(claimSide(id));if(GAME.panel)renderPanel(true)}
+window.CAMP.claimFx=claimFx;
 window.CAMP.init=init;window.CAMP.claim=claim;window.CAMP.loop=loop;
 })();

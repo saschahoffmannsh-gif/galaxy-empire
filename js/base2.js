@@ -35,19 +35,26 @@ function ensureDom(){if(root)return;root=document.createElement('div');root.id='
  <div id="b2bar"><span id="b2msg"></span><button id="b2no" class="btn sm">✕</button><button id="b2ok" class="btn sm">✓ Hier bauen</button></div>`;
  $('#v-base').appendChild(root);wld=root.querySelector('#b2w');if(window.ENV2)try{ENV2.init(root.querySelector('#b2fx'))}catch(e){console.warn(e)}bind();fitAll()}
 function vw(){return root.clientWidth||innerWidth}function vh(){return root.clientHeight||innerHeight}
-const minS=()=>vh()/WH,maxS=()=>2.6;
+const LITE=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1)||/[?&]lite\b/.test(location.search);B2.lite=LITE;if(LITE)document.documentElement.classList.add('lite');
+const minS=()=>vh()/WH,maxS=()=>LITE?1.25:2.6;
 function clamp(){const s=cam.s=Math.max(minS(),Math.min(maxS(),cam.s));const W=WW*s,H=WH*s,w=vw(),h=vh();
  cam.x=W<=w?(w-W)/2:Math.min(0,Math.max(w-W,cam.x));cam.y=H<=h?(h-H)/2:Math.min(0,Math.max(h-H,cam.y))}
-function apply(){clamp();wld.style.transform=`translate3d(${cam.x}px,${cam.y}px,0) scale(${cam.s})`;wld.style.setProperty('--inv',(1/cam.s).toFixed(3));tilesUpd()}
+function apply(){clamp();wld.style.transform=`translate3d(${cam.x}px,${cam.y}px,0) scale(${cam.s})`;wld.style.setProperty('--inv',(1/cam.s).toFixed(3));tilesUpd();schedCull()}
+let cullRaf=0;function schedCull(){if(cullRaf)return;cullRaf=requestAnimationFrame(()=>{cullRaf=0;cull()})}
+// v39: Effekte außerhalb des Sichtfelds komplett ausblenden (keine GPU-Ebenen)
+function cull(){if(!root)return;const m0=1,m=120/cam.s+80,x0=-cam.x/cam.s-m,y0=-cam.y/cam.s-m,x1=x0+vw()/cam.s+2*m,y1=y0+vh()/cam.s+2*m;
+ const env=root.querySelectorAll('#b2fx .ev');for(const e of env){let r=e._r;if(!r){const w=e.offsetWidth||40,h=e.offsetHeight||40;const p=w<80?80:40;r=e._r=[e.offsetLeft-w-p,e.offsetTop-h-p,e.offsetLeft+w+p,e.offsetTop+h+p]}const v=r[2]>x0&&r[0]<x1&&r[3]>y0&&r[1]<y1;if(e._v!==v){e._v=v;e.style.display=v?'':'none'}}
+ for(const id in els){const f=els[id].querySelector('.b2fx');if(!f)continue;const l=parseFloat(f.style.left),t=parseFloat(f.style.top),w=parseFloat(f.style.width),h=parseFloat(f.style.height);const v=!(LITE&&cam.s<.5)&&l+w>x0&&l<x1&&t+h>y0&&t<y1;if(f._v!==v){f._v=v;f.style.display=v?'':'none'}}}
+B2.cull=()=>{if(root)root.querySelectorAll('#b2fx .ev').forEach(e=>{e._r=null;e._v=null});schedCull()};
 function fitAll(){cam.s=minS()*1.35;cam.x=vw()/2-1550*cam.s;cam.y=vh()/2-1150*cam.s;apply()}
 B2.cam=cam;B2.apply=()=>apply();
 function zoomAt(f,sx,sy){const wx=(sx-cam.x)/cam.s,wy=(sy-cam.y)/cam.s;cam.s=Math.max(minS(),Math.min(maxS(),cam.s*f));cam.x=sx-wx*cam.s;cam.y=sy-wy*cam.s;apply()}
 B2.focus=(x,y,s)=>{if(s)cam.s=s;cam.x=vw()/2-x*cam.s;cam.y=vh()/2-y*cam.s;apply()};
-function tilesUpd(){const dpr=devicePixelRatio||1;const hi=cam.s*dpr>1.15;const host=root.querySelector('#b2tiles');
+function tilesUpd(){const dpr=Math.min(2,devicePixelRatio||1);const hi=cam.s*dpr>(LITE?1.6:1.15);const host=root.querySelector('#b2tiles');
  const x0=-cam.x/cam.s,y0=-cam.y/cam.s,x1=x0+vw()/cam.s,y1=y0+vh()/cam.s;
  for(let r=0;r<4;r++)for(let c=0;c<4;c++){const k=r+'_'+c;const vis=hi&&c*TW<x1&&(c+1)*TW>x0&&r*TH<y1&&(r+1)*TH>y0;let t=tiles[k];
   if(vis&&!t){t=tiles[k]=new Image();t.className='b2t';t.draggable=false;Object.assign(t.style,{left:c*TW+'px',top:r*TH+'px',width:TW+'px',height:TH+'px'});t.onload=()=>t.classList.add('on');t.src=`assets/plat/t_${k}.webp`;host.appendChild(t)}
-  else if(!vis&&t&&!hi){t.remove();delete tiles[k]}}}
+  else if(!vis&&t){t.remove();t.src='';delete tiles[k]}}}
 // ---------- Gebäude ----------
 const els={};
 function sprite(p,id,lv,state){const k=key(id);const m=window.B5&&B5[k];if(!m)return null;const tn=state==='new'?'build':'t'+tier5(Math.max(1,lv))+(state==='up'?'_up':'');const file=(k==='radar'&&state==='done'&&window.B5DISH)?tn+'_nod':(window.B5A&&B5A.hasCut&&B5A.hasCut(k,tn))?tn+'_b':tn;return{tn,k,m:m[tn]||m[tn.replace('_up','')],src:`assets/b5/${k}_${file}.webp`}}
@@ -65,7 +72,7 @@ function render(){ensureDom();const p=pl();if(ensurePos(p))save();const host=roo
    e.style.zIndex=Math.round(pos.y);e.className='b2b '+state}
   const t=e.querySelector('.b2t'),bar=e.querySelector('.b2ring i');if(busy&&busy.end){if(t.dataset.end!=String(busy.end)){t.dataset.end=busy.end;bar.dataset.pstart=busy.start;bar.dataset.pend=busy.end}}else if(t.dataset.end){t.removeAttribute('data-end');bar.removeAttribute('data-pend')}}
  for(const id in els)if(!seen.has(id)){els[id].remove();delete els[id]}
- drawGhost()}
+ drawGhost();schedCull()}
 // ---------- Platzierung ----------
 function drawGhost(){const gh=root.querySelector('#b2ghost'),bar=root.querySelector('#b2bar');const P=B2.placing;root.classList.toggle('placing',!!P);if(!P){gh.style.display='none';bar.style.display='none';return}
  const p=pl();const lv=lvOf(p,P.id);const sp=sprite(p,P.id,lv,P.move?(lv?'done':'new'):'new')||sprite(p,P.id,1,'done');const g=geo(P.id,P.x,P.y,sp);gh.style.display='block';bar.style.display='flex';

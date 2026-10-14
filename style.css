@@ -1054,3 +1054,11 @@ body.raid:has(#panel:not(.hidden)) #raidbar{top:auto;bottom:8px;z-index:41}
 @keyframes ptDr{to{transform:translateY(14.9px)}}
 @media (prefers-reduced-motion:reduce){.b2fx{display:block!important}.b2fx .fx,.b2fx .pt.ov{display:none!important}.b2fx .pt,.b2fx .pt *{animation:none!important}}
 .fxpause .b2fx .pt,.fxpause .b2fx .pt *{animation-play-state:paused!important}
+/* v39: Speicher/GPU schonen (iOS) */
+#b2::before{filter:brightness(.55)!important}
+.b2fx .pt{will-change:auto!important}
+.ev.cloud{width:1000px;height:420px;background:url(assets/plat/fx/cloud.webp) 0 0/100% 100% no-repeat;opacity:.5;animation:evCd 50s ease-in-out infinite alternate}
+@keyframes evCd{from{transform:translateX(-160px)}to{transform:translateX(160px)}}
+.ev.skyfx{width:3000px;height:400px}
+.lite .ev.neb,.lite .ev.side,.lite .ev.mote:nth-child(odd){display:none!important}
+.lite .b2fx .fx.smoke:nth-of-type(3n),.lite .b2fx .fx.dust{display:none!important}

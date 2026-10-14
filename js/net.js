@@ -29,7 +29,7 @@ NET.sync=async function(withSave){if(!NET.on||!GS())return;const S=GS();
   if(NET.ally)S.ally={name:NET.ally.name,tag:NET.ally.tag,created:S.ally&&S.ally.tag===NET.ally.tag?S.ally.created:Date.now(),mp:1};else if(S.ally&&S.ally.mp)S.ally=null;
   if(evs0.length&&applyEvents(evs0)){await api('ack',{body:{ids:evs0.map(e=>e.id)}});try{save()}catch(e){}if(!NET._re){NET._re=1;try{await NET.sync(false)}finally{NET._re=0}}}NET.lastSync=Date.now();NET.err=null;
   try{localStorage.setItem('ge_mp_uni',JSON.stringify({...NET.uni,players:NET.uni.players,npcs:NET.uni.npcs}))}catch(e){}
-  if(window.RANK)RANK.g=null;
+  if(window.RANK)RANK.g=null;rkC.t=0;try{hud()}catch(e){}
   if(withSave||Date.now()-NET.lastSave>10*60e3){await NET.pushSave()}
  }catch(e){NET.err=e.message}};
 NET.pushSave=async function(keepalive){const S=GS();if(!S)return;const z=await zip(JSON.stringify(S));await api('save',{body:{z,t:S.t},keepalive:keepalive&&z.length<60000});NET.lastSave=Date.now()};
@@ -37,7 +37,9 @@ NET.pushSave=async function(keepalive){const S=GS();if(!S)return;const z=await z
 async function enter(res,url){const c={url,token:res.token,name:res.name,home:res.home,speed:res.speed,seed:res.seed||4242};NET.cfg=c;
  const key='ge_mp_save_'+String(res.name).toLowerCase();
  if(res.hasSave){try{const s=await api('save');const local=JSON.parse(localStorage.getItem(key)||'null');if(!local||(local.t||0)<s.t)localStorage.setItem(key,await unzip(s.z))}catch(e){}}
- localStorage.setItem(LS,JSON.stringify(c));location.reload()}
+ localStorage.setItem(LS,JSON.stringify(c));localStorage.removeItem('ge_mp_off');
+ if(!window.GE_REBOOT||!NET._ui){location.reload();return}
+ NET.on=true;window.NET_KEY=key;ENGINE.mp=true;NET.uni=null;installMP();rkC.t=0;GE_REBOOT(key);setTimeout(()=>{try{renderAll()}catch(e){}},2500)}
 NET.register=async(url,name,pin,invite)=>enter(await api('register',{url,noauth:true,body:{name,pin,invite}}),url);
 NET.login=async(url,name,pin)=>enter(await api('login',{url,noauth:true,body:{name,pin}}),url);
 NET.logout=async function(){try{await NET.pushSave()}catch(e){}localStorage.removeItem(LS);location.reload()};
@@ -124,9 +126,41 @@ async function allyAct(a,t){const v=id=>(document.getElementById(id)||{}).value|
  else if(a==='mpa-leave'){if(!confirm('Allianz wirklich verlassen?'))return;await api('ally/leave',{body:{}})}
  else if(a==='mpa-descr')await api('ally/descr',{body:{descr:v('mpad')}});
  AL.list=null;await NET.sync(false);renderAll()}
+
+// ---------- v32: Kommandant-HUD (Name + Punkte + Platz) ----------
+let rkC={t:0,r:null};
+function hud(){const el=document.getElementById('cmdhud');const S=GS();if(!el||!S)return;let pts=0;try{pts=Math.floor(ENGINE.totalPoints())}catch(e){}
+ if(Date.now()-rkC.t>30e3&&window.RANK){rkC.t=Date.now();try{const L=RANK.players('tot');const m=L.find(x=>x.me);rkC.r=m?m.rank:null;rkC.n=L.length}catch(e){}}
+ const h=`<div class="hn"><i class="${NET.on?(NET.err?'off':''):'off'}" title="${NET.on?(NET.err?'Server nicht erreichbar':'Online'):'Einzelspieler'}"></i>${esc(S.cmdName||'Kommandant')}</div><div class="hp">★ ${fmt(pts)}${rkC.r?`<b>#${rkC.r}</b>`:''}</div>`;
+ if(el._h!==h){el._h=h;el.innerHTML=h}}
+NET.hud=hud;
+// ---------- v32: Anmeldebildschirm nach dem Ladebildschirm ----------
+function loginScreen(msg){if(document.getElementById('mplogin'))return;const d=document.createElement('div');d.id='mplogin';let tab='in';
+ const draw=()=>{d.innerHTML=`<div class="lg glass"><h1>GALAXY EMPIRE</h1><div class="sub">Gemeinsames Universum · Tempo 10×</div>
+  <div class="tabs"><button data-t="in" class="${tab==='in'?'on':''}">Anmelden</button><button data-t="reg" class="${tab==='reg'?'on':''}">Registrieren</button></div>
+  <form autocomplete="on"><input id="lg_n" name="username" autocomplete="username" placeholder="Kommandantenname" maxlength="16" value="${esc(NET.cfg.name||'')}">
+  <input id="lg_p" name="password" type="password" inputmode="numeric" autocomplete="${tab==='in'?'current-password':'new-password'}" placeholder="PIN (4–8 Ziffern)" maxlength="8">
+  ${tab==='reg'?'<input id="lg_i" placeholder="Einladungscode" maxlength="32" autocomplete="off">':''}
+  <button class="go" type="submit">${tab==='in'?'Anmelden':'Konto erstellen'}</button></form>
+  <div class="er">${esc(msg||'')}</div><button class="off" data-off="1">Offline spielen (Einzelspieler)</button></div>`;
+  d.querySelector('form').onsubmit=async e=>{e.preventDefault();const v=id=>((d.querySelector('#'+id)||{}).value||'').trim();const er=d.querySelector('.er');const b=d.querySelector('.go');
+   const n=v('lg_n'),p=v('lg_p'),i=v('lg_i');
+   if(n.length<3)return er.textContent='Bitte einen Namen mit mindestens 3 Zeichen eingeben.';if(!/^\d{4,8}$/.test(p))return er.textContent='Die PIN muss aus 4 bis 8 Ziffern bestehen.';if(tab==='reg'&&!i)return er.textContent='Bitte den Einladungscode eingeben.';
+   b.disabled=true;b.textContent='Verbinde…';er.textContent='';
+   try{const url=NET.cfg.url||NET.DEFAULT_URL;if(tab==='in')await NET.login(url,n,p);else await NET.register(url,n,p,i);close();toast(`Willkommen, ${n}!`,'ok',3000)}
+   catch(err){b.disabled=false;b.textContent=tab==='in'?'Anmelden':'Konto erstellen';er.textContent=de(err.message)}};
+  d.querySelectorAll('[data-t]').forEach(x=>x.onclick=()=>{msg='';tab=x.dataset.t;draw()});
+  d.querySelector('[data-off]').onclick=()=>{try{sessionStorage.setItem('ge_mp_off','1')}catch(e){}if(NET.on){location.reload();return}close()}};
+ const close=()=>{d.classList.add('out');setTimeout(()=>d.remove(),550)};
+ draw();document.body.appendChild(d)}
+const de=m=>/fetch|network|Failed/i.test(m)?'Server nicht erreichbar – bitte Internetverbindung prüfen.':/HTTP 5/.test(m)?'Serverfehler – bitte später erneut versuchen.':m;
+NET.loginScreen=loginScreen;
+function bootGate(){if(sessionStorage.getItem('ge_mp_off'))return;
+ if(NET.on){api('me').catch(e=>{if(/401|403|Token|Sitzung|anmelden|unauth/i.test(e.message)){localStorage.removeItem(LS);loginScreen('Sitzung abgelaufen – bitte neu anmelden.')}});return}
+ loginScreen()}
 // ---------- UI (nach dem Laden der Oberfläche) ----------
-function ui(){const E=window.ENGINE;
- if(NET.on){E.slotHook=NET.slotHook;E.onSend=onSend;E.pvpArrive=f=>{setTimeout(resolveLoop,300)};E.extIncoming=NET.extIncoming;
+let mpDone=false;
+function installMP(){const E=window.ENGINE;if(mpDone)return;mpDone=true;{E.slotHook=NET.slotHook;E.onSend=onSend;E.pvpArrive=f=>{setTimeout(resolveLoop,300)};E.extIncoming=NET.extIncoming;
   const rc=E.recall;E.recall=function(fid){const S=GS();const f=S&&S.fleets.find(x=>x.id===fid);if(f&&f.phase==='pvp')return;if(f&&f.pvp&&f.pvp.sid&&f.phase==='out'){api('fleet/recall',{body:{id:f.pvp.sid}}).catch(()=>{});delete f.pvp}return rc.call(this,fid)};
   setInterval(resolveLoop,5000);setInterval(()=>{if(document.visibilityState==='visible'&&view==='chat'){const ch=AL.ch;chatLoad(ch).then(n=>{if(n&&view==='chat')mpChat()})}},8000);
   window.renderAlly=mpAlly;window.renderChat=mpChat;
@@ -136,6 +170,10 @@ const ss=E.setSpeed;E.setSpeed=function(sp){if(sp!==(NET.cfg.speed||10)){toast('
   setTimeout(()=>NET.sync(true).then(()=>{if(NET.err)toast('Server nicht erreichbar: '+NET.err,'err',4000);else{try{renderAll()}catch(e){}}}),1500);
   setInterval(()=>{if(document.visibilityState==='visible')NET.sync(false)},120e3);
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')NET.pushSave(true).catch(()=>{})})}
+}
+function ui(){NET._ui=1;if(NET.on)installMP();setInterval(hud,2000);setTimeout(hud,300);
+ {const L=document.getElementById('loader');if(!L)bootGate();else{const mo=new MutationObserver(()=>{if(!document.getElementById('loader')){mo.disconnect();bootGate()}});mo.observe(document.body,{childList:true});
+  const t=setInterval(()=>{if(L.classList.contains('done')){clearInterval(t);bootGate()}},200)}}
  const _s=PANELS.settings;PANELS.settings=()=>{const r=_s();const c=NET.cfg;let h;
   if(NET.on)h=`<div class="box" style="margin-bottom:8px"><div class="row"><b>🌐 Mehrspieler</b><span class="spacer"></span><span class="mut">${esc(c.name)} · [${(c.home||[]).join(':')}] · ${c.speed}×</span></div>
    <div class="mut" style="font-size:11px;margin:4px 0">Server: ${esc(c.url)}<br>Letzter Abgleich: ${NET.lastSync?new Date(NET.lastSync).toLocaleTimeString('de-DE'):'–'}${NET.err?` · <span style="color:var(--bad)">${esc(NET.err)}</span>`:''} · Spieler: ${(NET.uni&&NET.uni.players||[]).length} · NPC-Spieler: ${(NET.uni&&NET.uni.npcs||[]).length}</div>

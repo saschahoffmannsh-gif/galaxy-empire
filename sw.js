@@ -1,4 +1,4 @@
-const C='ge-remake-v31';
+const C='ge-remake-v32';
 const PRE=['./','index.html','assets/loading.webp','assets/loading_l.webp','assets/audio/music.mp3'];
 self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(C).then(c=>Promise.all(PRE.map(u=>c.add(u).catch(()=>{})))))});
 self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==C).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));

@@ -879,3 +879,28 @@ body.raid:has(#panel:not(.hidden)) #raidbar{top:auto;bottom:8px;z-index:41}
 @keyframes tfSpore{0%{transform:translate(0,0);opacity:0}15%{opacity:1}100%{transform:translate(8px,-60px);opacity:0}}
 /* v30: Mehrspieler */
 .mp-f{display:grid;grid-template-columns:1fr 1fr;gap:6px}.mp-f input{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);border-radius:9px;color:#fff;padding:7px 9px;font-size:13px;min-width:0}.mp-f input:first-child{grid-column:1/-1}
+/* v32: Kommandant-HUD + Anmeldebildschirm */
+#cmdhud{display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:1px;padding:3px 9px;border-left:1px solid var(--bd);min-width:0;max-width:120px;height:34px;border-radius:0 9px 9px 0;text-align:left}
+#cmdhud:active{background:rgba(255,255,255,.06)}
+#cmdhud .hn{font-weight:650;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;display:flex;align-items:center;gap:4px}
+#cmdhud .hn i{font-style:normal;width:6px;height:6px;border-radius:50%;background:var(--ok);box-shadow:0 0 6px var(--ok);flex:none}
+#cmdhud .hn i.off{background:var(--mut);box-shadow:none}
+#cmdhud .hp{font-size:11px;color:var(--c);white-space:nowrap;font-variant-numeric:tabular-nums}
+#cmdhud .hp b{color:var(--warn);font-weight:600;margin-left:4px}
+@media (max-width:760px){#cmdhud{max-width:92px;padding:3px 6px}#cmdhud .hp b{display:none}}
+#mplogin{position:fixed;inset:0;z-index:998;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 40%,rgba(20,30,70,.55),rgba(2,3,9,.92)),url(assets/loading_l.webp) center/cover;transition:opacity .5s ease}
+#mplogin.out{opacity:0;pointer-events:none}
+#mplogin .lg{width:min(380px,92vw);max-height:94vh;overflow:auto;border-radius:18px;padding:16px 18px 14px;animation:lgIn .6s cubic-bezier(.2,.8,.2,1)}
+@keyframes lgIn{from{opacity:0;transform:translateY(14px) scale(.97)}to{opacity:1;transform:none}}
+#mplogin h1{font-size:20px;letter-spacing:.14em;text-align:center;background:linear-gradient(90deg,var(--c),var(--v));-webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:2px}
+#mplogin .sub{text-align:center;color:var(--mut);font-size:11px;margin-bottom:10px}
+#mplogin .tabs{display:flex;background:rgba(255,255,255,.05);border-radius:10px;padding:3px;margin-bottom:10px}
+#mplogin .tabs button{flex:1;padding:6px;border-radius:8px;color:var(--mut);font-weight:600}
+#mplogin .tabs button.on{background:linear-gradient(90deg,rgba(56,225,255,.25),rgba(166,107,255,.25));color:var(--tx);box-shadow:inset 0 0 0 1px var(--bd)}
+#mplogin input{width:100%;margin-bottom:7px;padding:8px 10px;border-radius:9px;border:1px solid var(--bd);background:rgba(3,6,16,.6);color:var(--tx);font:inherit;-webkit-user-select:text;user-select:text}
+#mplogin input:focus{outline:none;border-color:var(--c);box-shadow:0 0 0 2px rgba(56,225,255,.18)}
+#mplogin .go{width:100%;padding:9px;border-radius:10px;font-weight:700;background:linear-gradient(90deg,#1aa7d8,#7a4ee0);box-shadow:0 4px 18px rgba(80,120,255,.35)}
+#mplogin .go:disabled{opacity:.6}
+#mplogin .er{min-height:16px;color:var(--bad);font-size:11px;text-align:center;margin:6px 0 2px}
+#mplogin .off{display:block;margin:6px auto 0;color:var(--mut);font-size:11px;text-decoration:underline;text-underline-offset:3px}
+@media (orientation:landscape) and (max-height:480px){#mplogin .lg{padding:10px 16px 8px}#mplogin h1{font-size:17px}#mplogin input{padding:6px 10px;margin-bottom:5px}#mplogin .sub{margin-bottom:6px}#mplogin .tabs{margin-bottom:7px}#mplogin .go{padding:7px}}

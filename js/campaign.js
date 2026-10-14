@@ -211,7 +211,7 @@ async function intro(k){const ch=CH[k];const un=Object.keys(FEAT).filter(f=>FEAT
 async function outro(k){const ch=CH[k];await card(`<div class="cc-k">Kapitel ${k+1} abgeschlossen</div><div class="cc-t">✦ ${esc(ch.t)}</div><div class="cc-d">${esc(ch.outro)}</div><div class="cc-u">Kapitelbonus: <b>${E.rewardText(ch.bonus)}</b></div><button class="btn" data-cc>Weiter</button>`)}
 async function finale(){await card(`<div class="cc-k">Kampagne abgeschlossen</div><div class="cc-t">👑 Das Universum gehört dir</div><div class="cc-d">Du hast alles gelernt, was ich dir zeigen kann. Ab jetzt sind alle Funktionen frei – baue, forsche, erobere. Ich bin stolz auf dich, Kommandant.</div><button class="btn" data-cc>Freies Spiel</button>`)}
 let looping=false;
-async function loop(){if(looping||busy||!S||!S.camp||S.camp.skip)return;if(document.querySelector('#loader'))return;looping=true;try{const c=C();
+async function loop(){if(looping||busy||!S||!S.camp||S.camp.skip)return;if(document.querySelector('#loader,#mplogin'))return;looping=true;try{const c=C();
  for(let k=0;k<CH.length;k++)if(c.seen['o'+k]===0){c.seen['o'+k]=1;save();pose('cheer');await outro(k);if(k===CH.length-1){c.seen.fin=1;save();await finale()}}
  if(c.ch<CH.length&&!c.seen['i'+c.ch]){c.seen['i'+c.ch]=1;save();await intro(c.ch);
   const i=curMain();const t=T(i);c.seen['a'+i]=1;save();

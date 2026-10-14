@@ -1,5 +1,5 @@
 'use strict';
-const E=window.ENGINE,A=window.ART;const KEY=window.NET_KEY||'ge_remake_save_v3';
+const E=window.ENGINE,A=window.ART;let KEY=window.NET_KEY||'ge_remake_save_v3';
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const fmt=n=>{n=Math.floor(n||0);const a=Math.abs(n);return a>=1e9?(n/1e9).toFixed(2).replace('.',',')+' Mrd':a>=1e7?(n/1e6).toFixed(1).replace('.',',')+' Mio':n.toLocaleString('de-DE')};
@@ -25,12 +25,13 @@ const pl=()=>E.planet();
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 // Test-Ressourcen (v19): einmalig für neue und bestehende Spielstände, plus Knopf in den Einstellungen
 function grantTest(force){S.flags=S.flags||{};if(!force&&S.flags.testRes19)return;S.flags.testRes19=1;const p=S.planets[S.home];p.r.m+=500000;p.r.k+=300000;p.r.g+=150000;S.dm=(S.dm||0)+50000;save();if(force)toast('+500k Metall, +300k Kristall, +150k Gas, +50k DM','ok');else setTimeout(()=>toast('Test-Ressourcen gutgeschrieben: 500k Metall · 300k Kristall · 150k Gas · 50k DM','ok',5000),900)}
+window.GE_REBOOT=function(key){try{save()}catch(e){}KEY=key;load();try{closePanel()}catch(e){}renderAll()};
 function load(){let raw=null;try{const imp=sessionStorage.getItem('ge_import');if(imp){sessionStorage.removeItem('ge_import');localStorage.setItem(KEY,imp)}raw=JSON.parse(localStorage.getItem(KEY))}catch(e){}
  if(raw&&raw.v===3){S=E.load(raw);const before=S.t,logN=S.log.length;E.tick();const away=Date.now()-before;
   if(away>60000){setTimeout(()=>toast(`Willkommen zurück! ${ft(away)} offline nachgeholt.`,'ok',5000),600)}}
  else{S=E.newGame({speed:10});if(window.NET&&NET.on)NET.initNew(S)}
- if(window.NET&&NET.on)NET.enforce(S);else grantTest(false);
- E.on((t,d)=>{if(t==='built')toast(`${GE.BUILD[d.q.id].n} Stufe ${d.q.lv} fertig`,'ok');if(t==='researched')toast(`${GE.TECH[d.id].n} Stufe ${d.lv} erforscht`,'ok');
+if(window.NET&&NET.on)NET.enforce(S);else grantTest(false);
+ if(load._on)return;load._on=1;E.on((t,d)=>{if(t==='built')toast(`${GE.BUILD[d.q.id].n} Stufe ${d.q.lv} fertig`,'ok');if(t==='researched')toast(`${GE.TECH[d.id].n} Stufe ${d.lv} erforscht`,'ok');
   if(t==='report'&&d.type!=='transport')toast('Neuer Bericht: '+d.title);if(t==='raidwarn'){toast('⚠ Piratenflotte im Anflug! „Flotte retten“ bringt deine Schiffe in Sicherheit.','err',6000);renderRaid()}dirty=true});}
 function toast(msg,kind='',ms=2600){const el=document.createElement('div');el.className='toast glass '+kind;el.textContent=msg;$('#toasts').appendChild(el);setTimeout(()=>el.remove(),ms);while($('#toasts').children.length>3)$('#toasts').firstChild.remove()}
 const err=e=>{if(e){toast(e,'err');return true}return false};

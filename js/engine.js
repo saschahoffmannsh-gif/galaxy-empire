@@ -168,13 +168,14 @@ E.canUnit=function(pl,kind,id,n){const d=E.unitDef(kind,id);if(pl.moon&&!E.lv(pl
  if(!E.reqOk(d.req,pl))return 'Voraussetzungen fehlen';if(!(n>0))return 'Anzahl wählen';
  if(E.maxUnits(pl,kind,id)<n)return d.max?'Nur einmal baubar':'Zu wenig Rohstoffe';return null};
 E.buildUnits=function(pid,kind,id,n){const pl=S.planets[pid];n=Math.floor(n);const err=E.canUnit(pl,kind,id,n);if(err)return err;
- const d=E.unitDef(kind,id);const c=d.c.map(v=>v*n);pay(pl,c);const ut=E.uTime(pl,kind,id)*1000;
+ const d=E.unitDef(kind,id);const c=d.c.map(v=>v*n);pay(pl,c);const ut=Math.max(1,Math.round(E.uTime(pl,kind,id)*1000));
  const start=pl.sq.length?sqEnd(pl.sq[pl.sq.length-1]):now();
  pl.sq.push({kind,id,n,done:0,ut,start});emit('change');return null};
 function sqEnd(q){return q.start+q.ut*q.n}
 E.sqEnd=sqEnd;
 function progressYard(pl,t){
- while(pl.sq.length){const q=pl.sq[0];const can=Math.min(q.n,Math.floor((t-q.start)/q.ut+1e-9));
+ while(pl.sq.length){const q=pl.sq[0];let can=Math.min(q.n,Math.floor((t-q.start)/q.ut+1e-9));
+  if(t>=sqEnd(q)-1)can=q.n; // FP-Schutz: sonst kann die Werft die Spielzeit einfrieren
   if(can>q.done){const add=can-q.done;const tgt=q.kind==='def'?pl.def:pl.ships;tgt[q.id]=(tgt[q.id]||0)+add;q.done=can;
    const d=E.unitDef(q.kind,q.id);S.pts.b+=add*(d.c[0]+d.c[1]+d.c[2])/1000*0; if(q.kind==='ship')S.built[q.id]=(S.built[q.id]||0)+add; else S.built[q.id]=(S.built[q.id]||0)+add;}
   if(q.done>=q.n){pl.sq.shift();addLog(`${pl.name}: ${q.n}× ${E.unitDef(q.kind,q.id).n} fertiggestellt`,'yard');

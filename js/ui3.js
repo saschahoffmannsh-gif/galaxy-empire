@@ -151,7 +151,7 @@ function loop(){try{E.tick()}catch(e){console.error(e)}const n=Date.now();updRes
   const typing=document.activeElement&&['INPUT','TEXTAREA'].includes(document.activeElement.tagName);
   if(!typing){if(view==='base')renderBase();else if(view==='fleet'&&fleetTab!=='send')renderFleet();else if(view==='chat')renderChat();if(panelStack.length)renderPanel(true)}}
  if(n-lastSave>3000){lastSave=n;save()}}
-load();A.stars($('#stars'));renderAll();setInterval(loop,250);if(window.WATER)WATER.init($('#waterhost'));if(window.AMBIENT)AMBIENT.init($('#world'));
+load();A.stars($('#stars'));renderAll();setInterval(loop,250);/* v39: alte Pano-Effekte (WebGL/Wasser) deaktiviert */
 addEventListener('resize',()=>{A.stars($('#stars'));layoutPano()});addEventListener('orientationchange',()=>setTimeout(layoutPano,300));
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{E.tick();renderAll()}});
 if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});

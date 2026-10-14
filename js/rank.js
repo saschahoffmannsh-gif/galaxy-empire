@@ -20,13 +20,13 @@ function gen(){const seed=h32('rank'+(S.seed||'ge'));const r=rng(seed);const nam
  while(names.length<340){const k=r();if(k<.45)add(PRE[r()*PRE.length|0]+SUF[r()*SUF.length|0]+(r()<.5?(r()*99|0):''));else if(k<.8)add(FIRST[r()*FIRST.length|0]+(r()<.5?'_':'.')+(r()<.6?(70+(r()*35|0))%100:String.fromCharCode(65+(r()*26|0))));else add((r()<.5?'Commander ':'Admiral ')+SUF[r()*SUF.length|0])}
  const tags=((window.ALLY&&ALLY.NPC)||[]).map(([n,t])=>({t,n})).concat(Object.entries(AL_EXTRA).map(([t,n])=>({t,n})));
  const own=S.ally?S.ally.tag:null;const atags=tags.filter(x=>x.t!==own);
- const npcs=names.map((n,i)=>{const st=r();const P0=120*Math.exp(Math.pow(st,1.15)*10.2);const g=.003+r()*.028*(1-st*.5);const act=r()<.84;const a=ARCH[r()*4|0].map(v=>v*(.75+r()*.5));const sm=a.reduce((x,y)=>x+y);
+ const npcs=names.map((n,i)=>{const st=r();const P0=120*Math.exp(Math.pow(st,1.15)*10.2);const g=.002+r()*.010*(1-st*.5);const act=r()<.84;const a=ARCH[r()*4|0].map(v=>v*(.75+r()*.5));const sm=a.reduce((x,y)=>x+y);
   let tag=null;if(r()<.62){const w=Math.min(atags.length-1,Math.floor(Math.pow(r(),1+st*2.5)*atags.length));tag=atags[w].t}
   let G,Sy,Pp;for(let k=0;k<8;k++){G=1+(r()*9|0);Sy=1+(r()*499|0);Pp=4+(r()*9|0);const np=E.npcAt(G,Sy);if(!np.includes(Pp))break}
   return{id:'n'+i,n,P0,g,act,fr:a.map(v=>v/sm),tag,home:[G,Sy,Pp],hue:r()*360|0}});
  return{npcs,tags,key:(S.seed||'')+'|'+own,homes:Object.fromEntries(npcs.map(x=>[x.home.join(':'),x]))}}
 function data(){if(!RK.g||RK.g.key!==(S.seed||'')+'|'+(S.ally?S.ally.tag:null))RK.g=gen();return RK.g}
-function npcPts(x,t){const d=(t-EPOCH)/DAY;const dd=x.act?d:Math.min(d,12);const f=Math.floor(dd),fr=dd-f;const nz=1+.025*((hn(x.id,f)*(1-fr)+hn(x.id,f+1)*fr)-.5);return Math.round(x.P0*Math.pow(1+x.g,dd)*nz)}
+function npcPts(x,t){const d=(t-EPOCH)/DAY;const dd=x.act?d:Math.min(d,12);const f=Math.floor(dd),fr=dd-f;const nz=1+.025*((hn(x.id,f)*(1-fr)+hn(x.id,f+1)*fr)-.5);return Math.round(x.P0*Math.pow(1+x.g,Math.min(dd,60))*(1+.004*Math.max(0,dd-60))*nz)}
 function myBreak(){let f=0,d=0;const add=(o,T)=>{let v=0;for(const k in o){const u=T[k];if(u)v+=o[k]*(u.c[0]+u.c[1]+u.c[2])/1000}return v};
  for(const id of S.order){const p=S.planets[id];f+=add(p.ships,GE.SHIP);d+=add(p.def,GE.DEF)}for(const fl of S.fleets)if(!fl.npc)f+=add(fl.ships,GE.SHIP);
  const b=S.pts.b||0,t=S.pts.t||0;return{b:Math.floor(b),t:Math.floor(t),f:Math.floor(f),d:Math.floor(d),tot:Math.floor(b+t+f+d)}}

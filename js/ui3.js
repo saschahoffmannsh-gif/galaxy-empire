@@ -94,7 +94,8 @@ document.addEventListener('click',ev=>{const t=ev.target.closest('[data-act]');i
  case 'rep':openPanel('rep',+id,panelStack.length>0);break;
  case 'readall':S.reports.forEach(r=>r.read=true);after();break;
  case 'replay':{const r=S.reports.find(x=>x.id===+id);window.REPLAY.play(r.battle||r.neb.battle);break}
- case 'gift':if(!err(E.claimGift())){toast('Tagesgeschenk erhalten!','ok');after()}break;
+ case 'gift':{if(!E.giftReady()){err('Heute schon abgeholt');break}const gr=E.giftReward();if(window.RWD){RWD.flow(gr,'Tagesgeschenk').then(ok=>{if(ok&&!err(E.claimGift(true)))after()})}else if(!err(E.claimGift())){toast('Tagesgeschenk erhalten!','ok');after()}break}
+ case 'fsave':if(!err(E.fleetSave(id))){toast('Flotte in Sicherheit gebracht – sie kehrt nach dem Angriff zurück','ok',4000);renderRaid();after()}break;
  case 'buy':{const it=E.STORE.find(x=>x.id===id);if(confirm(`${it.n} für ${it.dm} DM kaufen?`)&&!err(E.buy(id,p.id))){toast('Gekauft: '+it.n,'ok');after()}break}
  case 'hire':if(!err(E.hireCmd(id,+t.dataset.d))){toast(GE.COMMANDERS[id].n+' angeheuert','ok');after()}break;
  case 'use':if(!err(E.useItem(id))){toast(GE.ITEMS[id].n+' aktiviert','ok');after()}break;

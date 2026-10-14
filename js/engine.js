@@ -61,16 +61,16 @@ E.gemBonus=gemBonus;
 // ---------- Kosten & Zeiten ----------
 function costOf(def,lv){const f=def.f||2;return def.c.map(v=>Math.floor(v*Math.pow(f,lv-1)))}
 E.bCost=(id,lv)=>costOf(GE.BUILD[id],lv);
-E.tCost=(id,lv)=>costOf(GE.TECH[id],lv);
+E.tCost=(id,lv)=>{const c=costOf(GE.TECH[id],lv);return id==='astro'&&lv>=4?c.map(x=>Math.round(x*0.75)):c};
 // v20: echte Bauzeiten (Faktor 6 auf die OGame-Formel, min. 15 s), Beschleunigen kostet immer DM
 E.TMUL=6;
-E.bTime=function(pl,id,lv){const c=E.bCost(id,lv);let h=(c[0]+c[1])/(2500*(1+E.lv(pl,'robotics'))*Math.pow(2,E.lv(pl,'nanite')));if(cmdActive('commander'))h*=0.9;return Math.max(15,h*3600*E.TMUL/S.speed)};
+E.bTime=function(pl,id,lv){const c=E.bCost(id,lv);let h=(c[0]+c[1])/(2500*(1+E.lv(pl,'robotics'))*Math.pow(2,E.lv(pl,'nanite')));if(cmdActive('commander'))h*=0.9;if((id==='lab'||id==='robotics')&&lv>8)h*=0.7;return Math.max(15,h*3600*E.TMUL/S.speed)};
 E.labLevel=function(pl){return E.lv(pl,'lab')};
 E.tTime=function(id,lv,pl){const c=E.tCost(id,lv);let h=(c[0]+c[1])/(1000*(1+E.labLevel(pl||E.planet())));if(cmdActive('technocrat'))h*=0.75;return Math.max(15,h*3600*E.TMUL/S.speed)};
 E.uTime=function(pl,kind,id){const d=kind==='def'?GE.DEF[id]:GE.SHIP[id];let h=(d.c[0]+d.c[1])/(2500*(1+E.lv(pl,'shipyard'))*Math.pow(2,E.lv(pl,'nanite')));if(kind==='def'&&cmdActive('admiral'))h*=0.9;return Math.max(2,h*3600*E.TMUL*.5/S.speed)};
 // Felder
 E.fieldsUsed=pl=>Object.values(pl.b).reduce((a,b)=>a+b,0);
-E.fieldsMax=pl=>pl.moon?1+3*E.lv(pl,'moon_base'):pl.fields;
+E.fieldsMax=pl=>pl.moon?1+3*E.lv(pl,'moon_base'):pl.fields+5*E.lv(pl,'terraformer')+(pl.xf||0);
 // Voraussetzungen
 E.reqOk=function(req,pl){if(!req)return true;for(const k in req){const need=req[k];const have=GE.TECH[k]?E.tl(k)+(k==='espionage'&&cmdActive('technocrat')?0:0):E.lv(pl,k);if(have<need)return false}return true};
 E.reqList=function(req,pl){const out=[];if(!req)return out;for(const k in req){const isT=!!GE.TECH[k];const have=isT?E.tl(k):E.lv(pl,k);out.push({id:k,n:(isT?GE.TECH[k]:GE.BUILD[k]).n,need:req[k],have,ok:have>=req[k],tech:isT})}return out};
@@ -250,7 +250,7 @@ E.flightTime=function(from,to,ships,pct){const v=E.fleetSpeed(ships);if(!v)retur
 E.fuel=function(from,to,ships,pct){const d=E.dist(from,to);let f=0;for(const id in ships)f+=ships[id]*GE.SHIP[id].fuel*d/35000*Math.pow(pct/100+1,2);
  return Math.round(f*(1-Math.min(0.4,0.02*E.tl('dynpower'))))+1};
 E.cargoCap=ships=>{let c=0;for(const id in ships)c+=ships[id]*GE.SHIP[id].cargo;return c};
-E.fleetSlots=()=>1+Math.floor(E.tl('computer')/2)+(cmdActive('admiral')?2:0);
+E.fleetSlots=()=>1+Math.floor(E.tl('computer')/2)+(cmdActive('admiral')?2:0)+(S.xslot||0);
 E.slotsUsed=()=>S.fleets.filter(f=>f.mission!=='explore'&&!f.npc).length;
 E.nebulaSlots=()=>{const a=E.tl('astro');return a>=12?4:a>=9?3:a>=4?2:1};
 E.nebulaUsed=pid=>S.fleets.filter(f=>f.mission==='explore'&&f.from===pid).length;
@@ -433,7 +433,7 @@ function nebulaResolve(f){
   case 'res':{const g=fill(E.NEB.resCap,[0.5,0.3,0.2],E.NEB.resMax);rec.res=g;text=`Deine Flotte entdeckte einen verlassenen Planeten voller Rohstoffe und belud die Frachträume: ${fmtR(g)}.`;break}
   case 'wreck':{const g=fill(E.NEB.wreckCap,[0.6,0.4,0]);rec.res=g;text=`Ein uraltes Schiffswrack treibt im Nebel. Deine Crew zerlegte es: ${fmtR(g)}.`;break}
   case 'ast':{const g=fill(E.NEB.astCap,[0.5,0.35,0.15]);rec.res=g;text=`Ein rohstoffreicher Asteroid! Die Abbautrupps förderten ${fmtR(g)}.`;break}
-  case 'dm':{const n=Math.max(1,Math.min(50,Math.round(total/2*rnd(0.4,1))));S.dm+=n;rec.dm=n;text=Math.random()<0.5?`In einem verlassenen Schiff fand deine Crew ${n} Dunkle Materie.`:`Ein Alienwesen überließ deiner Flotte ${n} Dunkle Materie.`;break}
+  case 'dm':{const day=Math.floor(t/(24*HOUR));if(S.nebDmDay!==day){S.nebDmDay=day;S.nebDm=0}const n=Math.max(1,Math.min(25,40-(S.nebDm||0),Math.round(total/4*rnd(0.4,1))));S.nebDm=(S.nebDm||0)+n;S.dm+=n;rec.dm=n;text=Math.random()<0.5?`In einem verlassenen Schiff fand deine Crew ${n} Dunkle Materie.`:`Ein Alienwesen überließ deiner Flotte ${n} Dunkle Materie.`;break}
   case 'ships':{ // Sonden-Trick: Fundmenge skaliert mit der Anzahl der Sonden (Wert-Budget, gedeckelt)
     const val=id=>{const c=GE.SHIP[id].c;return c[0]+c[1]+c[2]};let fv=0;for(const id in ships)fv+=ships[id]*val(id);
     const pshare=probes/Math.max(1,total);const budget=Math.min(fv*0.5,fv*rnd(0.03,0.12)*(1+pshare*2.5));
@@ -464,13 +464,20 @@ function nebulaResolve(f){
 E.totalPoints=function(){let fl=0;const add=(o,T)=>{for(const k in o){const d=T[k];if(d)fl+=o[k]*(d.c[0]+d.c[1]+d.c[2])/1000}};
  for(const id of S.order){const p=S.planets[id];add(p.ships,GE.SHIP);add(p.def,GE.DEF)}for(const f of S.fleets)if(!f.npc)add(f.ships,GE.SHIP);
  return Math.floor(S.pts.b+S.pts.t+fl)};
-function scheduleRaid(t){S.nextRaid=t+rnd(10,24)*HOUR/S.speed}
+function scheduleRaid(t){S.nextRaid=t+rnd(10,24)*HOUR/Math.sqrt(S.speed)}
 function launchRaid(t){const cands=S.order.filter(id=>!S.planets[id].moon);const pl=S.planets[cands[ri(0,cands.length-1)]];
- const pts=E.totalPoints();const lv=pts<20000?1:pts<100000?2:pts<500000?3:pts<2e6?4:5;const budget=Math.max(40000,pts*1000*rnd(0.03,0.08));
+ const pts=E.totalPoints();const lv=pts<20000?1:pts<100000?2:pts<500000?3:pts<2e6?4:5;let dv=0;for(const T of[[pl.def,GE.DEF],[pl.ships,GE.SHIP]])for(const k in T[0]){const d=T[1][k];if(d&&k!=='ss')dv+=T[0][k]*(d.c[0]+d.c[1]+d.c[2])}
+ const budget=Math.max(40000,Math.min(pts*1000*0.08,Math.max(pts*1000*0.01,dv*rnd(0.6,1.15))));
  const types=lv<=1?['lf']:lv===2?['lf','hf']:lv===3?['lf','hf','cr']:lv===4?['hf','cr','bs']:['cr','bs','de'];const ships={};let b=budget;
  for(const ty of types){const d=GE.SHIP[ty];const v=d.c[0]+d.c[1]+d.c[2];const n=Math.floor(b/types.length/v);if(n>0)ships[ty]=n}ships.lc=Math.max(1,Math.round(budget/400000));
- const dur=rnd(40,80)*MIN/S.speed;const f={id:S.nextFleet++,npc:true,mission:'attack',from:null,fromC:{g:pl.g,s:pl.s,p:16},to:{g:pl.g,s:pl.s,p:pl.p},target:pl.id,ships,cargo:{m:0,k:0,g:0},depart:t,arrive:t+dur,dur,phase:'out',tech:{weapons:Math.max(0,E.tl('weapons')-1),shielding:Math.max(0,E.tl('shielding')-1),armour:Math.max(0,E.tl('armour')-1)}};
- S.fleets.push(f);if(E.lv(pl,'radar')>0){addLog(`⚠ Radar: Piratenflotte im Anflug auf ${pl.name}!`,'warn');emit('raidwarn',f)}}
+ const dur=Math.max(12*MIN,rnd(40,80)*MIN/Math.sqrt(S.speed));const f={id:S.nextFleet++,npc:true,mission:'attack',from:null,fromC:{g:pl.g,s:pl.s,p:16},to:{g:pl.g,s:pl.s,p:pl.p},target:pl.id,ships,cargo:{m:0,k:0,g:0},depart:t,arrive:t+dur,dur,phase:'out',tech:{weapons:Math.max(0,E.tl('weapons')-1),shielding:Math.max(0,E.tl('shielding')-1),armour:Math.max(0,E.tl('armour')-1)}};
+ S.fleets.push(f);addLog(`⚠ ${E.lv(pl,'radar')>0?'Radar':'Frühwarnung'}: Piratenflotte im Anflug auf ${pl.name}!`,'warn');emit('raidwarn',f)}
+E.raidsIncoming=()=>S.fleets.filter(f=>f.npc&&f.phase==='out'&&f.arrive>S.t);
+E.fleetSave=function(pid){const pl=S.planets[pid];const f=E.raidsIncoming().find(x=>x.target===pid);if(!f)return 'Kein Angriff im Anflug';
+ const sh={};let n=0;for(const k in pl.ships)if(k!=='ss'&&GE.SHIP[k]&&!GE.SHIP[k].stat&&pl.ships[k]>0){sh[k]=pl.ships[k];n+=sh[k]}if(!n)return 'Keine flugfähigen Schiffe';
+ const fuel=Math.min(pl.r.g,Math.ceil(n*2));pl.r.g-=fuel;for(const k in sh)delete pl.ships[k];S.saves=S.saves||[];S.saves.push({pid,ships:sh,ret:f.arrive+15*MIN/Math.sqrt(S.speed)});
+ addLog(`Saveflug: ${fmtN(n)} Schiffe von ${pl.name} in Sicherheit gebracht (${fmtN(fuel)} Gas)`,'fleet');S.flags.fleetSaved=1;emit('change');return null};
+function saveReturn(s){S.saves=S.saves.filter(x=>x!==s);const pl=S.planets[s.pid]||S.planets[S.home];for(const k in s.ships)pl.ships[k]=(pl.ships[k]||0)+s.ships[k];addLog(`Saveflug zurück: Flotte wieder auf ${pl.name}`,'fleet')}
 E.raidVisible=f=>{const pl=S.planets[f.target];return pl&&E.lv(pl,'radar')>0};
 function raidArrive(f){const pl=S.planets[f.target];S.fleets=S.fleets.filter(x=>x!==f);if(!pl)return;
  const B=E.simulate({units:f.ships,tech:f.tech},{units:{...pl.ships,...pl.def},tech:E.techOf(),bonus:{at:gemBonus(pl,'at'),sh:gemBonus(pl,'sh'),hull:gemBonus(pl,'hull')+buff('hull')}});
@@ -494,13 +501,18 @@ E.STORE=[
  {id:'armor1',n:GE.ITEMS.armor1.n,d:GE.ITEMS.armor1.d,dm:8,item:'armor1'},
  {id:'power1',n:GE.ITEMS.power1.n,d:GE.ITEMS.power1.d,dm:8,item:'power1'},
  {id:'energy1',n:GE.ITEMS.energy1.n,d:GE.ITEMS.energy1.d,dm:6,item:'energy1'},
- {id:'engine1',n:GE.ITEMS.engine1.n,d:GE.ITEMS.engine1.d,dm:6,item:'engine1'}];
-E.buy=function(id,pid){const it=E.STORE.find(x=>x.id===id);if(S.dm<it.dm)return 'Zu wenig Dunkle Materie';S.dm-=it.dm;
+ {id:'engine1',n:GE.ITEMS.engine1.n,d:GE.ITEMS.engine1.d,dm:6,item:'engine1'},
+ {ic:'terraformer',id:'xfield',n:'Planetenerweiterung',d:'+3 Felder dauerhaft auf dem aktuellen Planeten (max. +15)',dm:60,xfield:3},
+ {ic:'computer',id:'xslot',n:'Zusätzlicher Flottenslot',d:'+1 Flottenslot dauerhaft (max. 3 Käufe)',dm:120,xslot:1},
+ {ic:'gem_conc',id:'polish',n:'Edelstein-Schleifen',d:'+60 Galactonit-Energie zum Verstärken deiner Edelsteine',dm:25,gen:60}];
+E.buy=function(id,pid){const it=E.STORE.find(x=>x.id===id);if(S.dm<it.dm)return 'Zu wenig Dunkle Materie';const tp=S.planets[pid||S.cur];
+ if(it.xfield&&(tp.moon||(tp.xf||0)>=15))return tp.moon?'Nur auf Planeten möglich':'Maximum erreicht (+15 Felder)';if(it.xslot&&(S.xslot||0)>=3)return 'Maximum erreicht (3 Zusatzslots)';S.dm-=it.dm;
+ if(it.xfield)tp.xf=(tp.xf||0)+it.xfield;if(it.xslot)S.xslot=(S.xslot||0)+1;if(it.gen)S.gal.energy+=it.gen;
  if(it.give)giveRes(S.planets[pid||S.cur],it.give);if(it.item)S.items[it.item]=(S.items[it.item]||0)+1;
  if(it.shards){const cols=Object.keys(GE.GEMS);for(let i=0;i<it.shards;i++){const c=cols[ri(0,cols.length-1)];S.gal.shards[c]=(S.gal.shards[c]||0)+1}}emit('change');return null};
 E.giftReady=()=>now()-(S.lastGift||0)>=20*HOUR;
-E.claimGift=function(){if(!E.giftReady())return 'Heute schon abgeholt';S.lastGift=now();S.dm+=5;const pl=E.planet();const pi=E.prodInfo(S.planets[S.home]);
- giveRes(S.planets[S.home],{m:Math.max(5000,Math.round(pi.m*2)),k:Math.max(3000,Math.round(pi.k*2)),g:Math.max(1500,Math.round(Math.max(0,pi.g)*2))});addLog('Tagesgeschenk erhalten: 5 DM und Rohstoffe','gift');emit('change');return null};
+E.giftReward=function(){const pi=E.prodInfo(S.planets[S.home]);return{m:Math.max(5000,Math.round(pi.m*2)),k:Math.max(3000,Math.round(pi.k*2)),g:Math.max(1500,Math.round(Math.max(0,pi.g)*2)),dm:5}};
+E.claimGift=function(paid){if(!E.giftReady())return 'Heute schon abgeholt';S.lastGift=now();if(!paid){const r=E.giftReward();S.dm+=r.dm;giveRes(S.planets[S.home],{m:r.m,k:r.k,g:r.g})}addLog('Tagesgeschenk erhalten: 5 DM und Rohstoffe','gift');emit('change');return null};
 E.fuseShards=function(col){if(!E.maxB('galacto'))return 'Galactonit-Forschungszentrum benötigt';if((S.gal.shards[col]||0)<3)return '3 Splitter derselben Farbe nötig';
  S.gal.shards[col]-=3;const g={id:S.gal.nextGem++,col,star:1};S.gal.gems.push(g);S.flags.fused=1;emit('change');return null};
 E.fuseGems=function(col,star){if(star>=5)return 'Maximal 5 Sterne';if(E.maxB('galacto')<star+1)return `Forschungszentrum Stufe ${star+1} benötigt`;
@@ -543,6 +555,7 @@ E.tick=function(to){to=to||now();let guard=0;const t0=S.t;
   if(S.rq&&S.rq.end<next){next=S.rq.end;kind='r'}
   for(const f of S.fleets)if(f.arrive<next){next=f.arrive;kind='f';ref=f}
   if(S.settings.raids&&S.nextRaid&&S.nextRaid<next){next=S.nextRaid;kind='raid'}
+  for(const s of S.saves||[])if(s.ret<next){next=s.ret;kind='save';ref=s}
   next=Math.max(next,S.t);
   const dtH=(next-S.t)/HOUR;for(const id of S.order)produce(S.planets[id],dtH);
   for(const id of S.order)progressYard(S.planets[id],next);
@@ -550,7 +563,7 @@ E.tick=function(to){to=to||now();let guard=0;const t0=S.t;
   const prev=E.clock;E.clock=()=>next; // Ereigniszeit als „jetzt“
   try{
   if(kind==='b')finishBuild(ref);else if(kind==='r')finishResearch();else if(kind==='f')processFleet(ref);
-  else if(kind==='raid'){launchRaid(next);scheduleRaid(next)}
+  else if(kind==='raid'){launchRaid(next);scheduleRaid(next)}else if(kind==='save')saveReturn(ref);
   }finally{E.clock=prev}
   if(!kind)break;}
  if(S.settings.raids&&!S.nextRaid&&E.totalPoints()>=3000)scheduleRaid(S.t);

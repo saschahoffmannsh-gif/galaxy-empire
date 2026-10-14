@@ -852,3 +852,11 @@ body.rw-flying #aries-h{opacity:0}
 .qsp.free{border-color:rgba(92,242,160,.8);background:rgba(20,70,45,.9);color:#bfffd9;font-weight:800;font-size:10px;box-shadow:0 0 10px rgba(92,242,160,.45);animation:freeP 1.6s ease-in-out infinite}
 @keyframes freeP{50%{box-shadow:0 0 16px rgba(92,242,160,.8)}}
 .freefin{box-shadow:0 0 12px rgba(92,242,160,.5)}
+/* v26: Energie-Badge & Überfall-Warnung */
+#res .rc{position:relative}
+.ebadge{position:absolute;top:-5px;right:-4px;min-width:17px;height:17px;border-radius:9px;background:#ff3b55;color:#fff;font:800 11px/17px system-ui;text-align:center;box-shadow:0 0 0 2px rgba(10,14,30,.85),0 0 10px #ff3b55;animation:ebp 1.2s ease-in-out infinite;cursor:pointer;z-index:3}
+@keyframes ebp{50%{transform:scale(1.18);box-shadow:0 0 0 2px rgba(10,14,30,.85),0 0 18px #ff3b55}}
+#raidbar{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 58px);transform:translateX(-50%);z-index:60;padding:8px 10px;border-radius:14px;border:1px solid rgba(255,80,100,.55);box-shadow:0 0 22px rgba(255,60,90,.35);max-width:min(460px,80vw);animation:rbin .35s ease-out}
+#raidbar .rb-row{display:flex;align-items:center;gap:10px}#raidbar .rb-row+.rb-row{margin-top:6px}
+#raidbar .rb-ic{font-size:20px;color:#ff5d73;animation:ebp 1s infinite}#raidbar .rb-t{flex:1;min-width:0;font-size:12px}#raidbar .rb-t b{font-size:13px}
+@keyframes rbin{from{opacity:0;transform:translate(-50%,-10px)}}

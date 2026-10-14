@@ -14,7 +14,11 @@ const CH=[
  {t:'Kolonie',ic:'🌍',intro:'Ein Planet allein ist zu klein für deine Pläne. Mit Astrophysik erreichst du neue Welten.',outro:'Deine zweite Welt ist bewohnt – dein Reich erstreckt sich über die Sterne.',main:[20,21,22,24],
   side:[{id:'s6a',t:'Kolonialreich',d:'Besitze 2 Kolonien.',c:()=>E.colonies()>=2,r:{m:40000,k:40000,g:20000}}],bonus:{dm:15}},
  {t:'Allianz',ic:'🤝',intro:'Gemeinsam ist man stärker. Gründe eine Allianz und miss dich mit den Besten der Galaxie.',outro:'Deine Allianz steht, dein Name steht in den Ranglisten.',main:[12,'rank',18,19,'c7a'],
-  side:[{id:'s7a',t:'Aufsteiger',d:'Erreiche 5.000 Punkte.',c:()=>(S.pts?Object.values(S.pts).reduce((a,b)=>a+(+b||0),0):0)>=5000,r:{dm:10}}],bonus:{dm:20}}
+  side:[{id:'s7a',t:'Aufsteiger',d:'Erreiche 5.000 Punkte.',c:()=>(S.pts?Object.values(S.pts).reduce((a,b)=>a+(+b||0),0):0)>=5000,r:{dm:10}}],bonus:{dm:20}},
+ {t:'Nanotechnik',ic:'🧬',intro:'Deine Fabriken stoßen an Grenzen. Mit Naniten baust du schneller als je zuvor – und Monde öffnen neue Wege.',outro:'Naniten schwärmen durch deine Werkhallen. Bauzeiten halbieren sich!',main:['c8a','c8b','c8c'],
+  side:[{id:'s8a',t:'Saveflug',d:'Bringe deine Flotte vor einem Piratenangriff in Sicherheit.',c:()=>!!S.flags.fleetSaved,r:{m:30000,k:20000,g:10000,dm:5}},{id:'s8b',t:'Mondlicht',d:'Besitze einen Mond.',c:()=>S.order.some(id=>S.planets[id].moon),r:{m:50000,k:50000,g:20000}}],bonus:{dm:25,gal:6}},
+ {t:'Flottenmacht',ic:'🚀',intro:'Ein Imperium braucht Raum und eine Flotte, die ihn verteidigt. Forme deine Welt um und baue Schlachtschiffe.',outro:'Deine Schlachtschiffe beherrschen den Raum. Du bist eine echte Großmacht – ab jetzt warten Wochenziele auf dich.',main:['c9a','c9b','c9c'],
+  side:[{id:'s9a',t:'Großreich',d:'Besitze 4 Kolonien.',c:()=>E.colonies()>=4,r:{m:150000,k:100000,g:50000}}],bonus:{dm:30,gal:9}}
 ];
 const mB=o=>Object.entries(o).every(([k,v])=>E.maxB(k)>=v);const eBal=()=>{const pi=E.prodInfo(S.planets[S.home]);return pi.eProd>=pi.eUse};
 const EXTRA={rank:{t:'Ruhmeshalle',d:'Öffne die Rangliste (Pokal oben rechts).',c:()=>!!S.flags.rankSeen,r:{m:5000,k:5000,dm:3}},
@@ -26,6 +30,12 @@ const EXTRA={rank:{t:'Ruhmeshalle',d:'Öffne die Rangliste (Pokal oben rechts).'
  c3b:{t:'Aufklärung',d:'Forschungslabor Stufe 4 und Spionagetechnik Stufe 2.',c:()=>E.maxB('lab')>=4&&E.tl('espionage')>=2,r:{m:10000,k:15000,g:5000,dm:5}},
  c4a:{t:'Schwerindustrie',d:'Metallmine 10, Kristallmine 9 und Gasförderung 7.',c:()=>mB({metal_mine:10,crystal_mine:9,gas_mine:7}),r:{m:40000,k:25000,g:15000,dm:5}},
  c5a:{t:'Rohstoffmacht',d:'Metallmine 11 und Kristallmine 10.',c:()=>mB({metal_mine:11,crystal_mine:10}),r:{m:80000,k:50000,g:30000,dm:10}},
+ c8a:{t:'Naniten',d:'Baue die Nanitenfabrik (Roboterfabrik 8, Computertechnik 8).',c:()=>E.maxB('nanite')>=1,r:{m:200000,k:120000,g:60000,dm:10}},
+ c8b:{t:'Weitblick',d:'Computertechnik Stufe 10 und Astrophysik Stufe 4.',c:()=>E.tl('computer')>=10&&E.tl('astro')>=4,r:{m:120000,k:150000,g:60000,dm:10}},
+ c8c:{t:'Forschungsmacht',d:'Forschungslabor Stufe 10 und Roboterfabrik Stufe 10.',c:()=>mB({lab:10,robotics:10}),r:{m:250000,k:200000,g:100000,dm:10}},
+ c9a:{t:'Neue Welten',d:'Baue einen Terraformer (+5 Felder je Stufe).',c:()=>E.maxB('terraformer')>=1,r:{m:150000,k:200000,g:150000,dm:10}},
+ c9b:{t:'Sprungantrieb',d:'Hyperraumantrieb Stufe 3.',c:()=>E.tl('hyperdrive')>=3,r:{m:200000,k:300000,g:100000,dm:10}},
+ c9c:{t:'Schlachtflotte',d:'Baue insgesamt 10 Schlachtschiffe.',c:()=>(S.built.bs||0)>=10,r:{m:400000,k:300000,g:150000,dm:15}},
  c7a:{t:'Imperiale Größe',d:'Roboterfabrik Stufe 5 und Forschungslabor Stufe 6.',c:()=>E.maxB('robotics')>=5&&E.maxB('lab')>=6,r:{m:100000,k:80000,g:40000,dm:15}}};
 // v24: Belohnungen wachsen mit der Produktion (mind. Basiswert, sonst ~45 Min. aktuelle Förderung, max. 10×)
 function scaleR(r,h=0.75){const o=Object.assign({},r);try{const pi=E.prodInfo(S.planets[S.home]);const nice=x=>{const e=Math.pow(10,Math.max(1,Math.floor(Math.log10(x))-1));return Math.round(x/e)*e};
@@ -39,7 +49,7 @@ const FEATN={research:'Forschung',store:'Space Store',cmd:'Offiziere',inv:'Inven
 const BLOCK={lab:2,shipyard:3,radar:4,galacto:5,stargate:6,alliance:7};
 window.CAMP={CH,FEAT,BLOCK};
 const C=()=>S.camp;
-function init(){if(S.camp){migrate24();return}const c={ch:0,cl:{},side:{},seen:{},skip:0,v24:(S.task||0)>0?0:1};
+function init(){if(S.camp){migrate24();migrate26();return}const c={ch:0,cl:{},side:{},seen:{},skip:0,v24:(S.task||0)>0?0:1};
  // Bestehender Spielstand: bisherige Aries-Aufgaben übernehmen, bereits erfüllte nachtragen
  for(let i=0;i<Math.min(S.task||0,GE.TASKS.length);i++)c.cl[i]=1;
  if((S.task||0)>=GE.TASKS.length){c.cl.rank=1;c.seen.fin=1}
@@ -47,6 +57,7 @@ function init(){if(S.camp){migrate24();return}const c={ch:0,cl:{},side:{},seen:{
  if((S.task||0)>0){for(const ch of CH)for(const i of ch.main)if(!c.cl[i]&&safe(()=>done(i))){E.giveReward(T(i).r);c.cl[i]=1;gave++}
   if(gave)toast(`Aries: ${gave} bereits erfüllte Missionen nachgetragen`,'ok',4000)}
  c.ch=chapterFrom(c);for(let k=0;k<c.ch;k++){c.seen['i'+k]=1;c.seen['o'+k]=1}if(c.ch>0)c.seen['i'+c.ch]=0;save();migrate24()}
+function migrate26(){const c=S.camp;if(!c||c.v26)return;c.v26=1;if(c.ch===7&&!c.skip)c.seen.i7=0;save()}
 function safe(f){try{return f()}catch(e){return false}}
 function migrate24(){const c=S.camp;if(!c||c.v24)return;
  // Kapitel, deren ursprüngliche Missionen schon erledigt sind, bekommen die neuen Zusatzmissionen geschenkt (kein Rückfall)
@@ -61,7 +72,7 @@ window.CAMP.locked=locked;window.CAMP.bLocked=bLocked;
 function curMain(){const c=C();if(!c||c.ch>=CH.length)return null;return CH[c.ch].main.find(i=>!c.cl[i])}
 function claim(i,paid){const c=C();if(c.cl[i]||!safe(()=>done(i)))return 'Mission noch nicht erfüllt';if(i===5)setTimeout(()=>{for(const id of S.order){const p=S.planets[id];if(p.pct.gas_mine===60)p.pct.gas_mine=100}renderAll();toast('Gasförderung wieder auf 100 %','ok')},1500);if(!paid)E.giveReward(scaleR(T(i).r));c.cl[i]=1;S.task=Object.keys(c.cl).filter(k=>/^\d+$/.test(k)).length;
  (E.addLog||(()=>{}))(`Aries: Mission „${T(i).t}“ abgeschlossen – Belohnung erhalten!`,'task');toast('Belohnung: '+E.rewardText(T(i).r),'ok',3500);
- const ch=CH[c.ch];if(ch&&ch.main.every(k=>c.cl[k])){E.giveReward(ch.bonus);c.seen['o'+c.ch]=0;c.ch++;if(c.ch<CH.length)c.seen['i'+c.ch]=0}
+ const ch=CH[c.ch];if(ch&&ch.main.every(k=>c.cl[k])){const bt='Kapitelbonus: '+ch.t;if(window.RWD)setTimeout(()=>RWD.flow(ch.bonus,bt).then(ok=>{if(!ok)E.giveReward(ch.bonus)}),500);else E.giveReward(ch.bonus);c.seen['o'+c.ch]=0;c.ch++;if(c.ch<CH.length)c.seen['i'+c.ch]=0}
  save();renderAll();return null}
 function claimSide(id,paid){const c=C();const m=CH.flatMap(x=>x.side).find(x=>x.id===id);if(!m||c.side[id]||!m.c())return 'Noch nicht erfüllt';if(!paid)E.giveReward(scaleR(m.r,0.5));c.side[id]=1;toast('Nebenmission: '+E.rewardText(m.r),'ok',3500);save();renderAll();return null}
 // ---------- Missionslog ----------
@@ -78,6 +89,25 @@ PANELS.camp=()=>{init();const c=C();let h=`<div class="cp-head">${holo('p3','cp-
  h+=`<div class="cp-sub">Tutorial</div><div class="row" style="gap:6px;margin:4px 0 8px"><button class="btn sm ghost" data-act="cp-restart">↻ Kapitel-Tutorial neu starten</button>${c.skip?'<button class="btn sm" data-act="cp-skip">Tutorial fortsetzen</button>':''}</div>`;
  return['Missionslog',`<div class="camp">${h}</div>`]};
 PANELS.tasks=PANELS.camp;
+// v26: Wochenziele (nach Kapitel 7 / im freien Spiel) – drei Ziele je Spielwoche, relativ zum Stand bei Wochenbeginn
+const WK_DEF=[
+ {id:'bl',t:'Baumeister',d:n=>`Baue ${n} Gebäudestufen aus.`,n:[8,12,16],v:()=>S.order.reduce((a,id)=>a+Object.values(S.planets[id].b).reduce((x,y)=>x+y,0),0),r:{m:60000,k:40000,g:20000,dm:4}},
+ {id:'rs',t:'Wissensdurst',d:n=>`Schließe ${n} Forschungsstufen ab.`,n:[3,4,6],v:()=>Object.values(S.tech).reduce((a,b)=>a+b,0),r:{m:40000,k:60000,g:30000,dm:4}},
+ {id:'nb',t:'Nebelpilot',d:n=>`Schicke ${n} Expeditionen in den Nebel.`,n:[5,8,12],v:()=>S.flags.nebN||0,r:{m:50000,k:50000,g:25000,gal:3}},
+ {id:'sh',t:'Werftbetrieb',d:n=>`Baue ${n} Schiffe oder Verteidigungsanlagen.`,n:[40,80,150],v:()=>Object.values(S.built).reduce((a,b)=>a+b,0),r:{m:70000,k:40000,g:20000,dm:3}},
+ {id:'pt',t:'Aufstieg',d:n=>`Gewinne ${E.fmtN?E.fmtN(n):n} Punkte hinzu.`,n:[2000,5000,10000],v:()=>E.totalPoints(),r:{m:80000,k:60000,g:30000,dm:5}}];
+const WEEK=7*24*3600e3;
+function wk(){const c=C();if(!c)return null;const w=Math.floor((S.t||Date.now())/WEEK);if(!c.wk||c.wk.w!==w){const tier=Math.min(2,Math.floor((c.ch>=CH.length?1:0)+E.colonies()/3));const pick=[];let h=w;const pool=WK_DEF.slice();
+  for(let i=0;i<3;i++){h=(h*9301+49297)%233280;pick.push(pool.splice(h%pool.length,1)[0])}
+  c.wk={w,g:pick.map(d=>({id:d.id,n:d.n[tier],b:d.v()})),cl:{}};save()}return c.wk}
+const wkShow=()=>{const c=C();return c&&(free()||c.ch>=7)};
+function wkRows(){const W=wk();if(!W)return'';const left=(W.w+1)*WEEK-(S.t||Date.now());
+ return`<div class="cp-sub">Wochenziele <span class="mut">· noch ${Math.max(1,Math.ceil(left/864e5))} Tg.</span></div>`+W.g.map(g=>{const d=WK_DEF.find(x=>x.id===g.id);const p=Math.max(0,d.v()-g.b),ok=p>=g.n,cl=W.cl[g.id];
+  return`<div class="cp-m side ${cl?'cl':''}"><div class="cp-mi">${cl?'✓':ok?'!':'⟳'}</div><div class="ft"><b>${esc(d.t)}</b><div>${esc(d.d(g.n))} <span class="mut">(${Math.min(p,g.n).toLocaleString('de-DE')}/${g.n.toLocaleString('de-DE')})</span></div>${rw(scaleR(d.r,1))}</div>${cl?'':ok?`<button class="btn sm green" data-act="cp-week" data-id="${g.id}">Abholen</button>`:''}</div>`}).join('')}
+const _cp=PANELS.camp;PANELS.camp=()=>{const r=_cp();if(wkShow())r[1]=r[1].replace('<div class="cp-sub">Tutorial</div>',wkRows()+'<div class="cp-sub">Tutorial</div>');return r};PANELS.tasks=PANELS.camp;
+async function claimWeek(id){const W=wk();const g=W&&W.g.find(x=>x.id===id);if(!g||W.cl[id])return;const d=WK_DEF.find(x=>x.id===id);if(d.v()-g.b<g.n)return err('Noch nicht erfüllt');
+ const r=scaleR(d.r,1);if(window.RWD){const ok=await RWD.flow(r,'Wochenziel: '+d.t);if(!ok)return}else E.giveReward(r);W.cl[id]=1;save();if(GAME.panel)renderPanel(true);renderAll()}
+document.addEventListener('click',e=>{const t=e.target.closest('[data-act="cp-week"]');if(!t)return;e.stopPropagation();claimWeek(t.dataset.id)},true);
 // ---------- HUD-Kachel ----------
 window.renderAries=function(){init();const el=$('#aries');if(!el)return;const c=C();if(c.skip){setHTML(el,'');return}
  const i=curMain();const anyDone=!free()&&CH[c.ch].main.some(k=>!c.cl[k]&&safe(()=>done(k)));

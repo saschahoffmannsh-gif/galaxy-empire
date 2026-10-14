@@ -31,7 +31,7 @@ function load(){let raw=null;try{const imp=sessionStorage.getItem('ge_import');i
  else{S=E.newGame({speed:10});}
  grantTest(false);
  E.on((t,d)=>{if(t==='built')toast(`${GE.BUILD[d.q.id].n} Stufe ${d.q.lv} fertig`,'ok');if(t==='researched')toast(`${GE.TECH[d.id].n} Stufe ${d.lv} erforscht`,'ok');
-  if(t==='report'&&d.type!=='transport')toast('Neuer Bericht: '+d.title);if(t==='raidwarn')toast('⚠ Radar: Piratenflotte im Anflug!','err',5000);dirty=true});}
+  if(t==='report'&&d.type!=='transport')toast('Neuer Bericht: '+d.title);if(t==='raidwarn'){toast('⚠ Piratenflotte im Anflug! „Flotte retten“ bringt deine Schiffe in Sicherheit.','err',6000);renderRaid()}dirty=true});}
 function toast(msg,kind='',ms=2600){const el=document.createElement('div');el.className='toast glass '+kind;el.textContent=msg;$('#toasts').appendChild(el);setTimeout(()=>el.remove(),ms);while($('#toasts').children.length>3)$('#toasts').firstChild.remove()}
 const err=e=>{if(e){toast(e,'err');return true}return false};
 function morph(a,b){const an=a.childNodes,bn=[...b.childNodes];
@@ -46,7 +46,12 @@ function morph(a,b){const an=a.childNodes,bn=[...b.childNodes];
   if(o.tagName!=='INPUT'&&!o.hasAttribute('data-end'))morph(o,n)}
  while(an.length>bn.length)a.removeChild(a.lastChild)}
 function setHTML(el,h){if(!el)return;if(el._h!==h){if(el._h==null){el.innerHTML=h}else{const t=document.createElement('template');t.innerHTML=h;morph(el,t.content)}el._h=h;return true}return false}
-function renderTop(){const p=pl();
+function renderRaid(){let b=document.getElementById('raidbar');const L=(E.raidsIncoming?E.raidsIncoming():[]);const pend={};for(const f of L){const t=S.planets[f.target];if(!t)continue;const n=Object.entries(t.ships).filter(([k,v])=>k!=='ss'&&v>0).reduce((a,[,v])=>a+v,0);if(!pend[f.target]||f.arrive<pend[f.target].a)pend[f.target]={a:f.arrive,n,pl:t}}
+ const ks=Object.keys(pend);if(!ks.length){if(b)b.remove();return}if(!b){b=document.createElement('div');b.id='raidbar';b.className='glass';document.body.appendChild(b)}
+ const sig=ks.map(k=>k+pend[k].n).join();if(b.dataset.sig===sig)return;b.dataset.sig=sig;
+ b.innerHTML=ks.map(k=>{const x=pend[k];return`<div class="rb-row"><span class="rb-ic">⚠</span><div class="rb-t"><b>Piratenangriff auf ${esc(x.pl.name)}</b><div>Ankunft in <span data-end="${x.a}"></span></div></div>${x.n?`<button class="btn sm red" data-act="fsave" data-id="${k}">Flotte retten</button>`:'<span class="mut">keine Schiffe</span>'}</div>`}).join('')}
+window.renderRaid=renderRaid;
+function renderTop(){const p=pl();try{renderRaid()}catch(e){}
  setHTML($('#plchip'),`<img src="${A.planetSrc(p.type)}" ${p.moon?'style="filter:grayscale(1)"':''}><div style="min-width:0;text-align:left"><div class="pn">${esc(p.name)}</div><div class="pc">[${p.g}:${p.s}:${p.p}]${p.moon?' Mond':''} ${window.PI?`<span class="pcf">${PI.icF}${E.fieldsUsed(p)}/${E.fieldsMax(p)}</span> <span class="pct">${PI.icT(p.temp)}${p.temp}°</span> `:""}▾</div></div>`);
  setHTML($('#res'),['m','k','g'].map(r=>`<div class="rc" data-act="resinfo" title="${GE.RES[r]}">${IC[r]}<div><div class="rv"></div><div class="rr"></div></div><div class="rbar"><i></i></div></div>`).join('')+
  `<div class="rc" data-act="resinfo">${IC.e}<div><div class="rv"></div><div class="rr"></div></div></div><div class="rc" data-act="open" data-p="store">${IC.dm}<div><div class="rv"></div><div class="rr">DM</div></div></div>`);
@@ -55,7 +60,7 @@ function renderTop(){const p=pl();
  setHTML($('#topbtns'),`<button class="iconbtn" data-act="open" data-p="rank" aria-label="Rangliste">${IC.trophy}</button><button class="iconbtn" data-act="open" data-p="tasks" aria-label="Aufgaben">${IC.task}${done?'<span class="dot ok">!</span>':''}</button><button class="iconbtn" data-act="open" data-p="reports" aria-label="Berichte">${IC.mail}${unread?`<span class="dot">${unread>99?'99+':unread}</span>`:''}</button><button class="iconbtn" data-act="open" data-p="settings" aria-label="Einstellungen">${IC.gear}</button>`);}
 function updRes(){const p=pl(),pi=E.prodInfo(p);const els=$$('#res .rc');if(els.length<5)return;
  ['m','k','g'].forEach((r,i)=>{const el=els[i],cap=E.storeCap(p,r);el.querySelector('.rv').textContent=fmt(p.r[r]);el.querySelector('.rr').textContent=(pi[r]>=0?'+':'')+fmt(pi[r])+'/h';el.classList.toggle('full',p.r[r]>=cap);el.querySelector('.rbar i').style.width=Math.min(100,p.r[r]/cap*100)+'%'});
- const e=pi.eProd-pi.eUse;els[3].querySelector('.rv').textContent=fmt(e);els[3].querySelector('.rr').textContent=fmt(pi.eProd)+' erz.';els[3].classList.toggle('neg',e<0);els[4].querySelector('.rv').textContent=fmt(S.dm)}
+ const e=pi.eProd-pi.eUse;els[3].querySelector('.rv').textContent=fmt(e);els[3].querySelector('.rr').textContent=fmt(pi.eProd)+' erz.';els[3].classList.toggle('neg',e<0);{let bd=els[3].querySelector('.ebadge');if(e<0&&!p.moon){if(!bd){bd=document.createElement('span');bd.className='ebadge';els[3].appendChild(bd)}const fx=E.lv(p,'fusion')>0||(E.canBuild&&!E.canBuild(p,'fusion'))?(E.bCost('fusion',E.lv(p,'fusion')+1).reduce((a,b)=>a+b,0)<E.bCost('solar',E.lv(p,'solar')+1).reduce((a,b)=>a+b,0)?'fusion':'solar'):'solar';bd.dataset.act='pbld';bd.dataset.id=fx;bd.textContent='!';bd.title='Energie negativ – '+GE.BUILD[fx].n+' ausbauen'}else if(bd)bd.remove()}els[4].querySelector('.rv').textContent=fmt(S.dm)}
 const TABS=[['base','Base',IC.base],['system','System',IC.sys],['galaxy','Galaxie',IC.gal],['fleet','Flotte',IC.fleet],['ally','Allianz',IC.ally],['chat','Chat',IC.chat]];
 function renderNav(){$('#nav').innerHTML=TABS.map(t=>`<button data-act="tab" data-v="${t[0]}" class="${view===t[0]?'on':''}">${t[2]}${t[1]}</button>`).join('')}
 function setView(v){view=v;$$('.view').forEach(e=>e.classList.remove('active'));$('#v-'+v).classList.add('active');$('#pano').classList.toggle('paused',v!=='base');if(v==='base'){layoutPano()}renderNav();renderView()}
@@ -66,9 +71,9 @@ function renderView(){({base:renderBase,system:renderSystem,galaxy:renderGalaxy,
 // 17 bebaubare Pads per Bildanalyse: [cx, cy (Mitte Oberseite), Breite, Höhe der Oberseite]. Index 17 = großer Vordergrund-Pad (v14 wieder bebaubar; Kamera zeigt ihn ganz über dem Menü).
 const PADS=[[390,502,187,47],[453,415,108,20],[680,415,103,20],[610,378,80,13],[828,460,146,32],[922,410,107,19],[1162,468,167,34],[1002,378,83,15],
  [1418,467,147,40],[1522,404,106,24],[1672,448,136,35],[1544,565,202,72],[1922,568,212,78],[2166,428,128,30],[2125,504,176,54],[2070,378,91,19],[1914,395,105,24],[939,600,308,93]];
-const PAD_PREF={metal_mine:0,crystal_mine:2,gas_mine:4,solar:8,fusion:12,lab:10,nanite:9,robotics:5,metal_store:11,galacto:7,'@defense':15,shipyard:6,alliance:1,stargate:13,radar:16,crystal_store:3,gas_store:14,
+const PAD_PREF={metal_mine:0,crystal_mine:2,gas_mine:4,solar:8,fusion:12,lab:10,nanite:9,robotics:5,metal_store:11,galacto:7,'@defense':15,shipyard:6,alliance:1,stargate:13,radar:16,terraformer:17,crystal_store:3,gas_store:14,
  moon_base:6,pioneer:10,eux:16,wormhole:13};
-const RIMG={metal_store:'store',crystal_store:'store',gas_store:'store','@defense':'defense'};
+const RIMG={terraformer:'pioneer',metal_store:'store',crystal_store:'store',gas_store:'store','@defense':'defense'};
 const rimg=id=>RIMG[id]||id;
 const TIERED=new Set(['metal_mine','crystal_mine','gas_mine','solar','fusion','lab','robotics','nanite','shipyard','metal_store','crystal_store','gas_store','defense','galacto','alliance','stargate','radar']);
 const tierOf=lv=>lv<5?1:lv<10?2:lv<15?3:lv<20?4:5;const ROMAN=['','I','II','III','IV','V'];

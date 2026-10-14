@@ -11,7 +11,7 @@ GE.BUILD = {
  solar:{n:'Solarkraftwerk',c:[75,30,0],f:1.5,img:'Kraftwerk',d:'Erzeugt Energie für Minen und Anlagen.',prod:'e'},
  fusion:{n:'Fusionskraftwerk',c:[900,360,180],f:1.8,req:{gas_mine:5,energy:3},d:'Erzeugt viel Energie, verbraucht dafür Gas. Energietechnik steigert die Leistung.',prod:'e'},
  robotics:{n:'Roboterfabrik',c:[400,120,200],f:2,img:'Roboter_Labor',d:'Roboter beschleunigen den Bau aller Gebäude.'},
- nanite:{n:'Nanitenfabrik',c:[1000000,500000,100000],f:2,img:'KI_Center',req:{robotics:10,computer:10},d:'Halbiert pro Stufe die Bauzeit von Gebäuden, Schiffen und Verteidigung.'},
+ nanite:{n:'Nanitenfabrik',c:[1000000,500000,100000],f:2,img:'KI_Center',req:{robotics:8,computer:8},d:'Halbiert pro Stufe die Bauzeit von Gebäuden, Schiffen und Verteidigung.'},
  shipyard:{n:'Raumschiffwerft',c:[400,200,100],f:2,img:'Werft',req:{robotics:2},d:'Baut Schiffe und Verteidigungsanlagen. Jede Stufe verkürzt die Bauzeit.'},
  lab:{n:'Forschungslabor',c:[200,400,200],f:2,img:'Forschung',d:'Ermöglicht Forschung. Höhere Stufen erforschen schneller und schalten Technologien frei.'},
  metal_store:{n:'Metallspeicher',c:[1000,0,0],f:2,img:'Lager',grp:'store',d:'Erhöht die Lagerkapazität für Metall.'},
@@ -20,6 +20,7 @@ GE.BUILD = {
  radar:{n:'Radaranlage',c:[20000,20000,1000],f:2,req:{shipyard:1},d:'Erkennt anrückende feindliche Flotten. Höhere Stufen zeigen Ankunft und Schiffstypen.'},
  alliance:{n:'Allianzdepot',c:[2000,4000,0],f:2,img:'Allianzzentrum',d:'Zentrale für Allianzen. Ermöglicht Beitritt und Gründung einer Allianz.'},
  galacto:{n:'Galactonit-Forschungszentrum',c:[10000,20000,5000],f:2,img:'Waffen',req:{lab:3},d:'Verarbeitet Galactonit. Jede Stufe schaltet einen Sockel für Edelsteine frei.'},
+ terraformer:{n:'Terraformer',c:[0,50000,100000],f:2,req:{robotics:8,energy:8},d:'Formt die Planetenkruste um: +5 Bauplätze (Felder) je Stufe. Belegt selbst 1 Feld.'},
  stargate:{n:'Sternentor',c:[2000000,4000000,2000000],f:2,req:{hyper:7,shipyard:10},d:'Verlegt Flotten ohne Flugzeit zwischen eigenen Planeten mit Sternentor.'},
  // Mond
  moon_base:{n:'Mondbasis',c:[20000,40000,20000],f:2,moon:1,d:'Jede Stufe schafft 3 zusätzliche Felder auf dem Mond.'},
@@ -27,7 +28,7 @@ GE.BUILD = {
  eux:{n:'EU-X Radarphalanx',c:[20000,40000,20000],f:2,moon:1,req:{moon_base:1},d:'Scannt Flottenbewegungen im Umkreis von (Stufe² − 1) Systemen.'},
  wormhole:{n:'Wurmlochgenerator',c:[2000000,4000000,2000000],f:2,moon:1,req:{moon_base:1,hyper:7},d:'Sprungtor: verlegt Schiffe sofort zwischen Monden.'}
 };
-GE.PLANET_B=['metal_mine','crystal_mine','gas_mine','solar','fusion','robotics','nanite','shipyard','lab','metal_store','crystal_store','gas_store','radar','alliance','galacto','stargate'];
+GE.PLANET_B=['metal_mine','crystal_mine','gas_mine','solar','fusion','robotics','nanite','shipyard','lab','metal_store','crystal_store','gas_store','radar','alliance','galacto','terraformer','stargate'];
 GE.MOON_B=['moon_base','robotics','shipyard','pioneer','eux','wormhole'];
 // Panorama-Hotspots (Bilder aus webapp/assets/b)
 GE.PANO={Bergbau:'metal_mine',Schmiede:'crystal_mine',Raffinerie:'gas_mine',Kraftwerk:'solar',Roboter_Labor:'robotics',KI_Center:'nanite',Werft:'shipyard',Forschung:'lab',Lager:'@store',Allianzzentrum:'alliance',Waffen:'galacto',Verteidigung:'@defense'};

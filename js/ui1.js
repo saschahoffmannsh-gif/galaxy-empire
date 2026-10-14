@@ -74,8 +74,9 @@ function layoutPano(){const H=($('#pano').clientHeight||innerHeight);const vis=H
  if(!panoCentered&&$('#pano').clientWidth){panoCentered=true;$('#pano').scrollLeft=Math.max(0,1080*panoS-$('#pano').clientWidth/2)}
  if(window.WATER)WATER.resize(panoS);if(window.AMBIENT)AMBIENT.place()}
 // Perspektiv-Variante: Gebäude ohne eigenes Pad, Fuß per Spalte auf die Pad-Neigung verschoben (Aufbau bleibt unverzerrt).
-function padGeo(i,name){const [cx,cy,w,h]=PADS[i];const r=h/w;let vi=0,bd=9;B3.rt.forEach((t,j)=>{if(Math.abs(t-r)<bd){bd=Math.abs(t-r);vi=j}});
- const v=B3.v[name][vi];const s=w/288;const half=cx<1180?640:1720;const sk=-Math.max(-1,Math.min(1,(cx-half)/640))*7;
+const IMP={lab:1.32,shipyard:1.3,robotics:1.3,fusion:1.32,alliance:1.28,stargate:1.34,nanite:1.34,galacto:1.18,radar:1.2,defense:1.15,solar:1.0,metal_mine:1.06,crystal_mine:1.06,gas_mine:1.06,store:1.0,moon_base:1.3,pioneer:1.3,eux:1.18,wormhole:1.32};
+function padGeo(i,name,lv){const [cx,cy,w,h]=PADS[i];const r=h/w;let vi=0,bd=9;B3.rt.forEach((t,j)=>{if(Math.abs(t-r)<bd){bd=Math.abs(t-r);vi=j}});
+ const v=B3.v[name][vi];const s=w/288*(IMP[name]||1)*(1+Math.min(lv||0,20)*.008);const half=cx<1180?640:1720;const sk=-Math.max(-1,Math.min(1,(cx-half)/640))*7;
  return{src:`assets/b3/${name}_${vi}.webp`,left:cx-v[2]*s,top:cy-v[3]*s,width:v[0]*s,height:v[1]*s,ox:v[2]*s,oy:v[3]*s,sk,cx,cy,w,h:Math.max(h,w*.16)}}
 function busyOf(p,id){return id[0]==='@'?null:p.bq.find(q=>q.id===id)}
 function lvOf(p,id){return id==='@defense'?((p.def.sdome||0)+(p.def.ldome||0)>0?1:0):E.lv(p,id)}
@@ -96,15 +97,16 @@ function scaffoldSVG(i){const [cx,cy,w,hh]=PADS[i];const h=Math.max(hh,w*.16);co
  const m=pts[1];const top=m[1]-H*1.25;s+=L(m[0],m[1],m[0],top,'mast');s+=`<g class="jib" style="transform-origin:${m[0]}px ${top}px">${L(m[0]-w*.12,top,m[0]+w*.55,top,'jibl')}${L(m[0]+w*.42,top,m[0]+w*.42,top+H*.45,'cable')}<rect x="${m[0]+w*.42-3}" y="${top+H*.45}" width="6" height="5" class="hook"/></g>`;
  return`<svg class="scaf" viewBox="${X0} ${Y0-H*.3} ${VW} ${VH+H*.3}" style="left:${X0}px;top:${Y0-H*.3}px;width:${VW}px;height:${VH+H*.3}px">${s}</svg>`}
 function buildBase(p){let h='';PADS.forEach(([cx,cy,w,hh],i)=>{const g={cx,cy,w,h:Math.max(hh,w*.16)};
-  h+=`<div class="pad" data-act="pad" data-i="${i}" style="z-index:${Math.round(cy)}"><div class="shadow"></div><img class="pb" alt="" draggable="false"><div class="scafw"></div><svg class="ring" viewBox="0 0 100 100" preserveAspectRatio="none"><ellipse cx="50" cy="50" rx="47" ry="44" class="rbg"/><ellipse cx="50" cy="50" rx="47" ry="44" class="rfg" pathLength="100"/></svg><div class="hit" style="--l1:${cx-w*.37}px;--w1:${w*.74}px;--l0:${cx-w*.55}px;--w0:${w*1.1}px;--t1:${cy-w*.45}px;--h1:${w*.45+g.h*.9}px;--t0:${cy-g.h*.15}px;--h0:${g.h*1.45}px"></div></div>`});
+  h+=`<div class="pad" data-act="pad" data-i="${i}" style="z-index:${Math.round(cy)}"><div class="shadow"></div><img class="pb" alt="" draggable="false"><div class="fx"></div><div class="scafw"></div><svg class="ring" viewBox="0 0 100 100" preserveAspectRatio="none"><ellipse cx="50" cy="50" rx="47" ry="44" class="rbg"/><ellipse cx="50" cy="50" rx="47" ry="44" class="rfg" pathLength="100"/></svg><div class="hit" style="--l1:${cx-w*.37}px;--w1:${w*.74}px;--l0:${cx-w*.55}px;--w0:${w*1.1}px;--t1:${cy-w*.45}px;--h1:${w*.45+g.h*.9}px;--t0:${cy-g.h*.15}px;--h0:${g.h*1.45}px"></div></div>`});
  $('#blds').innerHTML=h;}
 function renderBase(){const p=pl();const key=p.id+(p.moon?'m':'');if(ensurePads(p))save();
  if(baseKey!==key){baseKey=key;$('#world').classList.toggle('moon',!!p.moon);buildBase(p);layoutPano()}
  const pads=$$('#blds .pad');PADS.forEach((pd,i)=>{const el=pads[i];const id=p.pads[i];const lv=id?lvOf(p,id):0;const busy=id?busyOf(p,id):null;
-  const state=!id?'empty':busy&&!lv?'new':busy?'up':'done';const k=(id||'')+state;const pb=el.querySelector('.pb');
+  const state=!id?'empty':busy&&!lv?'new':busy?'up':'done';const k=(id||'')+state+Math.min(lv,20);const pb=el.querySelector('.pb');
   if(el.dataset.k!==k){el.dataset.k=k;el.dataset.id=id||'';el.className='pad '+state;const sh=el.querySelector('.shadow');
-   if(!id){pb.removeAttribute('src')}
-   else{const g=padGeo(i,rimg(id));if(pb.getAttribute('src')!==g.src)pb.src=g.src;Object.assign(pb.style,{left:g.left+'px',top:g.top+'px',width:g.width+'px',height:g.height+'px',transformOrigin:`${g.ox}px ${g.oy}px`,transform:`skewX(${g.sk.toFixed(2)}deg)`});
+   if(!id){pb.removeAttribute('src');const fx=el.querySelector('.fx');fx.innerHTML='';fx.dataset.n=''}
+   else{const g=padGeo(i,rimg(id),lv);if(pb.getAttribute('src')!==g.src)pb.src=g.src;const bs={left:g.left+'px',top:g.top+'px',width:g.width+'px',height:g.height+'px',transformOrigin:`${g.ox}px ${g.oy}px`,transform:`skewX(${g.sk.toFixed(2)}deg)`};Object.assign(pb.style,bs);
+    const fx=el.querySelector('.fx');Object.assign(fx.style,bs);fx.style.setProperty('--m',`url(${g.src})`);const fh=state==='new'?'':window.BFX?BFX.html(rimg(id)):'';if(fx.dataset.n!==id+state){fx.dataset.n=id+state;fx.innerHTML=fh}
     Object.assign(sh.style,{left:g.cx-g.w*.5+g.w*.08+'px',top:g.cy-g.h*.45+'px',width:g.w*1.08+'px',height:g.h*1.5+'px'})}
    el.querySelector('.scafw').innerHTML=state==='new'||state==='up'?scaffoldSVG(i):'';
    const r=el.querySelector('.ring');const [cx,cy,w,hh]=PADS[i];const h2=Math.max(hh,w*.16);Object.assign(r.style,{left:cx-w*.56+'px',top:cy-h2*.62+'px',width:w*1.12+'px',height:h2*1.24+'px'})}

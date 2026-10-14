@@ -540,3 +540,60 @@ video.pimg{border-radius:50%;object-fit:cover;mix-blend-mode:screen;background:t
 .ld-fill i{position:absolute;inset:0;background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,.65) 50%,transparent 65%);background-size:200% 100%;animation:ldsh 1.4s linear infinite}
 @keyframes ldsh{from{background-position:150% 0}to{background-position:-50% 0}}
 .ld-pc{margin-top:5px;font:800 11px system-ui,sans-serif;letter-spacing:2px;color:#ffe2a8;text-shadow:0 0 8px rgba(255,180,80,.6)}
+/* v17 Gebäude-Animationen */
+#blds .pad .fx{position:absolute;pointer-events:none}
+#blds .pad .fx>*{position:absolute;display:block}
+.paused #blds .fx *,.paused #blds .fx *::before,.paused #blds .fx *::after{animation-play-state:paused!important}
+.fx-g{aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle,color-mix(in srgb,var(--c) 70%,transparent),transparent 65%);mix-blend-mode:screen;animation:fxpulse 3s ease-in-out infinite}
+@keyframes fxpulse{0%,100%{opacity:.35;transform:translate(-50%,-50%) scale(.9)}50%{opacity:.85;transform:translate(-50%,-50%) scale(1.06)}}
+.fx-sp{width:0;height:0}
+.fx-sp i{position:absolute;width:2px;height:2px;border-radius:50%;background:#fff;box-shadow:0 0 3px 1px var(--c);opacity:0;animation:fxspark 1.6s ease-out infinite}
+@keyframes fxspark{0%{transform:translate(0,0);opacity:0}6%{opacity:1}55%{opacity:.9}100%{transform:translate(var(--dx),calc(var(--dy) + 14px));opacity:0}}
+.fx-st{width:0;height:0}
+.fx-st i{position:absolute;left:-7px;top:-7px;width:14px;height:14px;border-radius:50%;background:radial-gradient(circle,rgba(235,235,240,.5),transparent 70%);opacity:0;animation:fxsteam 4.4s ease-out infinite}
+@keyframes fxsteam{0%{transform:translate(0,0) scale(.4);opacity:0}15%{opacity:.7}100%{transform:translate(9px,-38px) scale(2.6);opacity:0}}
+.fx-bl{width:3px;height:3px;margin:-1.5px;border-radius:50%;background:#fff;box-shadow:0 0 4px 2px var(--c),0 0 10px 3px color-mix(in srgb,var(--c) 50%,transparent);animation:fxblink 1.8s steps(1) infinite}
+@keyframes fxblink{0%,60%{opacity:1}61%,100%{opacity:.08}}
+.fx-sw{inset:0;-webkit-mask:var(--m) center/100% 100% no-repeat;mask:var(--m) center/100% 100% no-repeat;background:linear-gradient(110deg,transparent 40%,color-mix(in srgb,var(--c) 42%,transparent) 50%,transparent 60%) 0 0/300% 100% no-repeat;mix-blend-mode:screen;animation:fxsweep 6s ease-in-out infinite}
+.fx-sw.v{background:linear-gradient(180deg,transparent 42%,color-mix(in srgb,var(--c) 38%,transparent) 50%,transparent 58%) 0 0/100% 300% no-repeat;animation-name:fxsweepv}
+@keyframes fxsweep{0%{background-position:100% 0}45%,100%{background-position:0 0}}
+@keyframes fxsweepv{0%{background-position:0 100%}50%,100%{background-position:0 0}}
+.fx-ring{overflow:visible}.fx-ring ellipse{fill:none;stroke:var(--c);stroke-width:2.2;stroke-dasharray:6 4 14 6;vector-effect:non-scaling-stroke;filter:drop-shadow(0 0 2px var(--c));opacity:.85;animation:fxdash 5s linear infinite}
+@keyframes fxdash{to{stroke-dashoffset:-100}}
+.fx-vx{border-radius:50%;overflow:hidden;mix-blend-mode:screen;-webkit-mask:radial-gradient(closest-side,#000 55%,transparent);mask:radial-gradient(closest-side,#000 55%,transparent)}
+.fx-vx i{position:absolute;inset:-30%;background:conic-gradient(from 0deg,rgba(80,180,255,0),rgba(140,220,255,.75),rgba(80,120,255,0) 30%,rgba(170,120,255,.6) 55%,rgba(80,180,255,0) 70%,rgba(140,230,255,.7) 90%,rgba(80,180,255,0));animation:fxspin 4s linear infinite}
+.fx-vx i+i{inset:-10%;opacity:.6;animation-duration:2.6s;animation-direction:reverse;background:radial-gradient(circle,rgba(255,255,255,.7),transparent 30%),conic-gradient(rgba(255,255,255,0),rgba(200,240,255,.6),rgba(255,255,255,0) 40%)}
+@keyframes fxspin{to{transform:rotate(360deg)}}
+.fx-pg{width:0;height:0}.fx-pg i{position:absolute;left:-30px;top:-12px;width:60px;height:24px;border-radius:50%;border:1.5px solid var(--c);opacity:0;animation:fxping 3s ease-out infinite}.fx-pg i+i{animation-delay:-1.5s}
+@keyframes fxping{0%{transform:scale(.15);opacity:.9}100%{transform:scale(1.4);opacity:0}}
+.fx-bb{overflow:hidden;border-radius:30%}.fx-bb i{position:absolute;bottom:-4px;width:3px;height:3px;border-radius:50%;border:1px solid var(--c);box-shadow:0 0 3px var(--c);animation:fxbub 2s ease-in infinite}
+@keyframes fxbub{0%{transform:translateY(0);opacity:0}15%{opacity:.9}100%{transform:translateY(-60px) translateX(2px);opacity:0}}
+.fx-fl{inset:0;-webkit-mask:var(--m) center/100% 100% no-repeat;mask:var(--m) center/100% 100% no-repeat;background:repeating-linear-gradient(0deg,transparent 0 18%,color-mix(in srgb,var(--c) 70%,transparent) 24%,transparent 30%) 0 0/100% 200%;mix-blend-mode:screen;animation:fxflow 3s linear infinite;opacity:.8}
+@keyframes fxflow{from{background-position:0 0}to{background-position:0 -200%}}
+.fx-sh{width:16px;height:60px;transform:translate(-50%,-100%);background:linear-gradient(0deg,color-mix(in srgb,var(--c) 60%,transparent),transparent);filter:blur(2px);mix-blend-mode:screen;transform-origin:50% 100%;animation:fxshaft 3.4s ease-in-out infinite}
+@keyframes fxshaft{0%,100%{opacity:.15;transform:translate(-50%,-100%) scaleY(.7)}50%{opacity:.6;transform:translate(-50%,-100%) scaleY(1.05)}}
+.fx-ho{width:0;height:var(--h)}.fx-ho i{position:absolute;left:-5px;width:10px;height:5px;border-radius:2px;background:linear-gradient(#ffd9a0,#c06a20);box-shadow:0 0 6px #ff9a3c;animation:fxhoist 2.2s ease-in-out infinite}
+@keyframes fxhoist{0%,100%{top:0}50%{top:100%}}
+.fx-shd{border-radius:50% 50% 45% 45%;overflow:hidden;mix-blend-mode:screen}
+.fx-shd i{position:absolute;inset:-50%;background:conic-gradient(from 0deg,transparent,rgba(140,200,255,.55),transparent 25%,transparent 50%,rgba(170,140,255,.45),transparent 75%);animation:fxspin 5s linear infinite}
+.fx-shd::after{content:"";position:absolute;inset:0;border-radius:inherit;box-shadow:inset 0 0 10px rgba(150,210,255,.8);animation:fxpulse2 2.4s ease-in-out infinite}
+@keyframes fxpulse2{50%{opacity:.35}}
+.fx-ry{aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;overflow:hidden;mix-blend-mode:screen;-webkit-mask:radial-gradient(closest-side,#000 20%,transparent);mask:radial-gradient(closest-side,#000 20%,transparent)}
+.fx-ry i{position:absolute;inset:0;background:repeating-conic-gradient(color-mix(in srgb,var(--c) 65%,transparent) 0 6deg,transparent 6deg 30deg);animation:fxspin 9s linear infinite}
+.fx-wv{inset:0;background:var(--m) center/100% 100% no-repeat;filter:sepia(.16) saturate(1.06) hue-rotate(-5deg) brightness(1.06) contrast(1.02);animation:fxwave 2.1s ease-in-out infinite}
+@keyframes fxwave{0%,100%{transform:skewY(0) scaleX(1)}30%{transform:skewY(2.5deg) scaleX(.97)}70%{transform:skewY(-1.8deg) scaleX(1.01)}}
+.fx-fk{width:14px;height:14px;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle,#fff,color-mix(in srgb,var(--c) 70%,transparent) 30%,transparent 70%);mix-blend-mode:screen;animation:fxflick 1.6s steps(8) infinite}
+@keyframes fxflick{0%{opacity:.9}12%{opacity:.2}25%{opacity:1}37%{opacity:.1}50%{opacity:.8}62%{opacity:0}75%,100%{opacity:0}}
+.lowfx #blds .fx-sw,.lowfx #blds .fx-fl,.lowfx #blds .fx-wv{display:none}
+
+/* v17 Lade-Querformat */
+@media (orientation:landscape){
+ .ld-bg{inset:0;background:url(assets/loading_l.webp) 50% 0%/cover;filter:none;transform-origin:50% 0;animation:ldpar 22s ease-in-out infinite alternate}
+ .ld-img{display:none}
+ .ld-vig{background:radial-gradient(ellipse at 50% 30%,transparent 55%,rgba(3,4,11,.45)),linear-gradient(transparent 66%,rgba(3,4,11,.8))}
+ #loader::before{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background-image:radial-gradient(1.5px 1.5px at 12% 18%,#fff,transparent),radial-gradient(1px 1px at 27% 9%,#fff,transparent),radial-gradient(1.5px 1.5px at 71% 14%,#fff,transparent),radial-gradient(1px 1px at 84% 36%,#fff,transparent),radial-gradient(1.2px 1.2px at 58% 31%,#fff,transparent),radial-gradient(1px 1px at 6% 44%,#fff,transparent),radial-gradient(1.4px 1.4px at 93% 8%,#fff,transparent);animation:ldtw 3.4s ease-in-out infinite}
+ #loader::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background-image:radial-gradient(1.2px 1.2px at 19% 30%,#fff,transparent),radial-gradient(1.5px 1.5px at 44% 6%,#fff,transparent),radial-gradient(1px 1px at 64% 22%,#fff,transparent),radial-gradient(1.3px 1.3px at 78% 4%,#fff,transparent),radial-gradient(1px 1px at 36% 40%,#fff,transparent);animation:ldtw 4.2s ease-in-out infinite reverse}
+ .ld-tap,.ld-foot{z-index:2}
+}
+@keyframes ldpar{from{transform:scale(1.01) translateX(-.5%)}to{transform:scale(1.045) translateX(.5%)}}
+@keyframes ldtw{0%,100%{opacity:.15}50%{opacity:.9}}

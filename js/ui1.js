@@ -59,19 +59,19 @@ document.addEventListener('visibilitychange',()=>$('#pano').classList.toggle('pa
 function renderView(){({base:renderBase,system:renderSystem,galaxy:renderGalaxy,fleet:renderFleet,ally:renderAlly,chat:renderChat})[view]()}
 // Basis: Gelände mit 12 Plattformen (Pad-Zentren per Bildanalyse ermittelt, Quelle 1280×720)
 // Basis-Panorama 2360×800 (unten 80px gespiegelt/abgedunkelt als Rand unter dem Menü).
-// 17 bebaubare Pads per Bildanalyse: [cx, cy (Mitte Oberseite), Breite, Höhe der Oberseite]. Der Vordergrund-Pad unter dem Menü ist entfallen.
+// 17 bebaubare Pads per Bildanalyse: [cx, cy (Mitte Oberseite), Breite, Höhe der Oberseite]. Index 17 = großer Vordergrund-Pad (v14 wieder bebaubar; Kamera zeigt ihn ganz über dem Menü).
 const PADS=[[390,502,187,47],[453,415,108,20],[680,415,103,20],[610,378,80,13],[828,460,146,32],[922,410,107,19],[1162,468,167,34],[1002,378,83,15],
- [1418,467,147,40],[1522,404,106,24],[1672,448,136,35],[1544,565,202,72],[1922,568,212,78],[2166,428,128,30],[2125,504,176,54],[2070,378,91,19],[1914,395,105,24]];
+ [1418,467,147,40],[1522,404,106,24],[1672,448,136,35],[1544,565,202,72],[1922,568,212,78],[2166,428,128,30],[2125,504,176,54],[2070,378,91,19],[1914,395,105,24],[939,600,308,93]];
 const PAD_PREF={metal_mine:0,crystal_mine:1,gas_mine:2,solar:3,fusion:4,lab:5,nanite:6,robotics:7,metal_store:8,galacto:9,'@defense':10,shipyard:11,alliance:12,stargate:13,radar:14,crystal_store:15,gas_store:16,
  moon_base:0,pioneer:5,eux:4,wormhole:13};
 const RIMG={metal_store:'store',crystal_store:'store',gas_store:'store','@defense':'defense'};
 const rimg=id=>RIMG[id]||id;
-const PANO_W=2360,PANO_Y0=60,PANO_VIS1=642;let baseKey=null,panoS=1,panoCentered=false;
+const PANO_W=2360,PANO_Y0=84,PANO_VIS1=714;let baseKey=null,panoS=1,panoCentered=false;
 function navH(){const n=$('#nav');return n?n.offsetHeight+10:64}
-function layoutPano(){const H=($('#pano').clientHeight||innerHeight);const vis=H-navH();panoS=vis/(PANO_VIS1-PANO_Y0);
+function layoutPano(){const H=($('#pano').clientHeight||innerHeight);const vis=H-navH();panoS=vis/(PANO_VIS1-PANO_Y0);window.panoS=panoS;window.PANO_Y0v=PANO_Y0;
  $('#world').style.transform=`translate(0,${-PANO_Y0*panoS}px) scale(${panoS})`;$('#sizer').style.width=PANO_W*panoS+'px';
  if(!panoCentered&&$('#pano').clientWidth){panoCentered=true;$('#pano').scrollLeft=Math.max(0,1080*panoS-$('#pano').clientWidth/2)}
- if(window.WATER)WATER.resize(panoS)}
+ if(window.WATER)WATER.resize(panoS);if(window.AMBIENT)AMBIENT.place()}
 // Perspektiv-Variante: Gebäude ohne eigenes Pad, Fuß per Spalte auf die Pad-Neigung verschoben (Aufbau bleibt unverzerrt).
 function padGeo(i,name){const [cx,cy,w,h]=PADS[i];const r=h/w;let vi=0,bd=9;B3.rt.forEach((t,j)=>{if(Math.abs(t-r)<bd){bd=Math.abs(t-r);vi=j}});
  const v=B3.v[name][vi];const s=w/288;const half=cx<1180?640:1720;const sk=-Math.max(-1,Math.min(1,(cx-half)/640))*7;
@@ -95,7 +95,7 @@ function scaffoldSVG(i){const [cx,cy,w,hh]=PADS[i];const h=Math.max(hh,w*.16);co
  const m=pts[1];const top=m[1]-H*1.25;s+=L(m[0],m[1],m[0],top,'mast');s+=`<g class="jib" style="transform-origin:${m[0]}px ${top}px">${L(m[0]-w*.12,top,m[0]+w*.55,top,'jibl')}${L(m[0]+w*.42,top,m[0]+w*.42,top+H*.45,'cable')}<rect x="${m[0]+w*.42-3}" y="${top+H*.45}" width="6" height="5" class="hook"/></g>`;
  return`<svg class="scaf" viewBox="${X0} ${Y0-H*.3} ${VW} ${VH+H*.3}" style="left:${X0}px;top:${Y0-H*.3}px;width:${VW}px;height:${VH+H*.3}px">${s}</svg>`}
 function buildBase(p){let h='';PADS.forEach(([cx,cy,w,hh],i)=>{const g={cx,cy,w,h:Math.max(hh,w*.16)};
-  h+=`<div class="pad" data-act="pad" data-i="${i}" style="z-index:${Math.round(cy)}"><div class="shadow"></div><img class="pb" alt="" draggable="false"><div class="scafw"></div><svg class="ring" viewBox="0 0 100 100" preserveAspectRatio="none"><ellipse cx="50" cy="50" rx="47" ry="44" class="rbg"/><ellipse cx="50" cy="50" rx="47" ry="44" class="rfg" pathLength="100"/></svg><div class="hit" style="left:${cx-w*.55}px;top:${cy-w*.62}px;width:${w*1.1}px;height:${w*.62+g.h*.9}px"></div></div>`});
+  h+=`<div class="pad" data-act="pad" data-i="${i}" style="z-index:${Math.round(cy)}"><div class="shadow"></div><img class="pb" alt="" draggable="false"><div class="scafw"></div><svg class="ring" viewBox="0 0 100 100" preserveAspectRatio="none"><ellipse cx="50" cy="50" rx="47" ry="44" class="rbg"/><ellipse cx="50" cy="50" rx="47" ry="44" class="rfg" pathLength="100"/></svg><div class="hit" style="--l1:${cx-w*.37}px;--w1:${w*.74}px;--l0:${cx-w*.55}px;--w0:${w*1.1}px;--t1:${cy-w*.45}px;--h1:${w*.45+g.h*.9}px;--t0:${cy-g.h*.15}px;--h0:${g.h*1.45}px"></div></div>`});
  $('#blds').innerHTML=h;}
 function renderBase(){const p=pl();const key=p.id+(p.moon?'m':'');if(ensurePads(p))save();
  if(baseKey!==key){baseKey=key;$('#world').classList.toggle('moon',!!p.moon);buildBase(p);layoutPano()}

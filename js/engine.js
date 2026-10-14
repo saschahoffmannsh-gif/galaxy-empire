@@ -87,7 +87,7 @@ E.prodInfo=function(pl){
  const uk=10*L('crystal_mine')*Math.pow(1.1,L('crystal_mine'))*P('crystal_mine');
  const ug=20*L('gas_mine')*Math.pow(1.1,L('gas_mine'))*P('gas_mine');
  const eUse=um+uk+ug; const f=eUse>0?Math.min(1,eProd/eUse):1;
- const geo=1+(cmdActive('geologist')?0.1:0)+buff('prod');
+ const geo=1+(cmdActive('geologist')?0.1:0)+buff('prod')+(S.ally&&S.ally.res?0.01*(S.ally.res.eco||0):0);
  const pl_=E.tl('plasma');
  const m=(30+30*L('metal_mine')*Math.pow(1.1,L('metal_mine'))*P('metal_mine')*f*geo*(1+0.01*pl_+gemBonus(pl,'m')));
  const k=(15+20*L('crystal_mine')*Math.pow(1.1,L('crystal_mine'))*P('crystal_mine')*f*geo*(1+0.0066*pl_+gemBonus(pl,'k')));

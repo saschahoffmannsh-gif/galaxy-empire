@@ -34,18 +34,25 @@ NET.sync=async function(withSave){if(!NET.on||!GS())return;const S=GS();
  }catch(e){NET.err=e.message}};
 NET.CV=42; // Client-Version: der Server lehnt Spielstände älterer Clients (ohne Stufen-Regeln) ab
 NET.pushSave=async function(keepalive){const S=GS();if(!S)return;const z=await zip(JSON.stringify(S));
- try{await api('save',{body:{z,t:S.t,cv:NET.CV},keepalive:keepalive&&z.length<60000});NET.lastSave=Date.now()}
+ const t=S.t;try{await api('save',{body:{z,t,cv:NET.CV},keepalive:keepalive&&z.length<60000});NET.lastSave=Date.now();try{localStorage.setItem('ge_mp_base_'+String(NET.cfg.name).toLowerCase(),String(t))}catch(_){}}
  catch(e){if(e.code==='reject'&&!keepalive){console.warn('Spielstand abgelehnt',e.reasons);await NET.revert(e.message)}else throw e}};
 // v41: Server hat den Stand abgelehnt (unmöglicher Fortschritt) → letzten gültigen Server-Stand laden
-NET.revert=async function(msg){try{const s=await api('save');const key=window.NET_KEY||('ge_mp_save_'+String(NET.cfg.name).toLowerCase());localStorage.setItem(key,await unzip(s.z));
+NET.revert=async function(msg){try{const s=await api('save');const key=window.NET_KEY||('ge_mp_save_'+String(NET.cfg.name).toLowerCase());localStorage.setItem(key,await unzip(s.z));try{localStorage.setItem('ge_mp_base_'+String(NET.cfg.name).toLowerCase(),String(s.t))}catch(_){}
  try{toast('Server: '+String(msg||'Spielstand abgelehnt').slice(0,140)+' – letzter gültiger Stand wird geladen','err',6000)}catch(_){}
  window.__noSave=1;setTimeout(()=>location.reload(),2500)}catch(e){console.warn(e)}};
+// v45: bei jedem Start den Server-Stand prüfen – ist er neuer (anderes Gerät/Browser, PWA vs. Safari) oder gehört er zu einem Konto-Reset,
+// wird er übernommen; die vergangene Echtzeit holt E.tick danach nach (Bau, Forschung, Werft, Produktion laufen offline weiter).
+const BK=()=>'ge_mp_base_'+String(NET.cfg.name).toLowerCase();
+NET.pull=async function(){const S=GS();if(!NET.on||!S)return;try{const s=await api('save');if(!s||!s.z)return;const raw=await unzip(s.z);let o=null;try{o=JSON.parse(raw)}catch(e){return}
+ if(!o||o.v!==3)return;const bk=BK(),base=+localStorage.getItem(bk)||0;if(!base){localStorage.setItem(bk,String(s.t));if((o.rid||null)===(S.rid||null))return}
+ else if((o.rid||null)===(S.rid||null)&&(+s.t||0)<=base+1000)return;localStorage.setItem(bk,String(s.t));
+ console.log('Server-Stand ist neuer – wird übernommen',o.t,S.t);sessionStorage.setItem('ge_import',raw);GE_REBOOT(window.NET_KEY||('ge_mp_save_'+String(NET.cfg.name).toLowerCase()));try{renderAll()}catch(e){}}catch(e){if(e.status!==404)console.warn('pull',e.message)}};
 // Anmeldung: Server-Spielstand holen und lokal ablegen, dann neu laden
 async function enter(res,url){const c={url,token:res.token,name:res.name,home:res.home,speed:res.speed,seed:res.seed||4242};NET.cfg=c;
  const key='ge_mp_save_'+String(res.name).toLowerCase();
  if(res.hasSave){try{const s=await api('save');const local=JSON.parse(localStorage.getItem(key)||'null');const raw=await unzip(s.z);let rid=null;try{rid=JSON.parse(raw).rid||null}catch(e){}
   // v42: nach einem Konto-Reset (rid) gewinnt immer der Server-Stand, auch wenn die lokale Kopie „neuer“ ist
-  if(!local||(local.t||0)<s.t||(local.rid||null)!==rid)localStorage.setItem(key,raw)}catch(e){}}
+  if(!local||(local.t||0)<s.t||(local.rid||null)!==rid)localStorage.setItem(key,raw);localStorage.setItem('ge_mp_base_'+String(res.name).toLowerCase(),String(s.t))}catch(e){}}
  localStorage.setItem(LS,JSON.stringify(c));localStorage.removeItem('ge_mp_off');
  if(!window.GE_REBOOT||!NET._ui){location.reload();return}
  NET.on=true;window.NET_KEY=key;ENGINE.mp=true;NET.uni=null;installMP();rkC.t=0;GE_REBOOT(key);setTimeout(()=>{try{renderAll()}catch(e){}},2500)}
@@ -176,7 +183,7 @@ function installMP(){const E=window.ENGINE;if(mpDone)return;mpDone=true;{E.slotH
   document.addEventListener('click',async e=>{const t=e.target.closest('[data-act^="mpa-"],[data-act^="mpc-"]');if(!t)return;e.stopPropagation();const a=t.dataset.act;
    try{if(a==='mpc-ch'){AL.ch=t.dataset.id;AL.last[AL.ch]=0;mpChat()}else if(a==='mpc-send')await sendChat();else{t.disabled=true;await allyAct(a,t)}}catch(err){t.disabled=false;toast(err.message,'err',4000)}},true);
 const ss=E.setSpeed;E.setSpeed=function(sp){if(sp!==(NET.cfg.speed||10)){toast('Im Mehrspieler-Universum ist das Tempo fest ('+(NET.cfg.speed||10)+'×)','err');return}return ss.call(this,sp)};
-  setTimeout(()=>NET.sync(true).then(()=>{if(NET.err)toast('Server nicht erreichbar: '+NET.err,'err',4000);else{try{renderAll()}catch(e){}}}),1500);
+  setTimeout(()=>NET.pull().then(()=>NET.sync(true)).then(()=>{if(NET.err)toast('Server nicht erreichbar: '+NET.err,'err',4000);else{try{renderAll()}catch(e){}}}),1500);
   setInterval(()=>{if(document.visibilityState==='visible')NET.sync(false)},120e3);
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')NET.pushSave(true).catch(()=>{})})}
 }

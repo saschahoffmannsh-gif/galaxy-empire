@@ -1125,3 +1125,7 @@ body.raid:has(#panel:not(.hidden)) #raidbar{top:auto;bottom:8px;z-index:41}
 /* v44 */
 #aries-h.nofig .ah-fig{display:none}
 #aries-h.nofig .ah-bub{margin-bottom:0}
+/* v51: Spielernamen antippbar (Privatchat / Profil) */
+[data-pn]{color:#8fd3ff;cursor:pointer;text-decoration:underline dotted rgba(143,211,255,.55);text-underline-offset:2px;-webkit-tap-highlight-color:rgba(56,225,255,.25)}
+[data-pn]:active{color:#fff}
+.badge.own [data-pn]{color:inherit}

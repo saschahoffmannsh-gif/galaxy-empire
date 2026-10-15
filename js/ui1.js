@@ -2,6 +2,10 @@
 const E=window.ENGINE,A=window.ART;let KEY=window.NET_KEY||'ge_remake_save_v3';
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+// v51: Spielernamen überall gleich antippbar (Klick → CHAT.tap: Privatchat / Bot-Profil / eigenes Profil)
+window.PN=(n,label,cls)=>n?`<span class="pnm ${cls||''}" data-pn="${esc(n)}">${esc(label==null?n:label)}</span>`:'';
+// Namen aus Berichten („Name 👤“, „Name (Du)“, „Name (inaktiv)“) – nur Spieler/Bots werden antippbar, NPC-Planeten/Piraten nicht
+window.PNx=raw=>{const s0=String(raw==null?'':raw);const c=s0.replace(/ 👤$/,'').replace(/ \((Du|inaktiv)\)$/,'').trim();const k=window.CHAT&&CHAT.kind?CHAT.kind(c):'none';return k==='none'?esc(s0):`<span class="pnm" data-pn="${esc(k==='me'&&c==='Du'&&window.NET&&NET.on?NET.cfg.name:c)}">${esc(s0)}</span>`};
 const fmt=n=>{n=Math.floor(n||0);const a=Math.abs(n);return a>=1e9?(n/1e9).toFixed(2).replace('.',',')+' Mrd':a>=1e7?(n/1e6).toFixed(1).replace('.',',')+' Mio':n.toLocaleString('de-DE')};
 const ft=ms=>{let s=Math.max(0,Math.ceil(ms/1000));const d=s/86400|0;s%=86400;const h=s/3600|0,m=(s%3600)/60|0,x=s%60;return d?`${d}T ${h}h`:h?`${h}h ${String(m).padStart(2,'0')}m`:m?`${m}m ${String(x).padStart(2,'0')}s`:`${x}s`};
 const clock=t=>new Date(t).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit',second:'2-digit'});

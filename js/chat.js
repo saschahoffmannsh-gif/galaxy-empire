@@ -34,13 +34,15 @@ async function poll(force){if(!on())return;try{
 async function inbox(){if(!on())return;try{const r=await NET.api('inbox');CH.inbox=r.convs||[];CH.unread=r.unread||0;badge()}catch(e){}}
 CH.inbox_=inbox;
 function badge(){const b=document.querySelector('#nav [data-v=chat]');if(!b)return;let d=b.querySelector('.dot');if(CH.unread){if(!d){d=document.createElement('span');d.className='dot';b.appendChild(d)}d.textContent=CH.unread>99?'99+':CH.unread}else if(d)d.remove()}
-setInterval(()=>{if(on()&&!document.hidden&&!(CH.open&&CH.tab==='dm'))inbox()},30000);setTimeout(()=>inbox(),4000);
+setInterval(()=>{if(on()&&!document.hidden&&!(CH.open&&CH.tab==='dm'))inbox()},30000);
+// v51: offenes Chatfenster live aktualisieren (vorher kamen neue Nachrichten erst nach erneutem Öffnen an)
+let _pl=false;setInterval(async()=>{if(!on()||document.hidden||!CH.open||_pl||CH.sending)return;_pl=true;try{await poll()}finally{_pl=false}},4000);setTimeout(()=>inbox(),4000);
 const _rn=window.renderNav;if(_rn)window.renderNav=function(){_rn.apply(this,arguments);badge()};
 D.querySelector('.cd-in').addEventListener('submit',async e=>{e.preventDefault();const txt=$in.value.trim();if(!txt||CH.sending)return;if(txt.length>200)return toast('Max. 200 Zeichen','err');CH.sending=true;
  try{if(CH.tab==='dm')await NET.api('dm',{body:{to:CH.with,txt}});else await NET.api('chat',{body:{ch:chKey(),txt}});$in.value='';await poll()}catch(err){toast(err.message,'err',3500)}finally{CH.sending=false}});
 D.addEventListener('click',e=>{const t=e.target.closest('[data-cd],[data-pn]');if(!t)return;e.stopPropagation();
  if(t.dataset.pn){const n=t.dataset.pn;if(CH.tab==='dm'&&nl(n)===nl(CH.with)){profile(n);return}CH.tap(n);return}const a=t.dataset.cd;
- if(a==='close')close();else if(a==='tab'){CH.tab=t.dataset.k;if(CH.tab==='dm')CH.with=null;render();poll(true)}else if(a==='conv'){CH.with=t.dataset.n;render();poll(true)}else if(a==='inbox'){CH.with=null;render();poll(true)}});
+ if(a==='close')close();else if(a==='tab'){CH.tab=t.dataset.k;if(CH.tab==='dm')CH.with=null;render();poll(true)}else if(a==='conv'){CH.with=t.dataset.n;render();poll(true);setTimeout(()=>{try{$in.focus({preventScroll:true})}catch(_){}},200)}else if(a==='inbox'){CH.with=null;render();poll(true)}});
 // Nav-Button „Chat“ öffnet die Schublade statt einer eigenen Ansicht
 document.addEventListener('click',e=>{const b=e.target.closest('#nav [data-v=chat]');if(!b||b.classList.contains('cp-lock'))return;e.stopPropagation();e.preventDefault();CH.open?close():open()},true);
 // ---------- Profil (überall: Chat, Rangliste, Galaxie, System) ----------

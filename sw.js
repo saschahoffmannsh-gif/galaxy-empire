@@ -1,5 +1,5 @@
-const C='ge-remake-v50';
-const PRE=['./','index.html','assets/loading.webp','assets/loading_l.webp','assets/audio/music.mp3'];
+const C='ge-remake-v51';
+const PRE=['./','index.html','assets/loading.webp','assets/loading_l.webp','assets/audio/music.mp3','manifest.webmanifest','favicon.ico','assets/icons/apple-touch-icon.png','assets/icons/apple-touch-icon-167.png','assets/icons/apple-touch-icon-152.png','assets/icons/apple-touch-icon-120.png','assets/icons/icon-192.png','assets/icons/icon-512.png','assets/icons/maskable-192.png','assets/icons/maskable-512.png','assets/icons/favicon-32.png','assets/icons/favicon-16.png'];
 self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(C).then(c=>Promise.all(PRE.map(u=>c.add(u).catch(()=>{})))))});
 self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==C).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
 // Audio mit Range-Anfrage (iOS) aus dem Cache als 206 beantworten

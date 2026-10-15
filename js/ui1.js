@@ -29,7 +29,7 @@ window.GE_REBOOT=function(key){try{save()}catch(e){}KEY=key;load();try{closePane
 function load(){let raw=null;try{const imp=sessionStorage.getItem('ge_import');if(imp){sessionStorage.removeItem('ge_import');localStorage.setItem(KEY,imp)}raw=JSON.parse(localStorage.getItem(KEY))}catch(e){}
  if(raw&&raw.v===3){S=E.load(raw);const before=S.t,logN=S.log.length;E.tick();const away=Date.now()-before;
   if(away>60000){setTimeout(()=>toast(`Willkommen zurück! ${ft(away)} offline nachgeholt.`,'ok',5000),600)}}
- else{S=E.newGame({speed:10});if(window.NET&&NET.on)NET.initNew(S)}
+ else{S=E.newGame({speed:10});window.GE_FRESH=1;if(window.NET&&NET.on)NET.initNew(S)}
 if(window.NET&&NET.on)NET.enforce(S);else grantTest(false);
  if(load._on)return;load._on=1;E.on((t,d)=>{if(t==='built')toast(`${GE.BUILD[d.q.id].n} Stufe ${d.q.lv} fertig`,'ok');if(t==='researched')toast(`${GE.TECH[d.id].n} Stufe ${d.lv} erforscht`,'ok');
   if(t==='report'&&d.type!=='transport')toast('Neuer Bericht: '+d.title);if(t==='raidwarn'){toast('⚠ Piratenflotte im Anflug! „Flotte retten“ bringt deine Schiffe in Sicherheit.','err',6000);renderRaid()}dirty=true});}

@@ -44,9 +44,9 @@ NET.revert=async function(msg){try{const s=await api('save');const key=window.NE
 // wird er übernommen; die vergangene Echtzeit holt E.tick danach nach (Bau, Forschung, Werft, Produktion laufen offline weiter).
 const BK=()=>'ge_mp_base_'+String(NET.cfg.name).toLowerCase();
 NET.pull=async function(){const S=GS();if(!NET.on||!S)return;try{const s=await api('save');if(!s||!s.z)return;const raw=await unzip(s.z);let o=null;try{o=JSON.parse(raw)}catch(e){return}
- if(!o||o.v!==3)return;const bk=BK(),base=+localStorage.getItem(bk)||0;if(!base){localStorage.setItem(bk,String(s.t));if((o.rid||null)===(S.rid||null))return}
+ if(!o||o.v!==3)return;const bk=BK(),base=+localStorage.getItem(bk)||0;if(!base){localStorage.setItem(bk,String(s.t));if((o.rid||null)===(S.rid||null)&&!window.GE_FRESH)return}
  else if((o.rid||null)===(S.rid||null)&&(+s.t||0)<=base+1000)return;localStorage.setItem(bk,String(s.t));
- console.log('Server-Stand ist neuer – wird übernommen',o.t,S.t);sessionStorage.setItem('ge_import',raw);GE_REBOOT(window.NET_KEY||('ge_mp_save_'+String(NET.cfg.name).toLowerCase()));try{renderAll()}catch(e){}}catch(e){if(e.status!==404)console.warn('pull',e.message)}};
+ console.log('Server-Stand ist neuer – wird übernommen',o.t,S.t);window.GE_FRESH=0;sessionStorage.setItem('ge_import',raw);GE_REBOOT(window.NET_KEY||('ge_mp_save_'+String(NET.cfg.name).toLowerCase()));try{renderAll()}catch(e){}}catch(e){if(e.status!==404)console.warn('pull',e.message)}};
 // Anmeldung: Server-Spielstand holen und lokal ablegen, dann neu laden
 async function enter(res,url){const c={url,token:res.token,name:res.name,home:res.home,speed:res.speed,seed:res.seed||4242};NET.cfg=c;
  const key='ge_mp_save_'+String(res.name).toLowerCase();

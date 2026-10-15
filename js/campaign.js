@@ -156,7 +156,7 @@ window.CAMP.say=say;window.CAMP.hide=hide;
 // ---------- Spotlight ----------
 let spotSel=null,spotEl=null;
 function spot(sel){spotSel=sel;SP.classList.toggle('on',!!sel);document.body.classList.toggle('cp-guided',!!sel);placeSpot()}
-function placeSpot(){if(!spotSel){document.querySelectorAll('.cp-target').forEach(e=>e.classList.remove('cp-target'));if(lastFit){lastFit='';H.style.bottom='';H.classList.remove('fitmini')}return}const el=typeof spotSel==='function'?spotSel():document.querySelector(spotSel);if(spotEl&&spotEl!==el)spotEl.classList.remove('cp-target');spotEl=el;if(el)el.classList.add('cp-target');if(!el){SP.classList.add('wait');return}SP.classList.remove('wait');
+function placeSpot(){if(!spotSel){document.querySelectorAll('.cp-target').forEach(e=>e.classList.remove('cp-target'));if(lastFit){lastFit='';H.style.bottom='';H.classList.remove('fitmini','nofig')}return}const el=typeof spotSel==='function'?spotSel():document.querySelector(spotSel);if(spotEl&&spotEl!==el)spotEl.classList.remove('cp-target');spotEl=el;if(el)el.classList.add('cp-target');if(!el){SP.classList.add('wait');return}SP.classList.remove('wait');
  const r=el.getBoundingClientRect();const pad=6;const hole=SP.querySelector('.sp-hole'),ring=SP.querySelector('.sp-ring'),ar=SP.querySelector('.sp-arrow');
  Object.assign(hole.style,{left:r.left-pad+'px',top:r.top-pad+'px',width:r.width+pad*2+'px',height:r.height+pad*2+'px'});for(const k of['left','top','width','height'])ring.style[k]=hole.style[k];
  const right=r.left+r.width/2>innerWidth/2;ar.style.left=(right?r.left-46:r.right+8)+'px';ar.style.top=r.top+r.height/2-16+'px';ar.classList.toggle('flip',right);
@@ -164,22 +164,28 @@ function placeSpot(){if(!spotSel){document.querySelectorAll('.cp-target').forEac
  fitAries(r)}
 // Aries + Sprechblase so platzieren, dass sie den Spotlight-Ausschnitt nie schneiden
 let lastFit='';
-function fitAries(r){const key=[r.left,r.top,r.width,r.height,innerWidth,innerHeight,H.classList.contains('show'),H.classList.contains('mini')].map(v=>Math.round(+v/4)).join(',');if(key===lastFit)return;lastFit=key;
- const pad=10,hole={l:r.left-pad,t:r.top-pad,r:r.right+pad,b:r.bottom+pad};
- const hit=el=>{const q=el.getBoundingClientRect();return!(q.right<hole.l||q.left>hole.r||q.bottom<hole.t||q.top>hole.b)};
+function fitAries(r){const av=[r];
+ // v44: im Platzierungsmodus auch Bestätigungsleiste, Geist und Zieh-Hinweis meiden
+ if(window.B2&&B2.placing){for(const q of['#b2bar','#cp-drag.on .dg-ghost','#cp-drag.on .dg-hand']){const e=document.querySelector(q);if(e&&e.offsetParent!==null){const b=e.getBoundingClientRect();if(b.width)av.push(b)}}
+  try{const P=B2.placing,c=B2.cam,rt=document.querySelector('#b2').getBoundingClientRect(),x=rt.left+c.x+P.x*c.s,y=rt.top+c.y+P.y*c.s,w=90*c.s+40;av.push({left:x-w,right:x+w,top:y-w*1.2,bottom:y+w*.6})}catch(e){}}
+ const key=av.map(q=>[q.left,q.top,q.right,q.bottom].map(v=>Math.round(v/6)).join(':')).join('|')+','+[innerWidth,innerHeight,H.classList.contains('show'),H.classList.contains('mini')].join(',');if(key===lastFit)return;lastFit=key;
+ const pad=10,holes=av.map(q=>({l:q.left-pad,t:q.top-pad,r:q.right+pad,b:q.bottom+pad})),hole=holes[0];
+ const hit=el=>{if(getComputedStyle(el).display==='none')return false;const q=el.getBoundingClientRect();return holes.some(h=>!(q.right<h.l||q.left>h.r||q.bottom<h.t||q.top>h.b))};
  const fig=H.querySelector('.ah-fig'),bub=H.querySelector('.ah-bub');const nav=($('#nav')||{getBoundingClientRect:()=>({top:innerHeight})}).getBoundingClientRect().top;
- const pref=r.left+r.width/2<innerWidth*0.5?'right':'left',alt=pref==='right'?'left':'right';
- const base=innerHeight-nav+6;
+ const cx=av.reduce((a,q)=>a+(q.left+q.right)/2,0)/av.length;
+ const pref=cx<innerWidth*0.5?'right':'left',alt=pref==='right'?'left':'right';
  const cands=[[pref,null,0],[alt,null,0],[pref,null,1],[alt,null,1]];
- // oberhalb bzw. unterhalb des Ziels
- const above=innerHeight-hole.t+4,below=Math.max(4,innerHeight-hole.b-4-(bub.offsetHeight+10));
+ const top=Math.min(...holes.map(h=>h.t)),bot=Math.max(...holes.map(h=>h.b));
+ const above=innerHeight-top+4,below=Math.max(4,innerHeight-bot-4-(bub.offsetHeight+10));
  for(const sd of[pref,alt])for(const m of[0,1]){cands.push([sd,above,m]);cands.push([sd,null,m,below])}
- for(const [sd,bt,mini,bl] of cands){H.classList.toggle('right',sd==='right');H.classList.toggle('fitmini',!!mini);
-  let b=bt!=null?bt:bl!=null?bl:null;H.style.bottom=b!=null?Math.max(4,Math.min(innerHeight-60,b))+'px':'';
+ // ganz oben (unter der Ressourcenleiste)
+ for(const sd of[pref,alt])for(const m of[1,2])cands.push([sd,'top',m]);
+ for(const sd of[pref,alt])cands.push([sd,null,2]);
+ for(const [sd,bt,mini,bl] of cands){H.classList.toggle('right',sd==='right');H.classList.toggle('fitmini',mini>=1);H.classList.toggle('nofig',mini===2);
+  let b=bt==='top'?innerHeight-H.offsetHeight-48:bt!=null?bt:bl!=null?bl:null;H.style.bottom=b!=null?Math.max(4,Math.min(innerHeight-60,b))+'px':'';
   const q=H.getBoundingClientRect();if(q.top<4&&b!=null)continue;
   if(!hit(bub)&&!hit(fig))return}
- // Notfall: Figur ausblenden, Blase an freie Ecke
- H.classList.add('fitmini');H.style.bottom='';H.classList.toggle('right',pref==='right')}
+ H.classList.add('fitmini','nofig');H.style.bottom='';H.classList.toggle('right',pref==='right')}
 let tickT=0;function spotTick(){const pn=!!(window.GAME&&GAME.panel);if(H.classList.contains('mini')!==pn)H.classList.toggle('mini',pn);if(pn&&!spotSel&&!H.classList.contains('right'))H.classList.add('right');if(spotSel||spotEl)placeSpot()}
 setInterval(()=>{if(!document.hidden&&(hshow||spotSel))spotTick()},200);addEventListener('resize',placeSpot);
 // Eingaben während geführter Schritte blockieren (außer Ziel und Aries)

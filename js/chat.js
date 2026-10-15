@@ -49,7 +49,10 @@ const P=document.createElement('div');P.id='pprof';document.body.appendChild(P);
 const nl=s=>String(s||'').trim().toLowerCase();
 CH.kind=function(name){const n=nl(name);if(!n)return 'none';const S0=window.GAME&&GAME.S;if((on()&&n===nl(me()))||(S0&&n===nl(S0.cmdName))||n==='du')return 'me';
  const U=on()&&NET.uni;if(U){if((U.players||[]).some(p=>nl(p.name)===n))return 'real';if((U.npcs||[]).some(x=>nl(x.n)===n))return 'bot'}
- if(window.RANK&&RANK.find&&RANK.find(name))return on()&&!U?'real?':'bot';return on()&&!U?'real?':'none'};
+ if(window.RANK&&RANK.find&&RANK.find(name))return on()&&!U?'real?':'bot';
+ // online & unbekannt (z. B. gerade erst registriert): Privatchat versuchen – der Server meldet Bots (→ Profil)
+ return on()?'real?':'none'};
+CH.show=open;
 CH.tap=function(name){const k=CH.kind(name);if(k==='me'){profile(on()?me():name,true);return}
  if((k==='real'||k==='real?')&&on()){try{if(typeof closePop==='function')closePop()}catch(_){}P.classList.remove('on');open('dm',name);return}profile(name)};
 async function profile(name,self){if(!name)return;if(on()&&nl(name)===nl(me()))self=true;

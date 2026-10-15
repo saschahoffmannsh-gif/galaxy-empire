@@ -15,16 +15,17 @@ async function zip(str){const cs=new CompressionStream('gzip');const b=await new
 async function unzip(b64){const bin=atob(b64);const u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);return await new Response(new Blob([u]).stream().pipeThrough(new DecompressionStream('gzip'))).text()}
 NET.zip=zip;NET.unzip=unzip;
 // neuer Spielstand im Mehrspieler: Heimat-Koordinaten + Tempo vom Server
-NET.initNew=function(S){const h=NET.cfg.home;const pl=S.planets[S.home];S.seed=NET.cfg.seed||4242;if(h){pl.g=h[0];pl.s=h[1];pl.p=h[2];const np=ENGINE.npcAt(pl.g,pl.s);while(np.includes(pl.p))pl.p=pl.p%12+3;pl.temp=Math.round(220-(pl.p-1)*25+(pl.p*7%11));}S.speed=NET.cfg.speed||10;S.cmdName=NET.cfg.name;S.flags=S.flags||{};S.flags.testRes19=1;S.flags.named=1;S.mp=1};
+NET.initNew=function(S){const h=NET.cfg.home;const pl=S.planets[S.home];S.seed=NET.cfg.seed||4242;if(h){pl.g=h[0];pl.s=h[1];pl.p=h[2];const np=ENGINE.npcAt(pl.g,pl.s);while(np.includes(pl.p))pl.p=pl.p%12+3;pl.temp=40;}S.speed=NET.cfg.speed||10;S.cmdName=NET.cfg.name;S.flags=S.flags||{};S.flags.testRes19=1;S.flags.named=1;S.mp=1};
 NET.enforce=function(S){if(!NET.on||!S)return;S.speed=NET.cfg.speed||10;S.cmdName=NET.cfg.name;S.flags=S.flags||{};S.flags.testRes19=1};
 function breakdown(){const S=GS();let f=0,d=0;const add=(o,T)=>{let v=0;for(const k in o){const u=T[k];if(u)v+=o[k]*(u.c[0]+u.c[1]+u.c[2])/1000}return v};
  for(const id of S.order){const p=S.planets[id];f+=add(p.ships,GE.SHIP);d+=add(p.def,GE.DEF)}for(const fl of S.fleets)if(!fl.npc)f+=add(fl.ships,GE.SHIP);
- return{b:Math.floor(S.pts.b||0),t:Math.floor(S.pts.t||0),f:Math.floor(f),d:Math.floor(d)}}
+ const cp=ENGINE.calcPoints(S);return{b:cp.b,t:cp.t,f:Math.floor(f),d:Math.floor(d)}}
 NET.breakdown=breakdown;
 NET.sync=async function(withSave){if(!NET.on||!GS())return;const S=GS();
  try{const planets=S.order.map(id=>S.planets[id]).map(p=>({g:p.g,s:p.s,p:p.p,name:p.name,type:p.type,moon:!!p.moon}));
   const snap=S.order.map(id=>S.planets[id]).filter(p=>!p.moon).map(p=>({g:p.g,s:p.s,p:p.p,r:{m:Math.floor(p.r.m),k:Math.floor(p.r.k),g:Math.floor(p.r.g)},ships:{...p.ships},def:{...p.def}}));
   NET.uni=await api('pub',{body:{pts:breakdown(),tag:S.ally?S.ally.tag:null,ally:S.ally?S.ally.name:null,planets,snap,tech:ENGINE.techOf()}});
+  if(+NET.uni.created>0&&S.created!==+NET.uni.created){S.created=+NET.uni.created;delete NET.uni.created} // Progression v1: Fenster-Anker = vertrauenswürdige Kontoerstellung
   NET.incoming=NET.uni.incoming||[];NET.ally=NET.uni.ally||null;const evs0=NET.uni.events||[];delete NET.uni.events;
   if(NET.ally)S.ally={name:NET.ally.name,tag:NET.ally.tag,created:S.ally&&S.ally.tag===NET.ally.tag?S.ally.created:Date.now(),mp:1};else if(S.ally&&S.ally.mp)S.ally=null;
   if(evs0.length&&applyEvents(evs0)){await api('ack',{body:{ids:evs0.map(e=>e.id)}});try{save()}catch(e){}if(!NET._re){NET._re=1;try{await NET.sync(false)}finally{NET._re=0}}}NET.lastSync=Date.now();NET.err=null;
@@ -32,7 +33,7 @@ NET.sync=async function(withSave){if(!NET.on||!GS())return;const S=GS();
   if(window.RANK)RANK.g=null;rkC.t=0;try{hud()}catch(e){}
   if(withSave||Date.now()-NET.lastSave>10*60e3){await NET.pushSave()}
  }catch(e){NET.err=e.message}};
-NET.CV=42; // Client-Version: der Server lehnt Spielstände älterer Clients (ohne Stufen-Regeln) ab
+NET.CV=49; // Client-Version: der Server lehnt Spielstände älterer Clients (ohne Stufen-Regeln) ab
 NET.pushSave=async function(keepalive){const S=GS();if(!S)return;const z=await zip(JSON.stringify(S));
  const t=S.t;try{await api('save',{body:{z,t,cv:NET.CV},keepalive:keepalive&&z.length<60000});NET.lastSave=Date.now();try{localStorage.setItem('ge_mp_base_'+String(NET.cfg.name).toLowerCase(),String(t))}catch(_){}}
  catch(e){if(e.code==='reject'&&!keepalive){console.warn('Spielstand abgelehnt',e.reasons);await NET.revert(e.message)}else throw e}};
@@ -62,7 +63,7 @@ NET.logout=async function(){try{await NET.pushSave()}catch(e){}localStorage.remo
 // ---------- Galaxie: echte Spieler + NPC-Spieler an ihren Koordinaten ----------
 const h32=s=>{let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0};
 function index(){const U=NET.uni;if(!U)return{};if(U._idx)return U._idx;const idx={};const me=String(NET.cfg.name||'').toLowerCase();
- for(const p of U.players||[]){if(String(p.name).toLowerCase()===me)continue;const tot=p.pts.b+p.pts.t+p.pts.f+p.pts.d;for(const pl of p.planets||[]){if(pl.moon)continue;idx[pl.g+':'+pl.s+':'+pl.p]={kind:'player',player:p.name,pts:tot,ally:p.tag,name:pl.name||'Planet',real:1}}}
+ for(const p of U.players||[]){if(String(p.name).toLowerCase()===me)continue;const tot=p.pts.b+p.pts.t+p.pts.f+p.pts.d;for(const pl of p.planets||[]){if(pl.moon)continue;idx[pl.g+':'+pl.s+':'+pl.p]={kind:'player',player:p.name,pts:tot,ally:p.tag,name:pl.name||'Planet',real:1,prot:!!p.prot}}}
  for(const x of U.npcs||[]){const tot=x.pts.b+x.pts.t+x.pts.f+x.pts.d;idx[x.home.join(':')]={kind:'player',player:x.n,pts:Math.max(50,tot),ally:x.tag,name:'Heimatplanet',npcp:x.type,npcid:x.id}}
  Object.defineProperty(U,'_idx',{value:idx,enumerable:false});return idx}
 NET.slotHook=(g,s,p)=>index()[g+':'+s+':'+p]||null;

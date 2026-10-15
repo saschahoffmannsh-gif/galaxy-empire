@@ -10,7 +10,7 @@ function dispatch(g,s,p,m){D={ships:{},to:{g,s,p,moon:false},mission:m,pct:100,c
 function renderFleet(){$('#fleettabs').innerHTML=[['moves','Bewegungen'],['send','Flotte senden'],['reports','Berichte']].map(t=>`<button class="${fleetTab===t[0]?'on':''}" data-act="ftab" data-v="${t[0]}">${t[1]}</button>`).join('');
  const b=$('#fleetbody');b.className='vbody glass';setHTML(b,fleetTab==='moves'?movesHTML():fleetTab==='send'?sendHTML():reportsList());updTimers()}
 function movesHTML(){const fl=S.fleets.filter(f=>!f.npc||E.raidVisible(f));const p=pl();
- const head=`<div class="row" style="margin-bottom:8px"><b>Flottenslots ${E.slotsUsed()}/${E.fleetSlots()}</b><span class="mut">Nebelflotten ${p.moon?'–':E.nebulaUsed(p.id)+'/'+E.nebulaSlots()} (pro Planet, zählen nicht als Slot)</span><span class="spacer"></span><button class="btn sm" data-act="ftab" data-v="send">${IC.fleet} Neue Flotte</button></div>`;
+ const head=`<div class="row" style="margin-bottom:8px"><b>Flottenslots ${E.slotsUsed()}/${E.fleetSlots()}</b><span class="mut">Nebelflotten ${E.nebulaUsed()+'/'+E.nebulaSlots()} (kontoweit) · Starts heute ${E.pve().n}/${E.NEB_MAX}</span><span class="spacer"></span><button class="btn sm" data-act="ftab" data-v="send">${IC.fleet} Neue Flotte</button></div>`;
  if(!fl.length)return head+'<div class="mut" style="padding:30px;text-align:center">Keine Flotten unterwegs.</div>';
  return head+fl.map(f=>{const st=f.phase==='hold'?f.arrive-f.hold:f.phase==='back'?f.arrive-f.dur:f.depart;const src=f.npc?'Piraten':S.planets[f.from]?.name||'?';
   const phase=f.npc?'Angriff auf '+esc(S.planets[f.target]?.name||''):f.phase==='out'?'Hinflug':f.phase==='hold'?'Erkundet den Nebel':'Rückflug';

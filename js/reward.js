@@ -14,6 +14,7 @@ const vib=p=>{try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}};
 function items(r){const L=[];const ic=k=>IC[k]||'';
  if(r.m)L.push({k:'m',ic:ic('m'),n:r.m,t:'Metall',to:0});if(r.k)L.push({k:'k',ic:ic('k'),n:r.k,t:'Kristall',to:1});if(r.g)L.push({k:'g',ic:ic('g'),n:r.g,t:'Gas',to:2});
  if(r.dm)L.push({k:'dm',ic:ic('dm'),n:r.dm,t:'Dunkle Materie',to:4});
+ if(r.voucher)L.push({k:'voucher',ic:'<span class="rw-gem e">⚡</span>',n:r.voucher,t:'Gutschein 10 Min.',to:'inv'});
  if(r.gal)L.push({k:'gal',ic:'<span class="rw-gem">◆</span>',n:r.gal,t:'Galactonit-Splitter',to:'inv'});
  if(r.gen)L.push({k:'gen',ic:'<span class="rw-gem e">✦</span>',n:r.gen,t:'Galactonit-Energie',to:'inv'});
  if(r.cmd)L.push({k:'cmd',ic:'<span class="rw-gem c">★</span>',n:r.cmd[1],t:GE.COMMANDERS[r.cmd[0]].n+' (Tage)',to:'inv'});

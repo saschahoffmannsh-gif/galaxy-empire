@@ -33,7 +33,7 @@ NET.sync=async function(withSave){if(!NET.on||!GS())return;const S=GS();
   if(window.RANK)RANK.g=null;rkC.t=0;try{hud()}catch(e){}
   if(withSave||Date.now()-NET.lastSave>10*60e3){await NET.pushSave()}
  }catch(e){NET.err=e.message}};
-NET.CV=49; // Client-Version: der Server lehnt Spielstände älterer Clients (ohne Stufen-Regeln) ab
+NET.CV=50; // Client-Version: der Server lehnt Spielstände älterer Clients (ohne Stufen-Regeln) ab
 NET.pushSave=async function(keepalive){const S=GS();if(!S)return;const z=await zip(JSON.stringify(S));
  const t=S.t;try{await api('save',{body:{z,t,cv:NET.CV},keepalive:keepalive&&z.length<60000});NET.lastSave=Date.now();try{localStorage.setItem('ge_mp_base_'+String(NET.cfg.name).toLowerCase(),String(t))}catch(_){}}
  catch(e){if(e.code==='reject'&&!keepalive){console.warn('Spielstand abgelehnt',e.reasons);await NET.revert(e.message)}else throw e}};
@@ -186,8 +186,20 @@ function installMP(){const E=window.ENGINE;if(mpDone)return;mpDone=true;{E.slotH
 const ss=E.setSpeed;E.setSpeed=function(sp){if(sp!==(NET.cfg.speed||10)){toast('Im Mehrspieler-Universum ist das Tempo fest ('+(NET.cfg.speed||10)+'×)','err');return}return ss.call(this,sp)};
   setTimeout(()=>NET.pull().then(()=>NET.sync(true)).then(()=>{if(NET.err)toast('Server nicht erreichbar: '+NET.err,'err',4000);else{try{renderAll()}catch(e){}}}),1500);
   setInterval(()=>{if(document.visibilityState==='visible')NET.sync(false)},120e3);
-  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')NET.pushSave(true).catch(()=>{})})}
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')NET.pushSave(true).catch(()=>{});else setTimeout(()=>NET.checkGifts(),1500)});setTimeout(()=>NET.checkGifts(),1500);setInterval(()=>{if(document.visibilityState==='visible')NET.checkGifts()},300e3)}
 }
+
+// Admin-Geschenke: beim Start/Zurückkehren abrufen, Popup zeigen, serverseitig einlösen (einmalig, geräteübergreifend)
+let giftBusy=false;
+NET.checkGifts=async function(){const S=GS();if(!NET.on||!S||giftBusy)return;giftBusy=true;try{const r=await api('gifts');S.gifts=S.gifts||{};let fixed=false;
+ for(const g of r.gifts||[]){if(g.claimed&&!S.gifts[g.id]){ENGINE.applyGift(g.id,g.dm);fixed=true}} // eingelöst, aber im lokalen Stand fehlend → nachtragen
+ if(fixed){try{save()}catch(e){}NET.pushSave().catch(()=>{})}
+ const g=(r.gifts||[]).find(x=>!x.claimed&&!S.gifts[x.id]);if(g)await giftPopup(g)}catch(e){if(e.status!==404)console.warn('gifts',e.message)}finally{giftBusy=false}};
+function giftPopup(g){return new Promise(res=>{const d=document.createElement('div');d.id='ge-gift';d.style.cssText='position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6)';
+ d.innerHTML=`<div class="glass" style="max-width:360px;margin:16px;padding:20px;border-radius:16px;text-align:center;background:rgba(20,16,40,.95);border:1px solid rgba(255,200,90,.5)"><div style="font-size:12px;letter-spacing:2px;color:#f5c75a">GESCHENK VON ${esc(g.sender||'Admin')}</div><div style="font-size:18px;margin:10px 0">${esc(g.msg||'')}</div><div style="font-size:26px;font-weight:700;margin:8px 0 14px">${Number(g.dm).toLocaleString('de-DE')} DM</div><button class="btn" data-gift="1" style="min-width:160px">Einsammeln</button></div>`;
+ document.body.appendChild(d);const b=d.querySelector('[data-gift]');b.onclick=async()=>{if(b.disabled)return;b.disabled=true;b.textContent='…';
+  try{const x=await api('gift/claim',{body:{id:g.id}});const S=GS();if(ENGINE.applyGift(g.id,x.dm))toast('+'+x.dm+' Dunkle Materie eingesammelt','ok',4000);try{save()}catch(e){}try{renderAll()}catch(e){}await NET.pushSave().catch(()=>{});d.remove();res(true)}
+  catch(e){b.disabled=false;b.textContent='Einsammeln';toast('Server: '+e.message,'err',4000)}}})}
 function ui(){NET._ui=1;if(NET.on)installMP();setInterval(hud,2000);setTimeout(hud,300);
  {const L=document.getElementById('loader');if(!L)bootGate();else{const mo=new MutationObserver(()=>{if(!document.getElementById('loader')){mo.disconnect();bootGate()}});mo.observe(document.body,{childList:true});
   const t=setInterval(()=>{if(L.classList.contains('done')){clearInterval(t);bootGate()}},200)}}

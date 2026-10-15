@@ -177,7 +177,7 @@ function renderBase(){const p=pl();const key=p.id+(p.moon?'m':'');if(ensurePads(
   fg.style.strokeDashoffset=(100-pr*100).toFixed(1);
   if(state==='new'){const c=`inset(${((1-pr)*100*.85+5).toFixed(1)}% 0 0 0)`;if(pb.style.clipPath!==c)pb.style.clipPath=c}else if(pb.style.clipPath)pb.style.clipPath=''});
  renderRail();renderQueues();(window.renderAries||renderAries)();updTimers();}
-const galNew=()=>!S.flags.galinfo&&(Object.values(S.gal.shards).some(n=>n>0)||E.maxB('galacto')>0||S.task>=25);
+const galNew=()=>!S.flags.galinfo&&((S.gal.st||0)>0||E.maxB('galacto')>0||S.task>=25);
 function renderRail(){if(galNew()&&!S.flags.galhint){S.flags.galhint=1;setTimeout(()=>toast('Neu: Galactonit! Tippe links auf „Galact.“ – dort wird alles erklärt.'),600)}const it=[['buildings','Gebäude',IC.bld],['research','Forschung',IC.res],['yard','Werft',IC.yard],['defense','Abwehr',IC.def],['store','Store',IC.store],['cmd','Offiziere',IC.cmd],['galacto','Galact.',IC.gem],['inv','Inventar',IC.inv]];
  setHTML($('#rail'),it.map(i=>`<button data-act="open" data-p="${i[0]}">${i[2]}${i[1]}${i[0]==='store'&&E.giftReady()?'<span class="dot ok" style="top:-2px;right:6px">1</span>':''}${i[0]==='galacto'&&galNew()?'<span class="dot" style="top:-2px;right:6px;background:var(--v)">!</span>':''}</button>`).join(''))}
 const qimg=id=>GE.BUILD[id]&&GE.BUILD[id].img?`<img src="assets/b/${GE.BUILD[id].img}.webp">`:A.img(id);

@@ -23,7 +23,7 @@ function breakdown(){const S=GS();let f=0,d=0;const add=(o,T)=>{let v=0;for(cons
 NET.breakdown=breakdown;
 NET.sync=async function(withSave){if(!NET.on||!GS())return;const S=GS();
  try{const planets=S.order.map(id=>S.planets[id]).map(p=>({g:p.g,s:p.s,p:p.p,name:p.name,type:p.type,moon:!!p.moon}));
-  const snap=S.order.map(id=>S.planets[id]).filter(p=>!p.moon).map(p=>({g:p.g,s:p.s,p:p.p,r:{m:Math.floor(p.r.m),k:Math.floor(p.r.k),g:Math.floor(p.r.g)},ships:{...p.ships},def:{...p.def}}));
+  const snap=S.order.map(id=>S.planets[id]).filter(p=>!p.moon).map(p=>({g:p.g,s:p.s,p:p.p,r:{m:Math.floor(p.r.m),k:Math.floor(p.r.k),g:Math.floor(p.r.g)},ships:{...p.ships},def:{...p.def},core:p.core||null}));
   NET.uni=await api('pub',{body:{pts:breakdown(),tag:S.ally?S.ally.tag:null,ally:S.ally?S.ally.name:null,planets,snap,tech:ENGINE.techOf()}});
   if(+NET.uni.created>0&&S.created!==+NET.uni.created){S.created=+NET.uni.created;delete NET.uni.created} // Progression v1: Fenster-Anker = vertrauenswürdige Kontoerstellung
   NET.incoming=NET.uni.incoming||[];NET.ally=NET.uni.ally||null;const evs0=NET.uni.events||[];delete NET.uni.events;
@@ -33,7 +33,7 @@ NET.sync=async function(withSave){if(!NET.on||!GS())return;const S=GS();
   if(window.RANK)RANK.g=null;rkC.t=0;try{hud()}catch(e){}
   if(withSave||Date.now()-NET.lastSave>10*60e3){await NET.pushSave()}
  }catch(e){NET.err=e.message}};
-NET.CV=52; // Client-Version: der Server lehnt Spielstände älterer Clients (ohne Stufen-Regeln) ab
+NET.CV=53; // Client-Version: der Server lehnt Spielstände älterer Clients (ohne Stufen-Regeln) ab
 NET.pushSave=async function(keepalive){const S=GS();if(!S)return;const z=await zip(JSON.stringify(S));
  const t=S.t;try{await api('save',{body:{z,t,cv:NET.CV},keepalive:keepalive&&z.length<60000});NET.lastSave=Date.now();try{localStorage.setItem('ge_mp_base_'+String(NET.cfg.name).toLowerCase(),String(t))}catch(_){}}
  catch(e){if(e.code==='reject'&&!keepalive){console.warn('Spielstand abgelehnt',e.reasons);await NET.revert(e.message)}else throw e}};
@@ -79,6 +79,8 @@ function applyEvents(evs){const S=GS();const E=ENGINE;if(!S)return false;let any
  for(const ev of evs){any=true;const c=ev.to||{};const pl=planetAt(S,c);const where=pl?`${pl.name} [${c.g}:${c.s}:${c.p}]`:`[${c.g}:${c.s}:${c.p}]`;
   try{if(ev.kind==='attacked'){if(pl){for(const k in ev.lossShips||{})pl.ships[k]=Math.max(0,(pl.ships[k]||0)-ev.lossShips[k]);for(const k in ev.lossDef||{})pl.def[k]=Math.max(0,(pl.def[k]||0)-ev.lossDef[k]);
      for(const k in pl.ships)if(!pl.ships[k])delete pl.ships[k];for(const r of['m','k','g'])pl.r[r]=Math.max(0,pl.r[r]-((ev.loot||{})[r]||0))}
+    if(pl&&ev.moon&&!pl.moonId){E.addMoon(pl);toast('🌙 Aus den Trümmern hat sich ein Mond gebildet!','ok',5000)}
+    if(ev.gal&&ev.galKey&&E.galGrant(ev.galKey,ev.gal))toast(`💎 ${ev.gal} Galactonit-Steine aus dem Trümmerfeld!`,'ok',5000);
     E.report('combat',`Angriff von ${ev.from} auf ${where}`,{battle:ev.battle});toast(`⚔️ ${ev.from} hat ${where} angegriffen`,'err',5000)}
    else if(ev.kind==='spied'){E.report('info',`Spionage von ${ev.from}`,{text:`${ev.from} hat ${where} ausspioniert.`+(ev.lost?' Die Sonden wurden abgeschossen.':'')})}
    else if(ev.kind==='transport'){if(pl)for(const r of['m','k','g'])pl.r[r]+=(+(ev.res||{})[r]||0);E.report('transport',`Lieferung von ${ev.from}`,{text:`${ev.from} hat dir ${fmtR(ev.res)} nach ${where} geliefert.`})}
@@ -102,6 +104,7 @@ async function resolveLoop(){const S=GS();if(!S||busy||!NET.on)return;const list
 function applyResult(f,x){const S=GS();const E=ENGINE;const to=f.to;const c=`[${to.g}:${to.s}:${to.p}]`;const who=f.pvp.who||'Spieler';
  if(x.kind==='attack'){f.ships={};for(const k in x.endShips||{})if(x.endShips[k]>0)f.ships[k]=x.endShips[k];for(const r of['m','k','g'])f.cargo[r]+=(x.loot||{})[r]||0;
   const d=x.debris||{};if((d.m||0)+(d.k||0)>0){const k=E.ck(to.g,to.s,to.p);const o=S.debris[k]||(S.debris[k]={m:0,k:0});o.m+=d.m||0;o.k+=d.k||0}
+  if(x.gal&&x.galKey&&E.galGrant(x.galKey,x.gal))toast(`💎 ${x.gal} Galactonit-Stein${x.gal>1?'e':''} erbeutet!`,'ok',5000);
   E.report('combat',`Kampf bei ${who} ${c}`,{battle:x.battle})}
  else if(x.kind==='spy'){if(x.lostProbes){f.ships={}}E.report('spy',`Spionagebericht ${who} ${c}`,{spy:x.spy})}
  else if(x.kind==='transport'){E.report('transport','Transport angekommen',{text:`Deine Flotte hat ${fmtR(f.cargo)} an ${who} ${c} geliefert.`});f.cargo={m:0,k:0,g:0}}

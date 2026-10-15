@@ -105,13 +105,8 @@ document.addEventListener('click',ev=>{const t=ev.target.closest('[data-act]');i
  case 'buy':{const it=E.STORE.find(x=>x.id===id);if(confirm(`${it.n} für ${it.dm} DM kaufen?`)&&!err(E.buy(id,p.id))){toast('Gekauft: '+it.n,'ok');after()}break}
  case 'hire':if(!err(E.hireCmd(id,+t.dataset.d))){toast(GE.COMMANDERS[id].n+' angeheuert','ok');after()}break;
  case 'use':if(!err(E.useItem(id))){toast(GE.ITEMS[id].n+' aktiviert','ok');after()}break;
- case 'fuse':if(!err(E.fuseShards(id))){toast('Edelstein erschaffen!','ok');after()}break;
- case 'gemsel':gemSel=+id;after();break;
- case 'gemfuse':{const g=S.gal.gems.find(x=>x.id===gemSel);if(g&&!err(E.fuseGems(g.col,g.star))){gemSel=null;toast('Edelstein verbessert!','ok');after()}break}
- case 'gemstr':if(gemSel&&!err(E.strengthen(gemSel)))after();break;
- case 'gemdec':if(gemSel&&confirm('Edelstein in Energie zerlegen?')&&!err(E.decompose(gemSel))){gemSel=null;after()}break;
- case 'equip':if(!gemSel){toast('Wähle zuerst unten einen Edelstein','err');break}if(!err(E.equip(p.id,gemSel))){gemSel=null;toast('Edelstein eingesetzt','ok');after()}break;
- case 'unequip':if(confirm('Edelstein für 2 DM ausbauen?')&&!err(E.unequip(p.id,+id)))after();break;
+ case 'coremk':if(!err(E.makeCore(p.id,id))){toast('Galactonit-Kern eingesetzt!','ok');after()}break;
+ case 'corechg':if(confirm('Effekt wechseln? Mit 50 % Chance zerbricht der Kern (5 Steine verloren).')){const r=E.changeCore(p.id,id);if(r==='broken'){toast('Der Kern ist zerbrochen.','err',4000);after()}else if(!err(r)){toast('Kern-Effekt gewechselt','ok');after()}}break;
  case 'switch':S.cur=id;closePanel();sysG=galG=null;D.to=null;renderAll();toast('Planet: '+S.planets[id].name);break;
  case 'rename':{const n=prompt('Neuer Name für den Planeten:',S.planets[id].name);if(n!=null&&!err(E.rename(id,n))){toast('Planet umbenannt','ok');after()}break}
  case 'abandon':if(confirm(`${S.planets[id].name} wirklich aufgeben? Gebäude und Rohstoffe gehen verloren.`)&&!err(E.abandon(id)))after();break;

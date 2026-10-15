@@ -45,7 +45,7 @@ const STR=[
  {k:'Aufklärung',ic:'📡',m:[{id:'a1',t:'Radar',d:'Baue eine Radaranlage.',c:()=>E.maxB('radar')>=1,r:{dm:5}},{id:'a2',t:'Saveflug',d:'Bringe deine Flotte vor einem Piratenangriff in Sicherheit.',c:()=>!!S.flags.fleetSaved,r:{dm:5}}]},
  {k:'Industrie',ic:'🏭',m:[{id:'i1',t:'Automatisierung',d:'Roboterfabrik 8 und Computertechnik 8.',c:()=>E.maxB('robotics')>=8&&E.tl('computer')>=8,r:{dm:8}},{id:'i2',t:'Naniten',d:'Baue die Nanitenfabrik.',c:()=>E.maxB('nanite')>=1,r:{dm:15}}]},
  {k:'Forschung',ic:'🔬',m:[{id:'f1',t:'Labor 6',d:'Forschungslabor Stufe 6.',c:()=>E.maxB('lab')>=6,r:{dm:5}},{id:'f2',t:'Labor 8',d:'Forschungslabor Stufe 8.',c:()=>E.maxB('lab')>=8,r:{dm:8}},{id:'f3',t:'Ionen & Hyperraum',d:'Ionentechnik 1 und Hyperraumtechnik 1.',c:()=>E.tl('ion')>=1&&E.tl('hyper')>=1,r:{dm:8}},{id:'f4',t:'Plasma',d:'Plasmatechnik 1.',c:()=>E.tl('plasma')>=1,r:{dm:10}}]},
- {k:'Galactonit',ic:'💎',m:[{id:'g1',t:'Forschungszentrum',d:'Baue das Galactonit-Forschungszentrum.',c:()=>E.maxB('galacto')>=1,r:{dm:5,gal:3}},{id:'g2',t:'Verschmelzen',d:'Verschmelze 3 Splitter zu einem Edelstein.',c:()=>!!S.flags.fused,r:{gal:3}},{id:'g3',t:'Einsetzen',d:'Setze einen Edelstein in einen Sockel.',c:()=>!!S.flags.equipped,r:{dm:5}}]},
+ {k:'Galactonit',ic:'💎',m:[{id:'g1',t:'Forschungszentrum',d:'Baue das Galactonit-Forschungszentrum. Belohnung: dein einziger geschenkter Galactonit-Stein.',c:()=>E.maxB('galacto')>=1,r:{dm:5,gal:1}},{id:'g2',t:'Trümmer & Monde',d:'Öffne „Was ist Galactonit?“ und lerne, wie PvP-Trümmerfelder Steine und Monde bringen.',c:()=>!!S.flags.galinfo,r:{dm:3}},{id:'g3',t:'Erster Kern',d:'Sammle 5 Steine aus PvP-Kämpfen und setze einen Galactonit-Kern ein (Langzeitziel).',c:()=>!!S.flags.fused,r:{dm:10}}]},
  {k:'Flottenmacht',ic:'⚔️',m:[{id:'s1',t:'Kreuzer',d:'Baue einen Kreuzer.',c:()=>(S.built.cr||0)>=1,r:{dm:5}},{id:'s2',t:'Schlachtflotte',d:'Baue insgesamt 10 Schlachtschiffe.',c:()=>(S.built.bs||0)>=10,r:{dm:15}}]},
  {k:'Raum',ic:'🪐',m:[{id:'r1',t:'Terraformer',d:'Baue einen Terraformer (+5 Felder je Stufe).',c:()=>E.maxB('terraformer')>=1,r:{dm:10}}]},
  {k:'Gemeinschaft',ic:'🤝',m:[{id:'c1',t:'Allianz',d:'Gründe oder betritt eine Allianz.',c:()=>!!S.ally,r:{dm:5}},{id:'c2',t:'Ruhmeshalle',d:'Öffne die Rangliste.',c:()=>!!S.flags.rankSeen,r:{dm:2}}]}];
@@ -126,7 +126,7 @@ PANELS.tasks=PANELS.camp;
 const WK_DEF=[
  {id:'bl',t:'Baumeister',d:n=>`Baue ${n} Gebäudestufen aus.`,n:[8,12,16],v:()=>S.order.reduce((a,id)=>a+Object.values(S.planets[id].b).reduce((x,y)=>x+y,0),0),r:{dm:4}},
  {id:'rs',t:'Wissensdurst',d:n=>`Schließe ${n} Forschungsstufen ab.`,n:[3,4,6],v:()=>Object.values(S.tech).reduce((a,b)=>a+b,0),r:{dm:4}},
- {id:'nb',t:'Nebelpilot',d:n=>`Schicke ${n} Expeditionen in den Nebel.`,n:[5,8,12],v:()=>S.flags.nebN||0,r:{gal:3}},
+ {id:'nb',t:'Nebelpilot',d:n=>`Schicke ${n} Expeditionen in den Nebel.`,n:[5,8,12],v:()=>S.flags.nebN||0,r:{dm:4}},
  {id:'sh',t:'Werftbetrieb',d:n=>`Baue ${n} Schiffe oder Verteidigungsanlagen.`,n:[40,80,150],v:()=>Object.values(S.built).reduce((a,b)=>a+b,0),r:{dm:3}},
  {id:'pt',t:'Aufstieg',d:n=>`Gewinne ${E.fmtN?E.fmtN(n):n} Punkte hinzu.`,n:[2000,5000,10000],v:()=>E.totalPoints(),r:{dm:5}}];
 const WEEK=7*24*3600e3;

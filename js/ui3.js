@@ -100,18 +100,20 @@ document.addEventListener('click',ev=>{const t=ev.target.closest('[data-act]');i
  case 'rep':openPanel('rep',+id,panelStack.length>0);break;
  case 'readall':S.reports.forEach(r=>r.read=true);after();break;
  case 'replay':{const r=S.reports.find(x=>x.id===+id);window.REPLAY.play(r.battle||r.neb.battle);break}
- case 'gift':{if(!E.giftReady()){err('Heute schon abgeholt');break}const gr=E.giftReward();if(window.RWD){RWD.flow(gr,'Tagesgeschenk').then(ok=>{if(ok&&!err(E.claimGift(true)))after()})}else if(!err(E.claimGift())){toast('Tagesgeschenk erhalten!','ok');after()}break}
+ case 'gift':{if(!E.giftReady()){err('Heute schon abgeholt');break}const gr=E.giftReward();if(err(E.claimGift()))break;after();if(window.RWD)RWD.flow(gr,'Tagesgeschenk',true).then(()=>after());else toast('Tagesgeschenk erhalten!','ok');break}
  case 'fsave':if(!err(E.fleetSave(id))){toast('Flotte in Sicherheit gebracht – sie kehrt nach dem Angriff zurück','ok',4000);renderRaid();after()}break;
  case 'buy':{const it=E.STORE.find(x=>x.id===id);if(confirm(`${it.n} für ${it.dm} DM kaufen?`)&&!err(E.buy(id,p.id))){toast('Gekauft: '+it.n,'ok');after()}break}
  case 'hire':if(!err(E.hireCmd(id,+t.dataset.d))){toast(GE.COMMANDERS[id].n+' angeheuert','ok');after()}break;
  case 'use':if(!err(E.useItem(id))){toast(GE.ITEMS[id].n+' aktiviert','ok');after()}break;
  case 'coremk':if(!err(E.makeCore(p.id,id))){toast('Galactonit-Kern eingesetzt!','ok');after()}break;
- case 'corechg':if(confirm('Effekt wechseln? Mit 50 % Chance zerbricht der Kern (5 Steine verloren).')){const r=E.changeCore(p.id,id);if(r==='broken'){toast('Der Kern ist zerbrochen.','err',4000);after()}else if(!err(r)){toast('Kern-Effekt gewechselt','ok');after()}}break;
+ case 'corechg':if(confirm(`Effekt wechseln? Mit ${Math.round(E.coreRisk(p)*100)} % Chance zerbricht der Kern (5 Steine verloren).`)){const r=E.changeCore(p.id,id);if(r==='broken'){toast('Der Kern ist zerbrochen.','err',4000);after()}else if(!err(r)){toast('Kern-Effekt gewechselt','ok');after()}}break;
  case 'switch':S.cur=id;closePanel();sysG=galG=null;D.to=null;renderAll();toast('Planet: '+S.planets[id].name);break;
  case 'rename':{const n=prompt('Neuer Name für den Planeten:',S.planets[id].name);if(n!=null&&!err(E.rename(id,n))){toast('Planet umbenannt','ok');after()}break}
  case 'abandon':if(confirm(`${S.planets[id].name} wirklich aufgeben? Gebäude und Rohstoffe gehen verloren.`)&&!err(E.abandon(id)))after();break;
  case 'speedset':E.setSpeed(+t.dataset.v);toast(`Spieltempo ${t.dataset.v}×`,'ok');after();break;
- case 'raids':S.settings.raids=t.dataset.v==='1';after();break;
+ case 'raids':S.settings.raids=t.dataset.v==='1';if(S.settings.raids)S.flags.pveMode=1;after();break;
+ case 'peacestart':if(!err(E.peaceStart()))after();break;
+ case 'peaceclaim':(async()=>{try{if(!(window.NET&&NET.on)){err('Nur im Mehrspieler (serverbestätigt)');return}const x=await NET.api('gal/peace',{body:{key:E.peaceKey(),info:E.peaceInfo()}});if(!err(E.peaceApply(x.key,x.n))){toast('💎 1 Galactonit-Stein aus dem friedlichen Projekt','ok',4000);try{save()}catch(e){}after()}}catch(e){err(e.message)}})();break;
  case 'setname':{const v=$('#cmdname').value.trim();if(v.length<2){toast('Mindestens 2 Zeichen','err');break}S.cmdName=v.slice(0,18);S.flags.named=1;toast('Name gespeichert','ok');after();break}
  case 'export':{const box=$('#savebox');box.style.display='block';box.value=btoa(unescape(encodeURIComponent(JSON.stringify(S))));box.select();try{navigator.clipboard.writeText(box.value)}catch(e){}S.flags.exported=1;toast('Spielstand exportiert und kopiert','ok');save();renderTop();break}
  case 'import':{const box=$('#savebox');if(box.style.display!=='block'||!box.value){box.style.display='block';box.value='';box.placeholder='Spielstand-Code hier einfügen und erneut „Importieren“ tippen';box.focus();break}

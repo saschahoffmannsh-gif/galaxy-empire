@@ -24,12 +24,12 @@ const fmtc=n=>fmt(Math.round(n));
 function countUp(el,to,ms){const t0=performance.now();const f=t=>{const k=Math.min(1,(t-t0)/ms);const e=1-Math.pow(1-k,3);el.textContent=(to>=1000?fmtc(to*e):Math.round(to*e).toLocaleString('de-DE'));if(k<1)requestAnimationFrame(f)};requestAnimationFrame(f)}
 const M=document.createElement('div');M.id='rwd';document.body.appendChild(M);
 let active=false;
-function flow(r,title){if(active)return Promise.resolve(false);active=true;const L=items(r);
+function flow(r,title,booked){if(active)return Promise.resolve(false);active=true;const L=items(r);
  return new Promise(res=>{M.innerHTML=`<div class="rw-rays"></div><div class="rw-card glass"><div class="rw-k">Belohnung</div><div class="rw-t">${esc(title||'Mission erfüllt')}</div><div class="rw-list">${L.map((x,i)=>`<div class="rw-it" data-i="${i}"><div class="rw-ic">${x.ic}</div><div class="rw-n">0</div><div class="rw-l">${esc(x.t)}</div></div>`).join('')}</div><button class="btn rw-go" disabled>Einsammeln</button></div>`;
   M.classList.add('on');SFX.open();vib(15);
   const its=[...M.querySelectorAll('.rw-it')];its.forEach((el,i)=>setTimeout(()=>{el.classList.add('in');SFX.pop(i);countUp(el.querySelector('.rw-n'),L[i].n,650)},350+i*220));
   const go=M.querySelector('.rw-go');setTimeout(()=>{go.disabled=false;go.classList.add('ready')},350+L.length*220+300);
-  go.onclick=async e=>{e.stopPropagation();if(go.disabled)return;go.disabled=true;await collect(L,its);E.giveReward(r);
+  go.onclick=async e=>{e.stopPropagation();if(go.disabled)return;go.disabled=true;await collect(L,its);if(!booked)E.giveReward(r);
    try{renderTop&&renderTop()}catch(e){}SFX.fin();vib([20,40,30]);M.classList.add('out');setTimeout(()=>{M.classList.remove('on','out');M.innerHTML='';active=false;res(true)},420)}})}
 function target(to){if(to==='inv')return document.querySelector('#rail [data-p=inv]')||document.querySelector('#rail');const rc=document.querySelectorAll('#res .rc')[to];return rc&&(rc.querySelector('svg')||rc)}
 function collect(L,its){M.classList.add('fly');document.body.classList.add('rw-flying');const lay=document.createElement('div');lay.className='rw-fx';document.body.appendChild(lay);

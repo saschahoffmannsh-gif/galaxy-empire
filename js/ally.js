@@ -41,7 +41,8 @@ const resKey=()=>{const a=S.ally;return a&&a.rp?a.rp.id:null};
 function donate(a,m,c){const room=dcap(a)-(a.depot.m+a.depot.k+a.depot.g);let tot=c.m+c.k+c.g;if(tot>room&&tot>0){const f=Math.max(0,room)/tot;c={m:c.m*f,k:c.k*f,g:c.g*f};tot=room}
  if(tot<=0)return 0;for(const k of 'mkg')a.depot[k]+=Math.floor(c[k]);m.don+=tot;a.xp+=tot/10;return tot}
 // Simulation: Ereignisse bis jetzt abarbeiten (max. 25 auf einmal, Offline-Aufholung gedeckelt)
-AL.sim=function(){const a=init();if(!a)return false;const t=now();let ch=false,g=0;
+AL.sim=function(){if((window.NET&&NET.on)||(S&&S.ally&&S.ally.mp))return false; // Review F24: keine lokale Allianzsimulation im Mehrspieler
+ const a=init();if(!a)return false;const t=now();let ch=false,g=0;
  const npcs=a.members.filter(m=>!m.me);
  while(g++<25){const nx=a.next;const k=Object.keys(nx).reduce((x,y)=>nx[x]<nx[y]?x:y);if(nx[k]>t)break;const at=nx[k];
   if(k==='app'){nx.app=at+R(2.5,7)*MIN;if(a.open&&a.apps.length<6&&a.members.length+a.apps.length<cap(a)+3){const n=nm();const pts=Math.round(myPts()*R(.2,1.6)+R(1e3,3e4));

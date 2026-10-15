@@ -33,7 +33,7 @@ NET.sync=async function(withSave){if(!NET.on||!GS())return;const S=GS();
   if(window.RANK)RANK.g=null;rkC.t=0;try{hud()}catch(e){}
   if(withSave||Date.now()-NET.lastSave>10*60e3){await NET.pushSave()}
  }catch(e){NET.err=e.message}};
-NET.CV=50; // Client-Version: der Server lehnt Spielstände älterer Clients (ohne Stufen-Regeln) ab
+NET.CV=52; // Client-Version: der Server lehnt Spielstände älterer Clients (ohne Stufen-Regeln) ab
 NET.pushSave=async function(keepalive){const S=GS();if(!S)return;const z=await zip(JSON.stringify(S));
  const t=S.t;try{await api('save',{body:{z,t,cv:NET.CV},keepalive:keepalive&&z.length<60000});NET.lastSave=Date.now();try{localStorage.setItem('ge_mp_base_'+String(NET.cfg.name).toLowerCase(),String(t))}catch(_){}}
  catch(e){if(e.code==='reject'&&!keepalive){console.warn('Spielstand abgelehnt',e.reasons);await NET.revert(e.message)}else throw e}};

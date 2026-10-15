@@ -12,7 +12,7 @@ M.set=function(on,vol){if(on!=null)cfg.on=on;if(vol!=null)cfg.vol=vol;M.save();i
 document.addEventListener('visibilitychange',()=>{if(!M.started)return;if(document.hidden){fadeTo(0,250)}else if(cfg.on){au.play().then(()=>fadeTo(cfg.vol,800)).catch(()=>{})}});
 // Ladebildschirm
 const L=document.getElementById('loader');const DUR=6500;
-const TIPS=['Tipp: Tippe auf einen freien Bauplatz, um ein Gebäude zu errichten.','Tipp: Expeditionen auf Position 16 bringen Rohstoffe und Dunkle Materie.','Tipp: Spenden ins Allianzdepot treiben die Allianzforschung voran.','Tipp: Lager schützen deine Rohstoffe vor dem Überlaufen.','Tipp: In der Rangliste siehst du, wer die Galaxie beherrscht.'];
+const TIPS=['Tipp: Tippe auf einen freien Bauplatz, um ein Gebäude zu errichten.','Tipp: Bis zu 25 Nebel-Erkundungen je 24 h – Recycler finden Rohstoffe, Sonden finden Schiffe.','Tipp: Spenden ins Allianzdepot treiben die Allianzforschung voran.','Tipp: Lager schützen deine Rohstoffe vor dem Überlaufen.','Tipp: In der Rangliste siehst du, wer die Galaxie beherrscht.'];
 function run(){if(!L||L.dataset.run)return;L.dataset.run=1;L.classList.add('run');const bar=L.querySelector('.ld-fill'),pc=L.querySelector('.ld-pc'),tip=L.querySelector('.ld-tip');let ti=Math.random()*TIPS.length|0;tip.textContent=TIPS[ti];
  const t0=performance.now();let lastTip=t0;
  (function step(n){const k=Math.min(1,(n-t0)/DUR);const e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;const v=(e*.85+k*.15)*100;bar.style.width=v+'%';pc.textContent=Math.floor(v)+' %';

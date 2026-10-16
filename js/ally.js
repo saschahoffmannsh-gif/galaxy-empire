@@ -11,7 +11,7 @@ const PDEF={leader:{apps:1,invite:1,kick:1,announce:1,research:1,depot:1,diplo:1
 const RES=[{id:'eco',n:'Bergbau-Synergie',d:'+1 % Rohstoffproduktion auf allen Planeten je Stufe',max:10,base:[60000,40000,10000]},
  {id:'depot',n:'Depot-Erweiterung',d:'+50 % Depotkapazität je Stufe',max:8,base:[30000,30000,5000]},
  {id:'recruit',n:'Rekrutierungsnetz',d:'+5 Mitgliederplätze je Stufe',max:6,base:[40000,20000,20000]}];
-const EMC=['#38e1ff','#ff9f43','#b06bff','#4ade80','#ff5577','#ffd166'],EMS=['star','planet','sword','wing','crown','comet'];
+const EMC=['#38e1ff','#ff9f43','#b06bff','#4ade80','#ff5577','#ffd166','#e8eef7','#2a3350'],EMS=['star','planet','sword','wing','crown','comet','atom','eye','bolt','gear'];
 const CHAT={hi:['Hallo zusammen! Danke für die Aufnahme 🙂','Moin! Freu mich dabei zu sein.','Hi! Wer braucht Kristall? Hab Überschuss.','Servus, bin neu hier – auf gute Zusammenarbeit!'],
  idle:['Hat jemand Tipps für die Expedition auf Pos. 16?','Gerade die Metallmine auf Stufe {n} gebracht 💪','Achtung, in G{g} fliegen Piraten rum.','Wer ist heute Abend online? Gemeinsamer Angriff?','Danke für die Spende vorhin!','Forschung läuft gut, weiter so Leute.','Mein Schildgenerator ist endlich fertig.','Kristall ist knapp bei mir, Depot hilft echt.','Hab einen Trümmerfeld-Recycler übrig, falls wer braucht.','Gute Nacht, bin morgen früh wieder da.','Unsere Allianzpunkte steigen schön 🚀','Kann ein Offizier mal die Bewerbungen checken?'],
  reply:['Klingt gut, Chef!','Bin dabei.','👍','Verstanden.','Mach ich, danke!','Super Idee.','Alles klar, Kommandant.','Ich spende gleich was ins Depot.'],
@@ -71,9 +71,16 @@ const can=p=>!!S.ally.perm[myRank()][p];
 const SYM={star:'<path d="M50 24l7 15 16 2-12 11 3 16-14-8-14 8 3-16-12-11 16-2z"/>',planet:'<circle cx="50" cy="48" r="13"/><ellipse cx="50" cy="48" rx="24" ry="7" fill="none" stroke-width="3.5" transform="rotate(-18 50 48)"/>',
  sword:'<path d="M50 20l5 8v30h-10V28zM38 60h24v5H38zM47 65h6v12h-6z"/>',wing:'<path d="M50 70C38 60 26 52 22 34c10 6 18 8 28 10 10-2 18-4 28-10-4 18-16 26-28 36z"/>',
  crown:'<path d="M28 64l-4-30 14 12 12-18 12 18 14-12-4 30z"/>',comet:'<circle cx="58" cy="40" r="9"/><path d="M52 47L26 72l4-14-10 2z" opacity=".75"/>'};
-function emblem(em,sz){const c=EMC[em.c%EMC.length],s=EMS[em.s%EMS.length];return`<svg class="al-em" viewBox="0 0 100 100" width="${sz}" height="${sz}"><defs><linearGradient id="emg${em.c}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${c}" stop-opacity=".95"/><stop offset="1" stop-color="#0b1020"/></linearGradient></defs>
- <path d="M50 4l40 14v28c0 26-18 42-40 50C28 88 10 72 10 46V18z" fill="url(#emg${em.c})" stroke="${c}" stroke-width="3"/><path d="M50 12l32 11v23c0 21-14 34-32 41-18-7-32-20-32-41V23z" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="1.5"/>
+// v62: Wappen-Baukasten – Form (sh), Symbol (s), Farbe (c), Feldfarbe (c2), Goldrahmen (fr), Nebelglühen (gl)
+Object.assign(SYM,{atom:'<circle cx="50" cy="48" r="6"/><ellipse cx="50" cy="48" rx="24" ry="9" fill="none" stroke-width="3"/><ellipse cx="50" cy="48" rx="24" ry="9" fill="none" stroke-width="3" transform="rotate(60 50 48)"/><ellipse cx="50" cy="48" rx="24" ry="9" fill="none" stroke-width="3" transform="rotate(-60 50 48)"/>',
+ eye:'<path d="M22 48c8-12 18-18 28-18s20 6 28 18c-8 12-18 18-28 18S30 60 22 48z" fill="none" stroke-width="4"/><circle cx="50" cy="48" r="8"/>',bolt:'<path d="M56 20L30 54h16l-6 26 28-36H52z"/>',
+ gear:'<path d="M46 22h8l2 7 6 3 7-3 5 6-4 6 2 7 7 2v8l-7 2-2 7 4 6-5 6-7-3-6 3-2 7h-8l-2-7-6-3-7 3-5-6 4-6-2-7-7-2v-8l7-2 2-7-4-6 5-6 7 3 6-3z"/><circle cx="50" cy="48" r="8" fill="#0b1020"/>'});
+const EMSH=['M50 4l40 14v28c0 26-18 42-40 50C28 88 10 72 10 46V18z','M50 6a44 44 0 1 0 .1 0z','M50 4l40 23v46L50 96 10 73V27z','M50 2l46 46-46 46L4 48z','M14 6h72v62L50 94 14 68z'];
+function emblem(em,sz){em=em||{};const c=EMC[(em.c|0)%EMC.length],c2=EMC[(em.c2==null?7:em.c2|0)%EMC.length],s=EMS[(em.s|0)%EMS.length],sh=EMSH[(em.sh|0)%EMSH.length];const id='emg'+[em.c|0,em.c2==null?7:em.c2|0].join('_');const rim=em.fr==='gold'?'#ffd166':c;
+ return`<svg class="al-em${em.gl?' al-glow':''}" viewBox="0 0 100 100" width="${sz}" height="${sz}" style="vertical-align:middle${em.gl?';filter:drop-shadow(0 0 5px '+c+')':''}"><defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${c}" stop-opacity=".95"/><stop offset="1" stop-color="${c2}"/></linearGradient></defs>
+ <path d="${sh}" fill="url(#${id})" stroke="${rim}" stroke-width="${em.fr==='gold'?6:3}"/><path d="${sh}" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="1.5" transform="translate(9 9) scale(.82)"/>
  <g fill="#fff" stroke="#fff" style="filter:drop-shadow(0 0 4px ${c})">${SYM[s]}</g></svg>`}
+AL.EMC=EMC;AL.EMS=EMS;AL.EMSH=EMSH;
 AL.emblem=emblem;
 const ago=t=>{const s=(now()-t)/1000;return s<60?'gerade eben':s<3600?`vor ${s/60|0} Min`:s<86400?`vor ${s/3600|0} Std`:`vor ${s/86400|0} T`};
 const online=m=>m.me||now()-m.on<12*MIN;

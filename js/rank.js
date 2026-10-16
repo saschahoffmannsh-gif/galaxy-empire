@@ -40,7 +40,7 @@ function players(sort){const now=Date.now();const cur=list(now),old=list(now-DAY
  const ord=(a,b)=>b[key]-a[key]||(a.id<b.id?-1:1);old.sort(ord);const orank=new Map(old.map((x,i)=>[x.id,i+1]));cur.sort(ord);cur.forEach((x,i)=>{x.rank=i+1;x.d1=(orank.get(x.id)||x.rank)-x.rank});return cur}
 function allies(sort,cur){cur=cur||players('tot');const D=data();const map={};const meta=Object.fromEntries(D.tags.map(x=>[x.t,x.n]));
  for(const p of cur){if(!p.tag)continue;const a=map[p.tag]||(map[p.tag]={tag:p.tag,name:meta[p.tag]||(S.ally&&S.ally.tag===p.tag?S.ally.name:p.tag),tot:0,n:0,mem:[],own:S.ally&&S.ally.tag===p.tag});a.tot+=p.tot;a.n++;a.mem.push(p)}
- const arr=Object.values(map);arr.forEach(a=>{a.avg=Math.round(a.tot/a.n);a.em={c:h32(a.tag)%6,s:(h32(a.tag)>>>3)%6};if(a.own&&S.ally.em)a.em=S.ally.em});
+ const arr=Object.values(map);arr.forEach(a=>{a.avg=Math.round(a.tot/a.n);a.em={c:h32(a.tag)%6,s:(h32(a.tag)>>>3)%6};if(a.own&&S.ally.em)a.em=S.ally.em;if(window.NET&&NET.on&&NET.logoData){const l=NET.logoData(a.tag);if(l)a.em=l}});
  const key=sort||'tot';arr.sort((a,b)=>b[key]-a[key]);arr.forEach((a,i)=>{a.rank=i+1;a.d1=(h32(a.tag+Math.floor(Date.now()/DAY))%5)-2});return arr}
 RK.players=players;RK.allies=allies;RK.ally=tag=>allies('tot').find(a=>a.tag===tag);
 E.slotHook=(g,s,p)=>{if(!S)return null;const x=data().homes[g+':'+s+':'+p];if(!x)return null;const tot=npcPts(x,Date.now());return{kind:x.act?'player':'inactive',player:x.n,pts:tot,ally:x.tag,name:'Heimatplanet'}};
@@ -53,7 +53,7 @@ const arrow=d=>d>0?`<span class="rk-up">▲${d}</span>`:d<0?`<span class="rk-dn"
 function podium(top,isA,key){const pos=[1,0,2];const cls=['gold','silver','bronze'];
  return`<div class="rk-pod">${pos.map(i=>{const x=top[i];if(!x)return'<div></div>';const v=x[key];
   return`<div class="rk-pc ${cls[i]} ${x.me||x.own?'me':''}" data-act="rk-open" data-id="${isA?'a:'+x.tag:x.id}"><div class="rk-medal">${i===0?crown:''}${isA?`<div class="rk-emw">${em(x,i===0?58:46)}</div>`:`<div class="rk-avw">${av(x,i===0?52:42)}</div>`}${i?laurel(i===1?'#f4f7ff':'#ffd2a8',i===1?'#8892a8':'#9a5a2a','rkl'+i):laurel('#fff1b0','#c8860e','rkl0')}</div>
-  <div class="rk-nm">${isA?`[${esc(x.tag)}]`:PN(x.n)}</div><div class="rk-sub">${isA?esc(x.name):x.tag?`[${esc(x.tag)}]`:'&nbsp;'}</div><div class="rk-big">${fmt(v)}</div><div class="rk-step"><b>${i+1}</b></div></div>`}).join('')}</div>`}
+  <div class="rk-nm">${isA?`[${esc(x.tag)}]`:PN(x.n)}</div><div class="rk-sub">${isA?esc(x.name):x.tag?`${window.NET&&NET.on&&NET.logoHtml?NET.logoHtml(x.tag,14):''}[${esc(x.tag)}]`:'&nbsp;'}</div><div class="rk-big">${fmt(v)}</div><div class="rk-step"><b>${i+1}</b></div></div>`}).join('')}</div>`}
 function row(x,isA,key){return`<div class="rk-row ${x.me||x.own?'me':''}" data-act="rk-open" data-id="${isA?'a:'+x.tag:x.id}"><span class="rk-n">${x.rank}</span>${arrow(x.d1)}${isA?em(x,26):av(x,26)}<span class="rk-name">${isA?`<b>[${esc(x.tag)}]</b> ${esc(x.name)}`:`${PN(x.n)}${x.me?' <i class="rk-du">Du</i>':''}${x.tag?` <span class="mut">[${esc(x.tag)}]</span>`:''}${x.act?'':' <span class="rk-i">i</span>'}`}</span><span class="rk-p">${fmt(x[key])}${isA&&key!=='tot'?'':''}</span></div>`}
 PANELS.rank=()=>{const isA=RK.mode==='a';const cats=isA?ACAT:CAT;if(!cats.some(c=>c[0]===RK.sort))RK.sort='tot';
  const P=players(isA?'tot':RK.sort);const L=isA?allies(RK.sort,P):P;const key=RK.sort;

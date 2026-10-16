@@ -61,7 +61,7 @@ const vis=(V,x,y,w,h)=>x+w>V[0]&&x<V[2]&&y+h>V[1]&&y<V[3];
 // ---- Gebäude-Daten ----
 const els={};let order=[];
 const hasCut=(k,tn)=>{const L=window.B5P&&B5P[k]&&B5P[k][tn];return !!(L&&!tn.endsWith('_up')&&L.some(e=>e.f.endsWith('.webp')))};
-function sprite(p,id,lv,state){const k=key(id);const m=window.B5&&B5[k];if(!m)return null;const tn=state==='new'?'build':'t'+tier5(Math.max(1,lv))+(state==='up'?'_up':'');const file=(k==='radar'&&state==='done'&&window.B5DISH)?tn+'_nod':hasCut(k,tn)?tn+'_b':tn;return{tn,k,m:m[tn]||m[tn.replace('_up','')],src:`assets/b5/${k}_${file}.webp`}}
+function sprite(p,id,lv,state){const k=key(id);const m=window.B5&&B5[k];if(!m)return null;const tn=state==='new'?'build':'t'+tier5(Math.max(1,lv))+(state==='up'?'_up':'');const file=(k==='radar'&&state==='done'&&window.B5DISH)?tn+'_nod':hasCut(k,tn)?tn+'_b':tn;const b6=window.B6&&B6.base(k,state==='new'?'build':tn);return{tn,k,m:m[tn]||m[tn.replace('_up','')],src:b6||`assets/b5/${k}_${file}.webp`}}
 function geo(id,x,y,sp){const [W,H,ox0,oy0,ow]=sp.m;const s=foot(id,y)/ow;return{left:x-ox0*s,top:y-oy0*s,width:W*s,height:H*s}}
 const R=(a,b)=>a+Math.random()*(b-a);
 // Effektliste je Gebäude (aus B5FX/B5P/B5DISH), Koordinaten relativ zur Sprite-Box
@@ -83,6 +83,7 @@ function fxList(k,tn,state){const base=tn.replace('_up','');const L=(window.B5FX
  if(state==='new'||state==='up'){for(let i=0;i<3;i++)A('weld',C[1]+R(-.22,.22),C[2]-R(0,.25),.05,R(1.8,3.2));if(!LITE)for(let i=0;i<2;i++)A('dust',C[1]+R(-.25,.25),C[2]+R(.12,.22),.18,R(4,6));
   A('wl',C[1]+C[3]*.38,C[2]-.05,.12,1.9);A('wl',C[1]-C[3]*.42,C[2]+.02,.1,1.9,{ph:1})}
  const P=window.B5P&&B5P[k]&&B5P[k][state==='new'?'build':tn];if(P)for(const e of P){const d=e.a==='turret'?(e.d||0)*2.7:R(0,12);o.push({t:'part',e,ph:d,src:'assets/b5/'+e.f})}
+ if(window.B6){const d=window.B6D&&B6D[k]&&B6D[k][state==='new'?'build':tn];const drop=d&&d.drop;const L=drop?o.filter(e=>!drop.includes(e.t)):o;L.push(...B6.list(k,tn,state));return L}
  return o}
 // ---- vorgerenderte Leucht-Sprites (klein, einmalig) ----
 const GL={};function glow(name,stops){if(GL[name])return GL[name];const c=document.createElement('canvas');c.width=c.height=64;const g=c.getContext('2d');const r=g.createRadialGradient(32,32,0,32,32,32);for(const [o,col] of stops)r.addColorStop(o,col);g.fillStyle=r;g.fillRect(0,0,64,64);return GL[name]=c}
@@ -111,6 +112,7 @@ function kf(p,K){p=((p%1)+1)%1;for(let i=1;i<K.length;i++)if(p<=K[i][0]){const a
 const KF={slew:[[0,1],[.18,1],[.45,.68],[.62,.68],[.88,1],[1,1]],luff:[[0,-3.5],[.4,2.5],[.55,2.8],[1,-3.5]],tur:[[0,0],[.12,-5],[.3,-5],[.45,4],[.62,4],[.78,0],[1,0]],sc:[[0,-3],[.35,-3],[.55,3.5],[.8,3.5],[1,-3]],
  beam:[[0,-165],[.5,-120],[1,-165]],dish:[[0,1],[.3,.86],[.65,.94],[1,1]],dishR:[[0,0],[.3,-3],[.65,2.5],[1,0]]};
 const DEG=Math.PI/180;
+const B6H={img:s=>getImg(s),src:f=>'assets/b6/'+f,lite:LITE,get scale(){return cam.s*DPR()}};
 let scr=null;function scratch(w,h){if(!scr){scr=document.createElement('canvas')}if(scr.width<w||scr.height<h){scr.width=Math.max(scr.width,w);scr.height=Math.max(scr.height,h)}const g=scr.getContext('2d');g.setTransform(1,0,0,1,0,0);g.globalCompositeOperation='source-over';g.clearRect(0,0,w,h);return g}
 function stripes(g,w,h,ang,per,off,cols){g.save();g.translate(w/2,h/2);g.rotate(ang*DEG);const L=Math.hypot(w,h);for(let x=-L-per+(off%per);x<L;x+=per){for(const [a,b,c] of cols){g.fillStyle=c;g.fillRect(x+a,-L,b-a,2*L)}}g.restore()}
 function drawFx(g,f,bx,t){const W=bx.width,X=bx.left+f.x*W,Y=bx.top+f.y*bx.height,d=f.z*W,p=(t+f.ph)/f.d;
@@ -131,6 +133,7 @@ function drawFx(g,f,bx,t){const W=bx.width,X=bx.left+f.x*W,Y=bx.top+f.y*bx.heigh
   case'swirl':{g.save();g.globalAlpha=.55;g.translate(X,Y);g.scale(.62,1);g.rotate(p*2*Math.PI);g.drawImage(swirl(),-d/2,-d/2,d,d);g.restore();break}
   case'beam':{const a=kf(p,KF.beam)*DEG;g.save();g.translate(X,Y);g.rotate(a);g.globalAlpha=kf(p,[[0,.5],[.5,.8],[1,.5]]);const gr=g.createLinearGradient(0,0,d,0);gr.addColorStop(0,'rgba(255,240,200,.45)');gr.addColorStop(1,'rgba(255,240,200,0)');g.fillStyle=gr;g.beginPath();g.moveTo(0,-d*.005);g.lineTo(d,-d*.05);g.lineTo(d,d*.05);g.lineTo(0,d*.005);g.fill();g.restore();break}
   case'dish':{const im=getImg(f.src);if(!im)break;const w=f.z*W,h=f.h*bx.height,ox=X+w*.55,oy=Y+h*.6;g.save();g.globalAlpha=1;g.translate(ox,oy);g.rotate(kf(p,KF.dishR)*DEG);g.scale(kf(p,KF.dish),1);g.drawImage(im,-w*.55,-h*.6,w,h);g.restore();break}
+  case'b6':B6.draw(g,f,bx,t,B6H);break;
   case'part':{const e=f.e,x=bx.left+e.x*W,y=bx.top+e.y*bx.height,w=e.w*W,h=e.h*bx.height;
    if(e.a==='drill'||e.a==='belt'){const m=getImg(f.src);if(!m)break;const sw=Math.min(256,Math.max(8,Math.ceil(w*Math.min(2,cam.s*DPR())))),sh=Math.min(512,Math.max(8,Math.ceil(h*sw/w)));const k=sw/w;const s2=scratch(sw,sh);
     if(e.a==='belt')stripes(s2,sw,sh,e.ang||0,20*k,((t+f.ph)/.9%1)*20*k,[[0,9*k,'rgba(0,0,0,0)'],[9*k,13*k,'rgba(0,0,0,.55)'],[13*k,15*k,'rgba(255,255,255,.22)']]);
@@ -195,8 +198,8 @@ function frame(now){requestAnimationFrame(frame);if(!root)return;
  const P=B2.placing;for(const b of order){const g2=b.g;if(!vis(V2,g2.left,g2.top,g2.width,g2.height))continue;
   const f=foot(b.id,b.y);g.globalAlpha=1;g.drawImage(G.sh(),b.x-f*.62,b.y-f*.24,f*1.24,f*.62);
   const im=getImg(b.src,b.maxW);if(im){g.globalAlpha=1;g.drawImage(im,g2.left,g2.top,g2.width,g2.height)}
-  if(im)for(const fx of b.fx){if(fx.t==='part')drawFx(g,fx,g2,t)}
-  if(im&&anim)for(const fx of b.fx)if(fx.t!=='part')drawFx(g,fx,g2,t)}
+  if(im)for(const fx of b.fx){if(fx.t==='part'||fx.under)drawFx(g,fx,g2,t)}
+  if(im&&anim)for(const fx of b.fx)if(fx.t!=='part'&&!fx.under)drawFx(g,fx,g2,t)}
  // Geist (Platzierung)
  if(P&&ghostSp){const f=foot(P.id,P.y);const gg=geo(P.id,P.x,P.y,ghostSp);const im=getImg(ghostSp.src,ghostSp.maxW);g.globalAlpha=.85;if(im)g.drawImage(im,gg.left,gg.top,gg.width,gg.height);g.globalAlpha=1;
   g.strokeStyle=P.ok?'rgba(80,255,140,.95)':'rgba(255,70,70,.95)';g.lineWidth=4;g.beginPath();g.ellipse(P.x,P.y,f/2,f/4,0,0,7);g.stroke()}

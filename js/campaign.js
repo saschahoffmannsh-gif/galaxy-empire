@@ -268,7 +268,7 @@ function bText(st,id){const n=GE.BUILD[id].n;const er=st==='btn'?E.canBuild(pl()
   case 'drag':return['Schieb es an den richtigen Platz: Zieh das Gebäude mit dem Finger auf einen freien Platz.',()=>DRAG.classList.contains('on')?DRAG:document.querySelector('#b2ok'),'explain'];
   case 'blocked':return['Dieser Platz ist belegt (rot) – schieb das Gebäude weiter auf einen freien Platz.',()=>DRAG.classList.contains('on')?DRAG:document.querySelector('#b2ok'),'think'];
   case 'confirm':return['Gut so! Tippe jetzt auf „✓ Hier bauen“.','#b2ok','point'];
-  case 'speed':return['Der Bau läuft! Unter 30 Sekunden Restzeit ist das Fertigstellen gratis – tippe auf „Gratis fertigstellen“.','#panel [data-act=speed][data-k=sub]','point']}}
+  case 'speed':return['Der Bau läuft! Bis 5 Minuten Restzeit ist das Fertigstellen gratis – tippe auf „Gratis fertigstellen“.','#panel [data-act=speed][data-k=sub]','point']}}
 function buildFlow(id,open,tg){const tgt=tg||qLv(id)+1;let key=null;return new Promise(res=>{let iv=0;const fin=ok=>{clearInterval(iv);dragHint(false);spot(null);res(ok)};
  const tick=()=>{if(abort)return fin(false);const st=bStage(id,tgt,open);dragHint(st==='drag'||st==='blocked');if(st==='done')return fin(true);
   const t=bText(st,id);const k=st+'|'+t[0];if(k!==key){key=k;spot(t[1]);say(t[0],{p:t[2],btns:[['Überspringen','skip']]}).then(v=>{if(v==='skip')abort=true})}};

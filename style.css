@@ -1293,3 +1293,6 @@ body.raid:has(#panel:not(.hidden)) #raidbar{top:auto;bottom:8px;z-index:41}
 @media (orientation:portrait),(max-width:640px){.ax-wrap.join{flex-direction:column;overflow:auto}}
 @media (max-height:460px) and (orientation:landscape){.ax-create{padding:8px;margin:0}.ax-create .ax-cta{margin-top:6px;padding:7px}.ax-hero.lobby{min-height:0;padding:8px}.ax-hero.lobby .ax-name{font-size:17px}}
 .ax-ali .al-em{width:46px!important;height:46px!important}.ax-hem .al-em{width:84px;height:84px}
+/* ZIP155: Rohstoffe senden (Allianz) */
+.ax-rs{max-width:520px;max-height:86vh;overflow:auto}.ax-rs .ax-mp{display:block;margin:6px 0;line-height:1.4}.ax-rs select{width:100%;background:rgba(10,18,40,.8);color:#e8f0ff;border:1px solid rgba(120,160,255,.3);border-radius:8px;padding:6px}
+.ax-warn{margin:6px 0;padding:8px 10px;border-radius:10px;background:rgba(255,80,80,.12);border:1px solid rgba(255,90,90,.35);color:#ffb3b3;font-size:12px}

@@ -144,7 +144,13 @@ PANELS.resinfo=()=>{const p=pl(),pi=E.prodInfo(p);const P=pi.parts||{};return['R
   <tr><td>Solarsatelliten ${fmt(p.ships.ss||0)}</td><td></td><td></td><td></td><td class="pos">+${fmt(P.sats)}</td></tr>
  <tr class="cur"><td>Gesamt</td><td>${fmt(pi.m)}</td><td>${fmt(pi.k)}</td><td>${fmt(pi.g)}</td><td>${fmt(pi.eProd-pi.eUse)}</td></tr></table>
  <div class="desc" style="margin-top:8px">Energieversorgung ${Math.round(pi.f*100)} % · Temperatur ${p.temp} °C · Spieltempo ${S.speed}×${E.cmdActive('geologist')?' · Geologe +10 %':''}</div>
+ ${cuBox(p)}
  <div class="cat">Lager</div>${['m','k','g'].map(r=>`<div class="row" style="font-size:12px">${IC[r]} ${GE.RES[r]}<span class="spacer"></span>${fmt(p.r[r])} / ${fmt(E.storeCap(p,r))}</div>`).join('')}`]};
+// ZIP155 §2.6/§9: vom Server bestätigter Aufholbonus, sein Beitrag und die nächste Referenz
+function cuBox(p){if(!E.cuInfo)return'';const c=E.cuInfo();const d=t=>t?new Date(t).toLocaleString('de-DE',{weekday:'short',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'–';
+ let pp={m:0,k:0,g:0};if(!p.moon){const a=E.prodInfo(p);E._nb=1;let z;try{z=E.prodInfo(p)}finally{E._nb=0}for(const r of ['m','k','g'])pp[r]=Math.max(0,a[r]-z[r])}
+ return`<div class="cat">Aufholbonus</div><div class="desc" style="font-size:12px">${c.why?esc(c.why):`<b class="pos">+${(c.b*100).toFixed(1).replace('.',',')} % Minenförderung</b> · Entwicklung ${fmt(c.D)} von Referenz ${fmt(Math.round(c.R))} (${Math.round((c.x||0)*100)} %) · dieser Planet +${fmt(pp.m)} M / +${fmt(pp.k)} K / +${fmt(pp.g)} G pro h`}
+ <br><span class="mut">Der Bonus wird zur Förderbonusgruppe der Minen addiert (wie Geologe), nicht auf Grundproduktion, Energie oder Monde – +50 % bedeutet daher nicht +50 % der Gesamtanzeige. Kurve: bis 10 % der Universumsreferenz +50 %, 25 % → +35 %, 50 % → +20 %, ab 75 % kein Bonus. Referenz = Median der 20 stärksten aktiven Konten, jeden Montag 00:00 UTC. Nächste Referenz: ${d(c.next)}.</span></div>`}
 
 PANELS.padbuild=i=>{const p=pl();const all=p.moon?GE.MOON_B:GE.PLANET_B;const list=all.filter(id=>!placed(p,id)).concat(all.filter(id=>placed(p,id)));const [cx]=PADS[i];const padOf=id=>{for(const k in p.pads)if(p.pads[k]===id)return +k+1};
  const zone=cx<1080?(cx<760?'Flusstal':'Hochebene'):'Seeufer';

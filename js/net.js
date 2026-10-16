@@ -33,7 +33,7 @@ NET.sync=async function(withSave){if(!NET.on||!GS())return;const S=GS();
   if(window.RANK)RANK.g=null;rkC.t=0;try{hud()}catch(e){}
   if(withSave||Date.now()-NET.lastSave>10*60e3){await NET.pushSave()}
  }catch(e){NET.err=e.message}};
-NET.CV=60; // Client-Version: der Server lehnt Spielstände älterer Clients (ohne Stufen-Regeln) ab
+NET.CV=61; // Client-Version: der Server lehnt Spielstände älterer Clients (ohne Stufen-Regeln) ab
 NET.acceptCanonical=async function(res,maxSeq){
   const canonical=JSON.parse(await unzip(res.z));const current=GS(),remaining=(current.pendingActions||[]).filter(a=>a.seq>maxSeq);const ui={cur:current.cur,settings:current.settings};const visual={};for(const id of current.order)visual[id]={pos:current.planets[id].pos,pads:current.planets[id].pads,padsV:current.planets[id].padsV};
   let at=canonical.t;for(const a of remaining){a.t=Math.max(at,a.t);at=a.t;}
@@ -97,7 +97,7 @@ function applyEvents(evs){const S=GS(),E=ENGINE;if(!S)return false;let any=false
 NET.applyEvents=applyEvents;
 const registrations=new Map();
 function registerFleet(id){if(registrations.has(id))return registrations.get(id);const job=(async()=>{
- try{await NET.pushSave();const f=GS().fleets.find(f=>f.id===id);if(!f||!f.pvp||f.phase==='back')return;if(f.pvp.sid){NET.err=null;return;}const r=await api('fleet',{body:{cid:id}});const q=GS().fleets.find(q=>q.id===id);if(q&&q.pvp)q.pvp.sid=r.id;NET.err=null;try{save()}catch(_){}
+ try{await NET.pushSave();const f=GS().fleets.find(f=>f.id===id);if(!f||!f.pvp||f.phase==='back')return;if(f.pvp.sid){NET.err=null;return;}const r=await api('fleet',{body:{cid:id,ally:f.pvp&&f.pvp.ally?1:0}});const q=GS().fleets.find(q=>q.id===id);if(q&&q.pvp)q.pvp.sid=r.id;NET.err=null;try{save()}catch(_){}
  }catch(e){NET.err=e.message;const q=GS().fleets.find(q=>q.id===id);if(q&&q.pvp&&!q.pvp.sid&&[400,403,404].includes(e.status)){const err=ENGINE.recall(id);if(!err){ENGINE.report('info','Mission abgebrochen',{text:e.message+' – die Flotte kehrt zurück.'});try{save();await NET.pushSave()}catch(_){}}}}
  })().finally(()=>registrations.delete(id));registrations.set(id,job);return job;}
 function onSend(f){if(!NET.on||f.npc||!['attack','spy','transport'].includes(f.mission)||f.to.moon)return;const sl=NET.slotHook(f.to.g,f.to.s,f.to.p);if(!sl)return;
@@ -204,7 +204,33 @@ function axStep(id,k,max){return`<div class="ax-sc pick">${A_img(k)}<i>${esc((GE
 function axSheet(A){const n=AL.pick;if(!n)return'';const m=A.members.find(x=>x.n===n);if(!m){AL.pick=null;return''}const me=NET.cfg.name;const my=+A.rank[1],tl=+m.rank[1];const P=new Set(A.perms||[]);const can=m.n!==me&&tl<my;
  return`<div class="ax-sheet" data-act="mpa-unpick"><div class="ax-sh glass" data-act="mpa-keep"><button class="ax-x" data-act="mpa-unpick">${axI('x')}</button><div class="ax-shh">${axAv(m.n,64)}<div><div class="ax-mn big">${PN(m.n)}</div><div class="ax-me">${axIns(m.rank,16)} ${m.rank.toUpperCase()} · ${RKN[m.rank]} · ${axOnline(A,m)?'<span class="ok">online</span>':'offline'}</div><div class="ax-mp">⚡ Macht ${fmt(m.pts||0)}</div></div></div>
   ${P.has('rank')&&can?`<div class="ax-pt">Rang zuweisen</div><div class="ax-rpick">${['r4','r3','r2','r1'].map(rk=>`<button class="ax-rb ${m.rank===rk?'on':''}" data-act="mpa-rank" data-id="${esc(m.n)}" data-r="${rk}" ${+rk[1]<my?'':'disabled'}>${axIns(rk,22)}<b>${rk.toUpperCase()}</b><i>${RKN[rk]}</i></button>`).join('')}</div>`:''}
-  <div class="ax-btns">${m.n!==me?`<button class="ax-b" data-act="mpa-pm" data-id="${esc(m.n)}">${axI('chat')} Privatchat</button>`:''}${P.has('treas')?`<button class="ax-b gold" data-act="mpa-sendto" data-id="${esc(m.n)}">${axI('send')} Aus Tresor senden</button>`:''}${P.has('kick')&&can?`<button class="ax-b bad" data-act="mpa-kick" data-id="${esc(m.n)}">Entfernen</button>`:''}${A.rank==='r5'&&m.n!==me?`<button class="ax-b ghost" data-act="mpa-hand" data-id="${esc(m.n)}">${axI('crown')} Präsident übergeben</button>`:''}</div></div></div>`}
+  <div class="ax-btns">${m.n!==me?`<button class="ax-b" data-act="mpa-pm" data-id="${esc(m.n)}">${axI('chat')} Privatchat</button>`:''}${m.n!==me?`<button class="ax-b ok" data-act="mpa-res" data-id="${esc(m.n)}">${axI('send')} Rohstoffe senden</button>`:''}${P.has('treas')?`<button class="ax-b gold" data-act="mpa-sendto" data-id="${esc(m.n)}">${axI('send')} Aus Tresor senden</button>`:''}${P.has('kick')&&can?`<button class="ax-b bad" data-act="mpa-kick" data-id="${esc(m.n)}">Entfernen</button>`:''}${A.rank==='r5'&&m.n!==me?`<button class="ax-b ghost" data-act="mpa-hand" data-id="${esc(m.n)}">${axI('crown')} Präsident übergeben</button>`:''}</div></div></div>`}
+// ===== Rohstoffe direkt senden (Allianz): echte Transportmission mit Flugzeit/Laderaum, Hilfsregeln vom Server (ZIP155 §1.4/1.5) =====
+const RSN={m:'Metall',k:'Kristall',g:'Gas'};
+function rsPlanets(n){const p=((NET.uni&&NET.uni.players)||[]).find(p=>p.name===n);return((p&&p.planets)||[]).filter(q=>!q.moon)}
+function rsShips(pl,to,tot){const E=ENGINE;const have={lc:pl.ships.lc||0,sc:pl.ships.sc||0};if(tot<=0)return{ships:null,err:'Menge wählen'};
+ let lc=Math.min(have.lc,Math.ceil(tot/25000)),sc=Math.min(have.sc,Math.max(0,Math.ceil((tot-lc*25000)/5000)));
+ for(let i=0;i<5000;i++){const sh={};if(lc)sh.lc=lc;if(sc)sh.sc=sc;if(lc+sc>0){const fu=E.fuel(pl,to,sh,100),cap=E.cargoCap(sh);if(cap-fu>=tot)return{ships:sh,fuel:fu,cap,dur:E.flightTime(pl,to,sh,100)*1000}}
+  if(sc<have.sc)sc++;else if(lc<have.lc)lc++;else break}
+ return{ships:null,err:'Zu wenig Transporter für diese Menge (Kleiner/Großer Transporter auf dem Startplaneten)'}}
+function rsVals(){const g=id=>Math.max(0,Math.floor(+((document.getElementById(id)||{}).value)||0));return{m:g('rs-m'),k:g('rs-k'),g:g('rs-g')}}
+function rsCalc(){const R=AL.rs;if(!R)return;const S=GS(),pl=S.planets[R.pid];const tp=rsPlanets(R.to)[R.ti||0];const o=document.getElementById('rs-calc');if(!o||!pl||!tp)return;const c=rsVals(),tot=c.m+c.k+c.g;
+ const x=rsShips(pl,{g:tp.g,s:tp.s,p:tp.p},tot);R.plan=x;
+ o.innerHTML=x.ships?`${Object.entries(x.ships).map(([k,n])=>fmt(n)+'× '+esc(GE.SHIP[k].n)).join(' + ')} · Laderaum ${fmt(x.cap)} · Treibstoff ${fmt(Math.ceil(x.fuel))} Gas · Flugzeit ${ft(Math.round(x.dur/1000))}${pl.r.g<x.fuel+c.g?' · <span class="negv">zu wenig Gas</span>':''}`:`<span class="${tot?'negv':'mut'}">${esc(x.err)}</span>`;
+ const b=document.getElementById('rs-go');if(b)b.disabled=!x.ships||pl.r.g<(x.fuel||0)+c.g||(R.info&&R.info.aidDir===false)}
+async function rsInfo(){const R=AL.rs;if(!R)return;try{R.info=await api('rules/info',{body:{to:R.to}})}catch(e){R.info={error:e.message}}if(view==='ally')renderAlly()}
+function axResSheet(A){const R=AL.rs;if(!R)return'';const S=GS();const own=S.order.map(i=>S.planets[i]).filter(p=>p&&!p.moon);if(!S.planets[R.pid]||S.planets[R.pid].moon)R.pid=(own[0]||{}).id;const pl=S.planets[R.pid];const tps=rsPlanets(R.to);
+ const I=R.info,fr=I&&I.aid?I.aid.free:null;const lim=r=>Math.max(0,Math.floor(Math.min(pl.r[r],fr?fr[r]:Infinity)));
+ const dir=I&&I.aidDir===false?`<div class="ax-warn">Nicht möglich: Hilfe ist nur an gleich starke oder schwächere Spieler erlaubt (deine Entwicklung ${fmt(I.dev.me)}, ${esc(R.to)} ${fmt(I.dev.to)}). Rückzahlungen an Stärkere sind gesperrt.</div>`:'';
+ const bud=I&&I.aid?`<div class="ax-mp">Hilfsbudget von ${esc(R.to)} (alle Spender, rollierend 24 h = 1 h seiner Produktion): frei ${['m','k','g'].map(r=>fmt(fr[r])+' '+RSN[r]).join(' · ')}${I.aid.next?' · nächste Freigabe '+new Date(I.aid.next).toLocaleString('de-DE',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):''}</div>`:I&&I.error?`<div class="ax-warn">${esc(I.error)}</div>`:'<div class="ax-mp">Budget wird geladen…</div>';
+ return`<div class="ax-sheet" data-act="mpa-rsx"><div class="ax-sh glass ax-rs" data-act="mpa-keep"><button class="ax-x" data-act="mpa-rsx">${axI('x')}</button><div class="ax-pt">${axI('send')} Rohstoffe senden an ${esc(R.to)}</div>
+  <div class="ax-form"><label><i>Von</i><select id="rs-pid" data-act2="rs-pid">${own.map(p=>`<option value="${p.id}" ${p.id===R.pid?'selected':''}>${esc(p.name)} [${p.g}:${p.s}:${p.p}]</option>`).join('')}</select></label>
+  <label><i>Nach</i><select id="rs-ti" data-act2="rs-ti">${tps.length?tps.map((q,i)=>`<option value="${i}" ${i===(R.ti||0)?'selected':''}>${esc(q.name||'Planet')} [${q.g}:${q.s}:${q.p}]</option>`).join(''):'<option>kein Planet bekannt</option>'}</select></label></div>
+  ${dir}${bud}${['m','k','g'].map(r=>axSlider('rs-'+r,RSN[r],r,lim(r))).join('')}
+  <div class="ax-mp" id="rs-calc">Menge wählen</div>
+  <div class="ax-mp mut" style="font-size:11px">Echte Transportmission: Transporter fliegen mit Laderaum und Treibstoff, der Empfänger erhält die Ladung bei Ankunft. Beide bekommen einen Bericht. Der Server prüft Allianz, Richtung und Budget erst beim Start verbindlich.</div>
+  <div class="ax-btns"><button class="ax-cta" id="rs-go" data-act="mpa-rsgo" disabled>${axI('send')} Lieferung starten</button></div></div></div>`}
+NET.openRes=function(n){AL.rs={to:n,pid:GS().cur,ti:0,info:null};AL.pick=null;setView('ally');renderAlly();rsInfo()};
 function axJoin(){const me=NET.cfg.name;const em=(l,s)=>window.ALLY?ALLY.emblem(l,s):'';let h=`<div class="ax-wrap join"><div class="ax-left col"><div class="ax-hero lobby"><div class="ax-bnr"></div><div class="ax-hn"><div class="ax-name">Allianzen</div><div class="ax-me">Gemeinsam stärker: Tresor, Boni und Allianzchat</div></div></div>`;
  h+=`<div class="ax-panel ax-create"><div class="ax-pt">Eigene Allianz gründen</div><div class="ax-form"><label><i>Name</i><input id="mpan" placeholder="3–30 Zeichen" maxlength="30"></label><label class="sm"><i>Kürzel</i><input id="mpat" placeholder="ABC" maxlength="5"></label></div><button class="ax-cta" data-act="mpa-create">${axI('crown')} Gründen</button></div></div><div class="ax-right"><div class="ax-ph"><b>Allianzen im Universum</b></div>`;
  h+=`<div class="ax-alist">${AL.list?AL.list.length?AL.list.map(a=>{const ap=(a.apps||[]).some(x=>x.n===me);return`<div class="ax-ali">${em(a.logo,54)}<div class="ax-mi"><div class="ax-mn"><span class="ax-tag sm">[${esc(a.tag)}]</span> ${esc(a.name)}</div><div class="ax-mp">${axI('mem')} ${a.members.length}/50 · ${MODEN[a.mode]||''} · R5 ${PN(a.founder)}</div>${a.descr?`<div class="ax-quote">${esc(a.descr)}</div>`:''}</div>
@@ -212,7 +238,7 @@ function axJoin(){const me=NET.cfg.name;const em=(l,s)=>window.ALLY?ALLY.emblem(
 function mpAlly(){const b=$('#allybody');b.className='vbody glass ax-body';const A=NET.ally;
  if(!AL.list){alLoad().then(()=>{if(view==='ally')renderAlly()})}
  if(!A){setHTML(b,axJoin());return}
- const pg=AL.sub&&AL.sub!=='home';const h=`<div class="ax-wrap ${pg?'sub':''}"><div class="ax-left">${axHero(A)}</div><div class="ax-right"><div class="ax-page" data-pg="${AL.sub||'home'}">${pg?axPage(A):(A.descr?`<div class="ax-motd"><i>Nachricht der Führung</i>${esc(A.descr)}</div>`:'')+axTiles(A)}</div></div>${axSheet(A)}${AL.fx||''}</div>`;
+ const pg=AL.sub&&AL.sub!=='home';const h=`<div class="ax-wrap ${pg?'sub':''}"><div class="ax-left">${axHero(A)}</div><div class="ax-right"><div class="ax-page" data-pg="${AL.sub||'home'}">${pg?axPage(A):(A.descr?`<div class="ax-motd"><i>Nachricht der Führung</i>${esc(A.descr)}</div>`:'')+axTiles(A)}</div></div>${axSheet(A)}${axResSheet(A)}${AL.fx||''}</div>`;
  setHTML(b,h)}
 const S_now=t=>t; // Serverzeit = Spielzeit im Mehrspieler
 function mpChat(){const b=$('#chatbody');b.className='vbody glass';const A=NET.ally;if(AL.ch!=='global'&&!(A&&AL.ch==='ally:'+A.tag))AL.ch='global';const ch=AL.ch;const arr=AL.chat[ch]||[];const me=NET.cfg.name;
@@ -228,6 +254,12 @@ async function allyAct(a,t){const v=id=>(document.getElementById(id)||{}).value|
  if(a==='mpa-sub'){AL.sub=id;AL.edit=null;AL.mode=null;AL.pick=null;if(id==='tres'||id==='shop')AL.tr=null;renderAlly();return}
  if(a==='mpa-col'){AL.col=AL.col||{};AL.col[id]=!AL.col[id];renderAlly();return}
  if(a==='mpa-pick'){AL.pick=id;renderAlly();return}
+ if(a==='mpa-res'){NET.openRes(id);return}
+ if(a==='mpa-rsx'){AL.rs=null;renderAlly();return}
+ if(a==='mpa-rsgo'){const R=AL.rs;if(!R){return}const S=GS(),pl=S.planets[R.pid],tp=rsPlanets(R.to)[R.ti||0];const c=rsVals();rsCalc();const x=R.plan;if(!tp||!x||!x.ships){toast((x&&x.err)||'Ziel fehlt','err');t.disabled=false;return}
+  if(!confirm(`${['m','k','g'].filter(r=>c[r]).map(r=>fmt(c[r])+' '+RSN[r]).join(', ')} an ${R.to} senden?`)){t.disabled=false;return}
+  const e=ENGINE.send(R.pid,x.ships,{g:tp.g,s:tp.s,p:tp.p,moon:false},'transport',100,c);if(e){toast(e,'err');t.disabled=false;return}
+  const f=S.fleets[S.fleets.length-1];if(f&&f.pvp)f.pvp.ally=1;try{save()}catch(_){}AL.rs=null;axFx(R.to,true,'Lieferflotte → '+R.to);toast('Lieferflotte gestartet – Ankunft '+new Date(f.arrive).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'}),'ok');renderAll();return}
  if(a==='mpa-unpick'){AL.pick=null;renderAlly();return}
  if(a==='mpa-pm'){AL.pick=null;if(window.openPM)openPM(id);else{AL.ch='global';setView('chat')}return}
  if(a==='mpa-chat'){AL.ch='ally:'+A.tag;AL.last[AL.ch]=0;setView('chat');return}
@@ -257,8 +289,9 @@ async function allyAct(a,t){const v=id=>(document.getElementById(id)||{}).value|
  else if(a==='mpa-buy'){const it=A.shop.find(x=>x.id===id);if(!confirm(it.n+' aus dem Tresor kaufen?'))return;const r=await api('ally/buy',{body:{item:id}});AL.tr=r.treasury;toast('Gekauft','ok')}
  AL.list=null;await NET.sync(false);renderAll()}
 function axSl(i){const o=document.getElementById(i.id+'-v');if(o)o.textContent=fmt(+i.value)}
-function axFx(to,give){AL.fx=`<div class="ax-fx ${give?'give':'don'}"><div class="ax-fxp">${axI('tres')}</div><div class="ax-fxl"><i></i><i></i><i></i></div><div class="ax-fxs">${axI('send')}</div><div class="ax-fxt">${give?'Konvoi → '+esc(to):'Spende → Tresor'}</div></div>`;setTimeout(()=>{AL.fx='';if(view==='ally')renderAlly()},1900)}
-document.addEventListener('input',e=>{const i=e.target;if(i&&i.dataset&&i.dataset.sl)axSl(i)},true);
+function axFx(to,give,label){AL.fx=`<div class="ax-fx ${give?'give':'don'}"><div class="ax-fxp">${axI(label?'send':'tres')}</div><div class="ax-fxl"><i></i><i></i><i></i></div><div class="ax-fxs">${axI('send')}</div><div class="ax-fxt">${label?esc(label):give?'Konvoi → '+esc(to):'Spende → Tresor'}</div></div>`;setTimeout(()=>{AL.fx='';if(view==='ally')renderAlly()},1900)}
+document.addEventListener('input',e=>{const i=e.target;if(i&&i.dataset&&i.dataset.sl){axSl(i);if(/^rs-/.test(i.id))rsCalc()}},true);
+document.addEventListener('change',e=>{const i=e.target;if(!i||!AL.rs)return;if(i.id==='rs-pid'){AL.rs.pid=i.value;renderAlly()}else if(i.id==='rs-ti'){AL.rs.ti=+i.value||0;renderAlly()}},true);
 
 // ---------- v32: Kommandant-HUD (Name + Punkte + Platz) ----------
 let rkC={t:0,r:null};

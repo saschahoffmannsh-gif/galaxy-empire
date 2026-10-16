@@ -271,5 +271,5 @@ B2.hintEl=function(id){if(!B2.on())return null;ensureDom();const h=root.querySel
 B2.hintOff=()=>{if(root)root.querySelector('#b2hint').classList.remove('on')};B2.hitAt=(x,y)=>hitAt(x,y);B2.els=()=>order.map(b=>({id:b.id,x:b.x,y:b.y,g:b.g}));
 // renderBase umleiten
 const _rb=window.renderBase;
-window.renderBase=function(){if(B2.on()){const pn=$('#pano');if(pn)pn.style.display='none';ensureDom();root.style.display='';if(!document.body.classList.contains('cp-guided'))B2.hintOff();render()}else{if(root)root.style.display='none';const pn=$('#pano');if(pn)pn.style.display='';_rb()}};
+window.renderBase=function(){if(B2.on()){const pn=$('#pano');if(pn)pn.style.display='none';ensureDom();root.style.display='';if(!document.body.classList.contains('cp-guided'))B2.hintOff();render();if(typeof renderQueues==='function')renderQueues()}else{if(root)root.style.display='none';const pn=$('#pano');if(pn)pn.style.display='';_rb()}};
 })();

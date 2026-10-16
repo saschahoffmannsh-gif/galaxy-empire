@@ -28,7 +28,7 @@ function rulesHint(to,sl){if(!(window.NET&&NET.on&&sl&&sl.real&&sl.player)||to.m
  const v=RH.v;if(!v)return'<div class="mut" style="font-size:11px;margin-top:4px">Regeln werden geprüft…</div>';if(v.error)return'';const L=v.limits||{};let h='';
  if(v.block)h+=`<div class="negv" style="font-size:11.5px;margin-top:4px">Angriff/Spionage gesperrt: ${esc(v.block)}</div>`;
  if(v.atk){const al=Object.values(v.atk.allys||{});h+=`<div class="mut" style="font-size:11px;margin-top:4px">Angriffe (24 h, inkl. laufender): dieser Planet ${v.atk.planet}/${L.planet} · Konto ${v.atk.acct}/${L.acct}${al.length?' · Allianz '+Math.max(...al)+'/'+L.ally:''}${v.atk.next?' · nächste Freigabe '+new Date(v.atk.next).toLocaleString('de-DE',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):''}</div>`}
- if(v.aid)h+=`<div class="mut" style="font-size:11px;margin-top:2px">${v.aidDir?'Transport = Hilfe: frei '+['m','k','g'].map(r=>fmt(v.aid.free[r])+' '+GE.RES[r]).join(' · ')+' (24 h, 1 h Produktion des Empfängers)':'Transport gesperrt: Hilfe nur an gleich starke oder schwächere Spieler'}</div>`;
+ if(v.aid){const nx=v.aid.next>Date.now()?v.aid.next:0;h+=`<div class="${nx?'negv':'mut'}" style="font-size:11px;margin-top:2px">Transport an Spieler: je Rohstoff max. 20 % des Bestands dieses Planeten · eine Lieferung alle 48 h${nx?' · wieder möglich in '+ft(Math.ceil((nx-Date.now())/1000)):' · jetzt möglich'}</div>`}
  return h}
 function sendHTML(){const p=pl();const avail=Object.keys(p.ships).filter(k=>k!=='ss'&&p.ships[k]>0);
  if(!D.to)D.to={g:p.g,s:p.s,p:16,moon:false};const to=D.to;const ms=to.moon?['transport','deploy']:E.missionsFor(to.g,to.s,to.p);if(!ms.includes(D.mission))D.mission=ms[0]||null;

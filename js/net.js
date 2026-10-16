@@ -33,7 +33,7 @@ NET.sync=async function(withSave){if(!NET.on||!GS())return;const S=GS();
   if(window.RANK)RANK.g=null;rkC.t=0;try{hud()}catch(e){}
   if(withSave||Date.now()-NET.lastSave>10*60e3){await NET.pushSave()}
  }catch(e){NET.err=e.message}};
-NET.CV=61; // Client-Version: der Server lehnt Spielstände älterer Clients (ohne Stufen-Regeln) ab
+NET.CV=62; // Client-Version: der Server lehnt Spielstände älterer Clients (ohne Stufen-Regeln) ab
 NET.acceptCanonical=async function(res,maxSeq){
   const canonical=JSON.parse(await unzip(res.z));const current=GS(),remaining=(current.pendingActions||[]).filter(a=>a.seq>maxSeq);const ui={cur:current.cur,settings:current.settings};const visual={};for(const id of current.order)visual[id]={pos:current.planets[id].pos,pads:current.planets[id].pads,padsV:current.planets[id].padsV};
   let at=canonical.t;for(const a of remaining){a.t=Math.max(at,a.t);at=a.t;}
@@ -171,9 +171,9 @@ function axPage(A){const P=new Set(A.perms||[]);const me=NET.cfg.name;const sub=
    <div class="ax-seg"><button class="${mode==='don'?'on':''}" data-act="mpa-tm" data-id="don">Spenden</button><button class="${mode==='send'?'on':''}" data-act="mpa-tm" data-id="send">${P.has('treas')?'Versenden':'Versenden 🔒'}</button><button class="${mode==='log'?'on':''}" data-act="mpa-tm" data-id="log">Tresorbuch</button></div>`;
   if(mode==='don'){h+=`<div class="ax-panel"><div class="ax-pt">Von <b>${esc(pl.name)}</b> spenden</div>${RES3.map(([r,n])=>axSlider('mpd-'+r,n,r,Math.floor(pl.r[r]))).join('')}${axSlider('mpd-dm','Dunkle Materie','dm',Math.floor(GS().dm||0))}
    <div class="ax-pt" style="margin-top:8px">Schiffe auf diesem Planeten</div><div class="ax-fleet pick">${mine.length?mine.map(([k,n])=>axStep('mpd-s-'+k,k,n)).join(''):'<div class="ax-empty">Keine Schiffe stationiert (Flotten unterwegs zählen nicht)</div>'}</div>
-   <button class="ax-cta" data-act="mpa-donate">${axI('tres')} Endgültig spenden</button><div class="ax-hint">Spenden verlassen sofort deinen Planeten. DM sind nur für den Shop, nicht auszahlbar.</div></div>`}
+   <button class="ax-cta" data-act="mpa-donate">${axI('tres')} Endgültig spenden</button><div class="ax-hint">Spenden verlassen sofort deinen Planeten. DM sind nur für den Shop, nicht auszahlbar. <b>Tresor: keine Begrenzung</b> – weder für Spenden noch für Auszahlungen.</div></div>`}
   if(mode==='send'){if(!P.has('treas'))h+=`<div class="ax-void">${axI('tres')}<b>Recht „Tresor verwalten“ fehlt</b><span>R4 und R5 dürfen versenden.</span></div>`;else{const to=AL.to||'';
-   h+=`<div class="ax-panel"><div class="ax-pt">Empfänger wählen</div><div class="ax-pick">${A.members.map(m=>`<button class="ax-pm ${to===m.n?'on':''}" data-act="mpa-to" data-id="${esc(m.n)}">${axAv(m.n,36)}<span>${esc(m.n)}</span>${axIns(m.rank,12)}</button>`).join('')}</div>
+   h+=`<div class="ax-panel"><div class="ax-hint" style="margin-bottom:6px">Tresor-Versand ohne Begrenzung (keine 20-%-Grenze, keine 48-h-Sperre).</div><div class="ax-pt">Empfänger wählen</div><div class="ax-pick">${A.members.map(m=>`<button class="ax-pm ${to===m.n?'on':''}" data-act="mpa-to" data-id="${esc(m.n)}">${axAv(m.n,36)}<span>${esc(m.n)}</span>${axIns(m.rank,12)}</button>`).join('')}</div>
     ${RES3.map(([r,n])=>axSlider('mpg-'+r,n,r,T.r[r])).join('')}<div class="ax-pt" style="margin-top:8px">Schiffe aus dem Tresor</div><div class="ax-fleet pick">${ts.length?ts.map(([k,n])=>axStep('mpg-s-'+k,k,n)).join(''):'<div class="ax-empty">Keine Schiffe im Tresor</div>'}</div>
     <button class="ax-cta" data-act="mpa-give" ${to?'':'disabled'}>${axI('send')} ${to?'An '+esc(to)+' senden':'Empfänger wählen'}</button><div class="ax-hint">Transfer per Allianz-Sprungtor zum Heimatplaneten – Ankunft sofort.</div></div>`}}
   if(mode==='log'){const don=Object.entries(T.don).sort((a,b)=>b[1].v-a[1].v).slice(0,5);h+=`<div class="ax-panel">${don.length?`<div class="ax-pt">Top-Spender</div><div class="ax-top">${don.map(([n,d],i)=>`<div class="ax-tp p${i}">${axAv(n,30)}<b>${PN(n)}</b><span>${fmt(d.v)}${d.dm?' · '+d.dm+' DM':''}</span></div>`).join('')}</div>`:''}
@@ -217,18 +217,18 @@ function rsVals(){const g=id=>Math.max(0,Math.floor(+((document.getElementById(i
 function rsCalc(){const R=AL.rs;if(!R)return;const S=GS(),pl=S.planets[R.pid];const tp=rsPlanets(R.to)[R.ti||0];const o=document.getElementById('rs-calc');if(!o||!pl||!tp)return;const c=rsVals(),tot=c.m+c.k+c.g;
  const x=rsShips(pl,{g:tp.g,s:tp.s,p:tp.p},tot);R.plan=x;
  o.innerHTML=x.ships?`${Object.entries(x.ships).map(([k,n])=>fmt(n)+'× '+esc(GE.SHIP[k].n)).join(' + ')} · Laderaum ${fmt(x.cap)} · Treibstoff ${fmt(Math.ceil(x.fuel))} Gas · Flugzeit ${ft(Math.round(x.dur/1000))}${pl.r.g<x.fuel+c.g?' · <span class="negv">zu wenig Gas</span>':''}`:`<span class="${tot?'negv':'mut'}">${esc(x.err)}</span>`;
- const b=document.getElementById('rs-go');if(b)b.disabled=!x.ships||pl.r.g<(x.fuel||0)+c.g||(R.info&&R.info.aidDir===false)}
+ const b=document.getElementById('rs-go');if(b)b.disabled=!x.ships||pl.r.g<(x.fuel||0)+c.g||!!(R.info&&R.info.aid&&R.info.aid.next>Date.now())}
 async function rsInfo(){const R=AL.rs;if(!R)return;try{R.info=await api('rules/info',{body:{to:R.to}})}catch(e){R.info={error:e.message}}if(view==='ally')renderAlly()}
 function axResSheet(A){const R=AL.rs;if(!R)return'';const S=GS();const own=S.order.map(i=>S.planets[i]).filter(p=>p&&!p.moon);if(!S.planets[R.pid]||S.planets[R.pid].moon)R.pid=(own[0]||{}).id;const pl=S.planets[R.pid];const tps=rsPlanets(R.to);
- const I=R.info,fr=I&&I.aid?I.aid.free:null;const lim=r=>Math.max(0,Math.floor(Math.min(pl.r[r],fr?fr[r]:Infinity)));
- const dir=I&&I.aidDir===false?`<div class="ax-warn">Nicht möglich: Hilfe ist nur an gleich starke oder schwächere Spieler erlaubt (deine Entwicklung ${fmt(I.dev.me)}, ${esc(R.to)} ${fmt(I.dev.to)}). Rückzahlungen an Stärkere sind gesperrt.</div>`:'';
- const bud=I&&I.aid?`<div class="ax-mp">Hilfsbudget von ${esc(R.to)} (alle Spender, rollierend 24 h = 1 h seiner Produktion): frei ${['m','k','g'].map(r=>fmt(fr[r])+' '+RSN[r]).join(' · ')}${I.aid.next?' · nächste Freigabe '+new Date(I.aid.next).toLocaleString('de-DE',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):''}</div>`:I&&I.error?`<div class="ax-warn">${esc(I.error)}</div>`:'<div class="ax-mp">Budget wird geladen…</div>';
+ const I=R.info,pc=(E.AID_PCT||0.2);const lim=r=>Math.max(0,Math.floor(Math.floor(pl.r[r])*pc));const nx=I&&I.aid&&I.aid.next>Date.now()?I.aid.next:0;
+ const dir=nx?`<div class="ax-warn">Nur eine Lieferung alle 48 h. Nächste Lieferung möglich in <b id="rs-cd" data-t="${nx}">${ft(Math.ceil((nx-Date.now())/1000))}</b> (${new Date(nx).toLocaleString('de-DE',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}).</div>`:'';
+ const bud=I&&I.aid?`<div class="ax-mp">Je Lieferung höchstens <b>20 %</b> des aktuellen Bestands dieses Planeten je Rohstoff · eine Lieferung alle 48 h${nx?'':' · <span class="posv">jetzt möglich</span>'}. Der Allianz-Tresor hat keine Begrenzung.</div>`:I&&I.error?`<div class="ax-warn">${esc(I.error)}</div>`:'<div class="ax-mp">Regeln werden geladen…</div>';
  return`<div class="ax-sheet" data-act="mpa-rsx"><div class="ax-sh glass ax-rs" data-act="mpa-keep"><button class="ax-x" data-act="mpa-rsx">${axI('x')}</button><div class="ax-pt">${axI('send')} Rohstoffe senden an ${esc(R.to)}</div>
   <div class="ax-form"><label><i>Von</i><select id="rs-pid" data-act2="rs-pid">${own.map(p=>`<option value="${p.id}" ${p.id===R.pid?'selected':''}>${esc(p.name)} [${p.g}:${p.s}:${p.p}]</option>`).join('')}</select></label>
   <label><i>Nach</i><select id="rs-ti" data-act2="rs-ti">${tps.length?tps.map((q,i)=>`<option value="${i}" ${i===(R.ti||0)?'selected':''}>${esc(q.name||'Planet')} [${q.g}:${q.s}:${q.p}]</option>`).join(''):'<option>kein Planet bekannt</option>'}</select></label></div>
   ${dir}${bud}${['m','k','g'].map(r=>axSlider('rs-'+r,RSN[r],r,lim(r))).join('')}
   <div class="ax-mp" id="rs-calc">Menge wählen</div>
-  <div class="ax-mp mut" style="font-size:11px">Echte Transportmission: Transporter fliegen mit Laderaum und Treibstoff, der Empfänger erhält die Ladung bei Ankunft. Beide bekommen einen Bericht. Der Server prüft Allianz, Richtung und Budget erst beim Start verbindlich.</div>
+  <div class="ax-mp mut" style="font-size:11px">Echte Transportmission: Transporter fliegen mit Laderaum und Treibstoff, der Empfänger erhält die Ladung bei Ankunft. Beide bekommen einen Bericht. Der Server prüft Allianz, 20-%-Grenze und 48-h-Sperre beim Start verbindlich.</div>
   <div class="ax-btns"><button class="ax-cta" id="rs-go" data-act="mpa-rsgo" disabled>${axI('send')} Lieferung starten</button></div></div></div>`}
 NET.openRes=function(n){AL.rs={to:n,pid:GS().cur,ti:0,info:null};AL.pick=null;setView('ally');renderAlly();rsInfo()};
 function axJoin(){const me=NET.cfg.name;const em=(l,s)=>window.ALLY?ALLY.emblem(l,s):'';let h=`<div class="ax-wrap join"><div class="ax-left col"><div class="ax-hero lobby"><div class="ax-bnr"></div><div class="ax-hn"><div class="ax-name">Allianzen</div><div class="ax-me">Gemeinsam stärker: Tresor, Boni und Allianzchat</div></div></div>`;
@@ -368,3 +368,5 @@ function ui(){NET._ui=1;if(NET.on)installMP();setInterval(hud,2000);setTimeout(h
 }
 window.addEventListener('load',()=>{try{ui()}catch(e){console.error(e)}});
 })();
+
+setInterval(()=>{const o=document.getElementById('rs-cd');if(!o)return;const l=+o.dataset.t-Date.now();if(l<=0){if(NET.AL&&NET.AL.rs)NET.AL.rs.info=null;o.textContent='jetzt';return}o.textContent=ft(Math.ceil(l/1000))},1000);

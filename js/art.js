@@ -68,7 +68,7 @@ A.make=function(id){if(A.cache[id])return A.cache[id];const c=document.createEle
  return A.cache[id]=c.toDataURL('image/png')};
 A.fb=function(el){el.onerror=null;el.dataset.osrc=el.getAttribute('src');const id=el.dataset.fb;if(id==='nebula')el.src=A.nebula();else if(id==='sun')el.src=A.sun();else el.src=A.make(id);el.classList.add('fb')};
 A.PORTRAIT=new Set(['commander','technocrat','admiral','geologist','engineer','guider','aries','pilot']);
-A.img=(id,cls='')=>`<img class="gi ${A.PORTRAIT.has(id)?'portrait':''} ${cls}" src="assets/img/${id}.png" data-fb="${id}" onerror="ART.fb(this)" alt="" draggable="false">`;
+A.img=(id,cls='')=>`<img class="gi ${A.PORTRAIT.has(id)?'portrait':''} ${cls}" src="assets/img/${id}.png" data-fb="${id}" onerror="window.ART.fb(this)" alt="" draggable="false">`;
 A.planetSrc=t=>t==='moon'?'assets/p2/mondgrau.webp':t&&t.startsWith('p2_')?`assets/p2/${t.slice(3)}.webp`:`assets/p/${t}.webp`;
 A.nebula=function(){if(A.cache._neb)return A.cache._neb;const c=document.createElement('canvas');c.width=c.height=360;const x=c.getContext('2d');const r=R(99);
  x.globalCompositeOperation='lighter';const cols=['rgba(160,80,255,','rgba(56,225,255,','rgba(255,90,200,','rgba(90,120,255,'];

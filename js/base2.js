@@ -1,6 +1,7 @@
 'use strict';
 // v35: Freie Bauplatzwahl auf dem Plateau (Clash-of-Clans-Stil): Pan/Pinch/Doppeltipp, Platzierungsmodus, Verschieben per Langdruck.
 (function(){
+if(!window.B5)return; // Das Quellcodepaket ohne Sprite-Metadaten verwendet die DOM-Basis.
 const WW=3000,WH=2250,CELL=95,TW=750,TH=562.5;
 const POLY=PLAT.poly,SPOTS=PLAT.spots;
 // v36: Größe nach Wichtigkeit (groß / mittel / klein)

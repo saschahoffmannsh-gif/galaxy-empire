@@ -18,7 +18,7 @@ NET.zip=zip;NET.unzip=unzip;
 NET.initNew=function(S){const h=NET.cfg.home;const pl=S.planets[S.home];S.seed=NET.cfg.seed||4242;if(h){pl.g=h[0];pl.s=h[1];pl.p=h[2];const np=ENGINE.npcAt(pl.g,pl.s);for(let k=0;k<15&&np.includes(pl.p);k++)pl.p=pl.p%15+1;/* Review F09: begrenzte Suche, Server vergibt NPC-freie Heimat */pl.temp=40;}S.speed=NET.cfg.speed||10;S.cmdName=NET.cfg.name;S.flags=S.flags||{};S.flags.testRes19=1;S.flags.named=1;S.mp=1};
 NET.enforce=function(S){if(!NET.on||!S)return;S.speed=NET.cfg.speed||10;S.cmdName=NET.cfg.name;S.flags=S.flags||{};S.flags.testRes19=1};
 function breakdown(){const S=GS();let f=0,d=0;const add=(o,T)=>{let v=0;for(const k in o){const u=T[k];if(u)v+=o[k]*(u.c[0]+u.c[1]+u.c[2])/1000}return v};
- for(const id of S.order){const p=S.planets[id];f+=add(p.ships,GE.SHIP);d+=add(p.def,GE.DEF)}for(const fl of S.fleets)if(!fl.npc)f+=add(fl.ships,GE.SHIP);
+ for(const id of S.order){const p=S.planets[id];f+=add(p.ships,GE.SHIP);d+=add(p.def,GE.DEF)}for(const fl of S.fleets)if(!fl.npc)f+=add(fl.ships,GE.SHIP);for(const sv of S.saves||[])f+=add(sv.ships,GE.SHIP);
  const cp=ENGINE.calcPoints(S);return{b:cp.b,t:cp.t,f:Math.floor(f),d:Math.floor(d)}}
 NET.breakdown=breakdown;
 NET.sync=async function(withSave){if(!NET.on||!GS())return;const S=GS();
@@ -28,32 +28,46 @@ NET.sync=async function(withSave){if(!NET.on||!GS())return;const S=GS();
   if(+NET.uni.created>0&&S.created!==+NET.uni.created){S.created=+NET.uni.created;delete NET.uni.created} // Progression v1: Fenster-Anker = vertrauenswürdige Kontoerstellung
   NET.incoming=NET.uni.incoming||[];NET.ally=NET.uni.ally||null;const evs0=NET.uni.events||[];delete NET.uni.events;
   if(NET.ally)S.ally={name:NET.ally.name,tag:NET.ally.tag,created:S.ally&&S.ally.tag===NET.ally.tag?S.ally.created:Date.now(),mp:1};else if(S.ally&&S.ally.mp)S.ally=null;
-  if(evs0.length){const S1=GS();const fresh=applyEvents(evs0);if(fresh){try{save()}catch(e){}try{await NET.pushSave()}catch(e){}}if(evs0.every(e=>S1&&S1.evSeen&&S1.evSeen[e.id]))await api('ack',{body:{ids:evs0.map(e=>e.id)}})}if(evs0.length&&!NET._re){NET._re=1;try{await NET.sync(false)}finally{NET._re=0}}NET.lastSync=Date.now();NET.err=null;
+  if(evs0.length){const S1=GS();const fresh=applyEvents(evs0);if(fresh){try{save()}catch(e){}try{await NET.pushSave()}catch(e){}}if(evs0.every(e=>S1&&S1.evSeen&&S1.evSeen[e.key||e.id]))await api('ack',{body:{ids:evs0.map(e=>e.id)}})}if(evs0.length&&!NET._re){NET._re=1;try{await NET.sync(false)}finally{NET._re=0}}NET.lastSync=Date.now();NET.err=null;
   try{localStorage.setItem('ge_mp_uni',JSON.stringify({...NET.uni,players:NET.uni.players,npcs:NET.uni.npcs}))}catch(e){}
   if(window.RANK)RANK.g=null;rkC.t=0;try{hud()}catch(e){}
   if(withSave||Date.now()-NET.lastSave>10*60e3){await NET.pushSave()}
  }catch(e){NET.err=e.message}};
-NET.CV=54; // Client-Version: der Server lehnt Spielstände älterer Clients (ohne Stufen-Regeln) ab
-NET.pushSave=async function(keepalive){const S=GS();if(!S)return;const z=await zip(JSON.stringify(S));
- const t=S.t;let base=null;try{base=+localStorage.getItem('ge_mp_base_'+String(NET.cfg.name).toLowerCase())||null}catch(_){}try{await api('save',{body:{z,t,cv:NET.CV,base},keepalive:keepalive&&z.length<60000});NET.lastSave=Date.now();try{localStorage.setItem('ge_mp_base_'+String(NET.cfg.name).toLowerCase(),String(t))}catch(_){}}
- catch(e){if(e.code==='reject'&&!keepalive){console.warn('Spielstand abgelehnt',e.reasons);await NET.revert(e.message)}else throw e}};
+NET.CV=60; // Client-Version: der Server lehnt Spielstände älterer Clients (ohne Stufen-Regeln) ab
+NET.acceptCanonical=async function(res,maxSeq){
+  const canonical=JSON.parse(await unzip(res.z));const current=GS(),remaining=(current.pendingActions||[]).filter(a=>a.seq>maxSeq);const ui={cur:current.cur,settings:current.settings};const visual={};for(const id of current.order)visual[id]={pos:current.planets[id].pos,pads:current.planets[id].pads,padsV:current.planets[id].padsV};
+  let at=canonical.t;for(const a of remaining){a.t=Math.max(at,a.t);at=a.t;}
+  const seen=current.camp&&current.camp.seen,skip=current.camp&&current.camp.skip;const hook=ENGINE.onSend,oldClock=ENGINE.clock;
+  try{ENGINE.onSend=f=>{const old=current.fleets.find(q=>q.id===f.id);if(old&&old.pvp)f.pvp=old.pvp;};ENGINE.journalEnabled=false;ENGINE.replay(canonical,remaining,Math.max(canonical.t,current.t));const next=ENGINE.state();next.pendingActions=remaining;
+   for(const k of Object.keys(current))delete current[k];Object.assign(current,next);ENGINE.load(current);if(current.planets[ui.cur])current.cur=ui.cur;for(const id in visual)if(current.planets[id])Object.assign(current.planets[id],visual[id]);if(current.camp){if(seen)current.camp.seen=seen;current.camp.skip=skip||0;}
+  }finally{ENGINE.onSend=hook;ENGINE.clock=oldClock;ENGINE.journalEnabled=true;}
+localStorage.setItem('ge_mp_base_'+String(NET.cfg.name).toLowerCase(),String(res.rev));};
+let pushPromise=null;
+NET.pushSave=function(keepalive){if(pushPromise)return pushPromise.then(()=>NET.pushSave(keepalive));
+ pushPromise=(async()=>{const state=GS();if(!state||!NET.on)return;const commands=JSON.parse(JSON.stringify(state.pendingActions||[]));const maxSeq=state.actionSeq||0;const z=await zip(JSON.stringify(state));
+ const base=+localStorage.getItem('ge_mp_base_'+String(NET.cfg.name).toLowerCase())||0;
+ try{const res=await api('save',{body:{z,actions:commands,t:state.t,cv:NET.CV,base},keepalive:keepalive&&z.length<40000});
+  await NET.acceptCanonical(res,maxSeq);
+  NET.lastSave=Date.now();localStorage.setItem('ge_mp_base_'+String(NET.cfg.name).toLowerCase(),String(res.rev));try{save()}catch(_){}
+ }catch(e){if(e.code==='reject'&&!keepalive)await NET.revert(e.message);throw e;}
+ })().finally(()=>{pushPromise=null;});return pushPromise;};
 // v41: Server hat den Stand abgelehnt (unmöglicher Fortschritt) → letzten gültigen Server-Stand laden
-NET.revert=async function(msg){try{const s=await api('save');const key=window.NET_KEY||('ge_mp_save_'+String(NET.cfg.name).toLowerCase());localStorage.setItem(key,await unzip(s.z));try{localStorage.setItem('ge_mp_base_'+String(NET.cfg.name).toLowerCase(),String(s.t))}catch(_){}
+NET.revert=async function(msg){try{const s=await api('save');const key=window.NET_KEY||('ge_mp_save_'+String(NET.cfg.name).toLowerCase());localStorage.setItem(key,await unzip(s.z));try{localStorage.setItem('ge_mp_base_'+String(NET.cfg.name).toLowerCase(),String(s.rev??s.t))}catch(_){}
  try{toast('Server: '+String(msg||'Spielstand abgelehnt').slice(0,140)+' – letzter gültiger Stand wird geladen','err',6000)}catch(_){}
  window.__noSave=1;setTimeout(()=>location.reload(),2500)}catch(e){console.warn(e)}};
 // v45: bei jedem Start den Server-Stand prüfen – ist er neuer (anderes Gerät/Browser, PWA vs. Safari) oder gehört er zu einem Konto-Reset,
 // wird er übernommen; die vergangene Echtzeit holt E.tick danach nach (Bau, Forschung, Werft, Produktion laufen offline weiter).
 const BK=()=>'ge_mp_base_'+String(NET.cfg.name).toLowerCase();
 NET.pull=async function(){const S=GS();if(!NET.on||!S)return;try{const s=await api('save');if(!s||!s.z)return;const raw=await unzip(s.z);let o=null;try{o=JSON.parse(raw)}catch(e){return}
- if(!o||o.v!==3)return;const bk=BK(),base=+localStorage.getItem(bk)||0;if(!base){localStorage.setItem(bk,String(s.t));if((o.rid||null)===(S.rid||null)&&!window.GE_FRESH)return}
- else if((o.rid||null)===(S.rid||null)&&(+s.t||0)<=base+1000)return;localStorage.setItem(bk,String(s.t));
+ if(!o||o.v!==3)return;const bk=BK(),base=+localStorage.getItem(bk)||0;if(!base){localStorage.setItem(bk,String(s.rev??s.t));if((o.rid||null)===(S.rid||null)&&!window.GE_FRESH)return}
+ else if((o.rid||null)===(S.rid||null)&&(+s.rev||+s.t||0)<=base)return;localStorage.setItem(bk,String(s.rev??s.t));
  console.log('Server-Stand ist neuer – wird übernommen',o.t,S.t);window.GE_FRESH=0;sessionStorage.setItem('ge_import',raw);GE_REBOOT(window.NET_KEY||('ge_mp_save_'+String(NET.cfg.name).toLowerCase()));try{renderAll()}catch(e){}}catch(e){if(e.status!==404)console.warn('pull',e.message)}};
 // Anmeldung: Server-Spielstand holen und lokal ablegen, dann neu laden
 async function enter(res,url){const c={url,token:res.token,name:res.name,home:res.home,speed:res.speed,seed:res.seed||4242};NET.cfg=c;
  const key='ge_mp_save_'+String(res.name).toLowerCase();
  if(res.hasSave){try{const s=await api('save');const local=JSON.parse(localStorage.getItem(key)||'null');const raw=await unzip(s.z);let rid=null;try{rid=JSON.parse(raw).rid||null}catch(e){}
   // v42: nach einem Konto-Reset (rid) gewinnt immer der Server-Stand, auch wenn die lokale Kopie „neuer“ ist
-  if(!local||(local.t||0)<s.t||(local.rid||null)!==rid)localStorage.setItem(key,raw);localStorage.setItem('ge_mp_base_'+String(res.name).toLowerCase(),String(s.t))}catch(e){}}
+  if(!local||(local.t||0)<s.t||(local.rid||null)!==rid)localStorage.setItem(key,raw);localStorage.setItem('ge_mp_base_'+String(res.name).toLowerCase(),String(s.rev??s.t))}catch(e){}}
  localStorage.setItem(LS,JSON.stringify(c));localStorage.removeItem('ge_mp_off');
  if(!window.GE_REBOOT||!NET._ui){location.reload();return}
  NET.on=true;window.NET_KEY=key;ENGINE.mp=true;NET.uni=null;installMP();rkC.t=0;GE_REBOOT(key);setTimeout(()=>{try{renderAll()}catch(e){}},2500)}
@@ -65,6 +79,7 @@ const h32=s=>{let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=
 function index(){const U=NET.uni;if(!U)return{};if(U._idx)return U._idx;const idx={};const me=String(NET.cfg.name||'').toLowerCase();
  for(const p of U.players||[]){if(String(p.name).toLowerCase()===me)continue;const tot=p.pts.b+p.pts.t+p.pts.f+p.pts.d;for(const pl of p.planets||[]){if(pl.moon)continue;idx[pl.g+':'+pl.s+':'+pl.p]={kind:'player',player:p.name,pts:tot,ally:p.tag,name:pl.name||'Planet',real:1,prot:!!p.prot}}}
  for(const x of U.npcs||[]){const tot=x.pts.b+x.pts.t+x.pts.f+x.pts.d;idx[x.home.join(':')]={kind:'player',player:x.n,pts:Math.max(50,tot),ally:x.tag,name:'Heimatplanet',npcp:x.type,npcid:x.id}}
+ for(const h of U.reserved||[])idx[h.join(':')]={kind:'reserved',npcid:'reserved',name:'Reservierte Position'};
  Object.defineProperty(U,'_idx',{value:idx,enumerable:false});return idx}
 NET.slotHook=(g,s,p)=>index()[g+':'+s+':'+p]||null;
 // ---------- Rangliste ----------
@@ -76,43 +91,27 @@ NET.rankList=function(){const U=NET.uni||{ranking:[]};const me=String(NET.cfg.na
 const fmtR=o=>['m','k','g'].filter(r=>o&&o[r]>0).map(r=>(window.fmt?fmt(Math.floor(o[r])):Math.floor(o[r]))+' '+({m:'Metall',k:'Kristall',g:'Gas'})[r]).join(', ')||'nichts';
 function planetAt(S,c){for(const id of S.order){const p=S.planets[id];if(!p.moon&&p.g===c.g&&p.s===c.s&&p.p===c.p)return p}return null}
 // Review F11: Ereignisse dedupliziert (evSeen), angewendet, gespeichert – ACK erst danach
-function applyEvents(evs){const S=GS();const E=ENGINE;if(!S)return false;let any=false;S.evSeen=S.evSeen||{};
- for(const ev of evs){if(ev.id&&S.evSeen[ev.id])continue;if(ev.id)S.evSeen[ev.id]=Date.now();any=true;const c=ev.to||{};const pl=planetAt(S,c);const where=pl?`${pl.name} [${c.g}:${c.s}:${c.p}]`:`[${c.g}:${c.s}:${c.p}]`;
-  try{if(ev.kind==='attacked'){if(pl){for(const k in ev.lossShips||{})pl.ships[k]=Math.max(0,(pl.ships[k]||0)-ev.lossShips[k]);for(const k in ev.lossDef||{})pl.def[k]=Math.max(0,(pl.def[k]||0)-ev.lossDef[k]);
-     for(const k in pl.ships)if(!pl.ships[k])delete pl.ships[k];for(const r of['m','k','g'])pl.r[r]=Math.max(0,pl.r[r]-((ev.loot||{})[r]||0))}
-    if(pl&&ev.moon&&!pl.moonId){E.addMoon(pl);toast('🌙 Aus den Trümmern hat sich ein Mond gebildet!','ok',5000)}
-    if(ev.gal&&ev.galKey&&E.galGrant(ev.galKey,ev.gal))toast(`💎 ${ev.gal} Galactonit-Steine aus dem Trümmerfeld!`,'ok',5000);
-    E.report('combat',`Angriff von ${ev.from} auf ${where}`,{battle:ev.battle});toast(`⚔️ ${ev.from} hat ${where} angegriffen`,'err',5000)}
-   else if(ev.kind==='spied'){E.report('info',`Spionage von ${ev.from}`,{text:`${ev.from} hat ${where} ausspioniert.`+(ev.lost?' Die Sonden wurden abgeschossen.':'')})}
-   else if(ev.kind==='transport'){if(pl){for(const r of['m','k','g'])pl.r[r]+=(+(ev.res||{})[r]||0);if(ev.id)E.bookIn('e:'+ev.id,ev.res)}E.report('transport',`Lieferung von ${ev.from}`,{text:`${ev.from} hat dir ${fmtR(ev.res)} nach ${where} geliefert.`})}
-   else if(ev.kind==='allyapp'){E.report('info',`Bewerbung von ${ev.from}`,{text:`${ev.from} möchte deiner Allianz [${ev.tag}] beitreten.`+(ev.msg?` Nachricht: „${ev.msg}“`:'')});toast(`Neue Allianz-Bewerbung von ${ev.from}`,'ok',4000)}
-   else if(ev.kind==='allydecision'){E.report('info',ev.accept?`Aufgenommen in [${ev.tag}]`:`Bewerbung bei [${ev.tag}] abgelehnt`,{text:ev.accept?`Du bist jetzt Mitglied der Allianz ${ev.name} [${ev.tag}].`:`Die Allianz ${ev.name} [${ev.tag}] hat deine Bewerbung abgelehnt.`})}
-   else if(ev.kind==='allykick'){E.report('info',`Aus [${ev.tag}] entfernt`,{text:`Du wurdest aus der Allianz [${ev.tag}] entfernt.`})}
-  }catch(e){console.error(e)}}
- {const ks=Object.keys(S.evSeen);if(ks.length>400){ks.sort((a,b)=>S.evSeen[a]-S.evSeen[b]);for(const k of ks.slice(0,ks.length-400))delete S.evSeen[k]}}
- return any}
+function applyEvents(evs){const S=GS(),E=ENGINE;if(!S)return false;let any=false;E.externalEvents=E.externalEvents||{};
+ for(const ev of evs){const key=ev.key||ev.id;E.externalEvents[key]=ev;if(S.evSeen&&S.evSeen[key])continue;const e=E.receiveEvent(key);if(e)continue;any=true;}
+ return any;}
 NET.applyEvents=applyEvents;
-function onSend(f){const S=GS();if(!NET.on||f.npc||!['attack','spy','transport'].includes(f.mission)||f.to.moon)return;const sl=NET.slotHook(f.to.g,f.to.s,f.to.p);if(!sl)return;
+const registrations=new Map();
+function registerFleet(id){if(registrations.has(id))return registrations.get(id);const job=(async()=>{
+ try{await NET.pushSave();const f=GS().fleets.find(f=>f.id===id);if(!f||!f.pvp||f.phase==='back')return;if(f.pvp.sid){NET.err=null;return;}const r=await api('fleet',{body:{cid:id}});const q=GS().fleets.find(q=>q.id===id);if(q&&q.pvp)q.pvp.sid=r.id;NET.err=null;try{save()}catch(_){}
+ }catch(e){NET.err=e.message;const q=GS().fleets.find(q=>q.id===id);if(q&&q.pvp&&!q.pvp.sid&&[400,403,404].includes(e.status)){const err=ENGINE.recall(id);if(!err){ENGINE.report('info','Mission abgebrochen',{text:e.message+' – die Flotte kehrt zurück.'});try{save();await NET.pushSave()}catch(_){}}}}
+ })().finally(()=>registrations.delete(id));registrations.set(id,job);return job;}
+function onSend(f){if(!NET.on||f.npc||!['attack','spy','transport'].includes(f.mission)||f.to.moon)return;const sl=NET.slotHook(f.to.g,f.to.s,f.to.p);if(!sl)return;
  let target=null;if(sl.real)target={name:sl.player};else if(sl.npcp&&sl.npcid&&f.mission!=='transport')target={npc:sl.npcid};if(!target)return;
- f.pvp={...target,who:sl.player};const E=ENGINE;
- api('fleet',{body:{mission:f.mission,target,to:{g:f.to.g,s:f.to.s,p:f.to.p},fromC:f.fromC,ships:f.ships,cargo:f.cargo,tech:E.techOf(),esp:E.tl('espionage'),arrive:Date.now()+(f.arrive-S.t),depart:Date.now(),cid:f.id}})
-  .then(r=>{f.pvp.sid=r.id;try{save()}catch(e){}}).catch(e=>{f.pvp.err=e.message;toast('Server: '+e.message+' – Flotte kehrt bei Ankunft um','err',4000)})}
+ f.pvp={...target,who:sl.player};Promise.resolve().then(()=>registerFleet(f.id));}
 let busy=false;
-async function resolveLoop(){const S=GS();if(!S||busy||!NET.on)return;const list=S.fleets.filter(f=>f.phase==='pvp');if(!list.length)return;busy=true;
- try{for(const f of list){if(!f.pvp.sid){if(f.pvp.err||S.t-f.pvpAt>60e3){f.phase='back';f.arrive=S.t+f.dur;ENGINE.report('info','Mission abgebrochen',{text:'Der Server hat die Flotte nicht angenommen. Sie kehrt zurück.'})}continue}
-   let r;try{r=await api('fleet/resolve',{body:{id:f.pvp.sid}})}catch(e){if(/unbekannt/.test(e.message)){f.phase='back';f.arrive=S.t+f.dur}continue}
-   if(!r.result)continue;applyResult(f,r.result)}}
+async function resolveLoop(){if(!GS()||busy||!NET.on)return;busy=true;
+ try{for(const id of GS().fleets.filter(f=>f.pvp&&!f.pvp.sid&&['out','pvp'].includes(f.phase)).map(f=>f.id))await registerFleet(id);
+  for(const id of GS().fleets.filter(f=>f.phase==='pvp'&&f.pvp&&f.pvp.sid).map(f=>f.id)){const f=GS().fleets.find(f=>f.id===id);if(!f||!f.pvp)continue;
+   let r;try{await NET.pushSave();r=await api('fleet/resolve',{body:{id:f.pvp.sid}})}catch(e){NET.err=e.message;continue;}
+   if(!r.result)continue;if(r.save){const max=(GS().actionSeq||0)-(GS().pendingActions||[]).length;await NET.acceptCanonical(r.save,max);}else applyResult(f,r.result);}}
  finally{busy=false;try{after()}catch(e){}}}
-function applyResult(f,x){const S=GS();const E=ENGINE;const to=f.to;const c=`[${to.g}:${to.s}:${to.p}]`;const who=f.pvp.who||'Spieler';
- if(x.kind==='attack'){f.ships={};for(const k in x.endShips||{})if(x.endShips[k]>0)f.ships[k]=x.endShips[k];for(const r of['m','k','g'])f.cargo[r]+=(x.loot||{})[r]||0;if(x.loot)ENGINE.bookIn('e:f'+f.pvp.sid,x.loot);
-  const d=x.debris||{};if((d.m||0)+(d.k||0)>0){const k=E.ck(to.g,to.s,to.p);const o=S.debris[k]||(S.debris[k]={m:0,k:0});o.m+=d.m||0;o.k+=d.k||0}
-  if(x.gal&&x.galKey&&E.galGrant(x.galKey,x.gal))toast(`💎 ${x.gal} Galactonit-Stein${x.gal>1?'e':''} erbeutet!`,'ok',5000);
-  E.report('combat',`Kampf bei ${who} ${c}`,{battle:x.battle})}
- else if(x.kind==='spy'){if(x.lostProbes){f.ships={}}E.report('spy',`Spionagebericht ${who} ${c}`,{spy:x.spy})}
- else if(x.kind==='transport'){E.report('transport','Transport angekommen',{text:`Deine Flotte hat ${fmtR(f.cargo)} an ${who} ${c} geliefert.`});f.cargo={m:0,k:0,g:0}}
- else E.report('info','Mission fehlgeschlagen',{text:(x.msg||'Unbekannter Fehler')+' – die Flotte kehrt zurück.'});
- if(!Object.keys(f.ships).length){S.fleets=S.fleets.filter(y=>y!==f);return}
- f.phase='back';f.arrive=S.t+f.dur;delete f.pvp}
+NET.resolveLoop=resolveLoop;
+function applyResult(f,x){const E=ENGINE;E.externalResults=E.externalResults||{};E.externalResults[f.pvp.sid]=x;const sid=f.pvp.sid;const e=E.receiveFleet(f.id,sid);if(e)return;}
 NET.extIncoming=()=>{const S=GS();if(!S)return[];return(NET.incoming||[]).filter(i=>(i.mission==='attack'||!i.mission)&&i.arrive).map(i=>{const pl=planetAt(S,i.to||{});return pl?{id:'x'+i.id,target:S.order.find(id=>S.planets[id]===pl),arrive:S.t+(i.arrive-Date.now()),who:i.from||'Unbekannt (Radar zu niedrig)',phase:'out',ext:1,ships:i.ships||{},radar:i.radar,nRough:i.nRough,classes:i.classes}:null}).filter(Boolean)};
 // ---------- Stufe 3: Allianzen + Chat ----------
 const AL={tab:'ally',list:null,chat:{},last:{},ch:'global'};NET.AL=AL;
@@ -182,8 +181,7 @@ function bootGate(){if(sessionStorage.getItem('ge_mp_off'))return;
  loginScreen()}
 // ---------- UI (nach dem Laden der Oberfläche) ----------
 let mpDone=false;
-function installMP(){const E=window.ENGINE;if(mpDone)return;mpDone=true;{E.slotHook=NET.slotHook;E.onSend=onSend;E.pvpArrive=f=>{setTimeout(resolveLoop,300)};E.extIncoming=NET.extIncoming;
-  const rc=E.recall;E.recall=function(fid){const S=GS();const f=S&&S.fleets.find(x=>x.id===fid);if(f&&f.phase==='pvp')return;if(f&&f.pvp&&f.pvp.sid&&f.phase==='out'){api('fleet/recall',{body:{id:f.pvp.sid}}).catch(()=>{});delete f.pvp}return rc.call(this,fid)};
+function installMP(){const E=window.ENGINE;if(mpDone)return;mpDone=true;E.journalEnabled=true;{E.slotHook=NET.slotHook;E.onSend=onSend;E.pvpArrive=f=>{setTimeout(resolveLoop,300)};E.extIncoming=NET.extIncoming;
   setInterval(resolveLoop,5000);setInterval(()=>{if(document.visibilityState==='visible'&&view==='chat'){const ch=AL.ch;chatLoad(ch).then(n=>{if(n&&view==='chat')mpChat()})}},8000);
   window.renderAlly=mpAlly;window.renderChat=mpChat;
   document.addEventListener('click',async e=>{const t=e.target.closest('[data-act^="mpa-"],[data-act^="mpc-"]');if(!t)return;e.stopPropagation();const a=t.dataset.act;
@@ -197,13 +195,13 @@ const ss=E.setSpeed;E.setSpeed=function(sp){if(sp!==(NET.cfg.speed||10)){toast('
 // Admin-Geschenke: beim Start/Zurückkehren abrufen, Popup zeigen, serverseitig einlösen (einmalig, geräteübergreifend)
 let giftBusy=false;
 NET.checkGifts=async function(){const S=GS();if(!NET.on||!S||giftBusy)return;giftBusy=true;try{const r=await api('gifts');S.gifts=S.gifts||{};let fixed=false;
- for(const g of r.gifts||[]){if(g.claimed&&!S.gifts[g.id]){ENGINE.applyGift(g.id,g.dm);fixed=true}} // eingelöst, aber im lokalen Stand fehlend → nachtragen
+ ENGINE.externalGifts=ENGINE.externalGifts||{};for(const g of r.gifts||[]){if(g.claimed)ENGINE.externalGifts[g.id]=g.dm;if(g.claimed&&!S.gifts[g.id]){ENGINE.applyGift(g.id,g.dm);fixed=true}} // eingelöst, aber im lokalen Stand fehlend → nachtragen
  if(fixed){try{save()}catch(e){}NET.pushSave().catch(()=>{})}
  const g=(r.gifts||[]).find(x=>!x.claimed&&!S.gifts[x.id]);if(g)await giftPopup(g)}catch(e){if(e.status!==404)console.warn('gifts',e.message)}finally{giftBusy=false}};
 function giftPopup(g){return new Promise(res=>{const d=document.createElement('div');d.id='ge-gift';d.style.cssText='position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6)';
  d.innerHTML=`<div class="glass" style="max-width:360px;margin:16px;padding:20px;border-radius:16px;text-align:center;background:rgba(20,16,40,.95);border:1px solid rgba(255,200,90,.5)"><div style="font-size:12px;letter-spacing:2px;color:#f5c75a">GESCHENK VON ${esc(g.sender||'Admin')}</div><div style="font-size:18px;margin:10px 0">${esc(g.msg||'')}</div><div style="font-size:26px;font-weight:700;margin:8px 0 14px">${Number(g.dm).toLocaleString('de-DE')} DM</div><button class="btn" data-gift="1" style="min-width:160px">Einsammeln</button></div>`;
  document.body.appendChild(d);const b=d.querySelector('[data-gift]');b.onclick=async()=>{if(b.disabled)return;b.disabled=true;b.textContent='…';
-  try{const x=await api('gift/claim',{body:{id:g.id}});const S=GS();if(ENGINE.applyGift(g.id,x.dm))toast('+'+x.dm+' Dunkle Materie eingesammelt','ok',4000);try{save()}catch(e){}try{renderAll()}catch(e){}await NET.pushSave().catch(()=>{});d.remove();res(true)}
+  try{const x=await api('gift/claim',{body:{id:g.id}});const S=GS();ENGINE.externalGifts=ENGINE.externalGifts||{};ENGINE.externalGifts[g.id]=x.dm;if(ENGINE.applyGift(g.id,x.dm))toast('+'+x.dm+' Dunkle Materie eingesammelt','ok',4000);try{save()}catch(e){}try{renderAll()}catch(e){}await NET.pushSave().catch(()=>{});d.remove();res(true)}
   catch(e){b.disabled=false;b.textContent='Einsammeln';toast('Server: '+e.message,'err',4000)}}})}
 function ui(){NET._ui=1;if(NET.on)installMP();setInterval(hud,2000);setTimeout(hud,300);
  {const L=document.getElementById('loader');if(!L)bootGate();else{const mo=new MutationObserver(()=>{if(!document.getElementById('loader')){mo.disconnect();bootGate()}});mo.observe(document.body,{childList:true});

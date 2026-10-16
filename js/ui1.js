@@ -106,8 +106,8 @@ const EW=(()=>{const W=PADS.map(([,,w])=>1.22*170*Math.pow(w/170,.55));for(let i
 const tier5=lv=>lv<5?1:lv<10?2:lv<15?3:lv<20?4:5;
 function b4Geo(i,m,ft){const [cx,cy,w,h]=PADS[i];let [W,H,ox,oy,ow]=m;let k=1;if(ft){k=ft[0];ox+=ft[2]*ow;oy+=ft[3]*ow}const s=w*1.02/(ow*k);return{vi:0,src:'',left:cx-ox*s,top:cy-oy*s,width:W*s,height:H*s,ox:ox*s,oy:oy*s,sk:0,cx,cy,w,h:Math.max(h,w*.16)}}
 function padGeo(i,name,lv){const [cx,cy,w,h]=PADS[i];const vi=2;
- const v=B3.v[name][vi];const bn=name.replace(/_t\d$/,'');const ew=EW[i];let s=ew/288*(IMP[bn]||IMP[rimg(bn)]||1)*(1+Math.min(lv||0,20)*.008);const hm=PAD_HMAX[i]*1.35;if(v[3]*s>hm)s=Math.max(ew/288*.9,hm/v[3]);const sk=0;
- return{vi,src:`assets/b3/${name}_${vi}.webp`,left:cx-v[2]*s,top:cy-v[3]*s,width:v[0]*s,height:v[1]*s,ox:v[2]*s,oy:v[3]*s,sk,cx,cy,w,h:Math.max(h,w*.16)}}
+ const meta=window.B3&&window.B3.v[name],v=meta&&meta[vi]||[256,256,128,224];const bn=name.replace(/_t\d$/,'');const ew=EW[i];let s=ew/288*(IMP[bn]||IMP[rimg(bn)]||1)*(1+Math.min(lv||0,20)*.008);const hm=PAD_HMAX[i]*1.35;if(v[3]*s>hm)s=Math.max(ew/288*.9,hm/v[3]);const sk=0;
+ return{vi,src:meta?`assets/b3/${name}_${vi}.webp`:A.make(bn),left:cx-v[2]*s,top:cy-v[3]*s,width:v[0]*s,height:v[1]*s,ox:v[2]*s,oy:v[3]*s,sk,cx,cy,w,h:Math.max(h,w*.16)}}
 
 // v22: Leben je Ausbaustufe (bewegliche Teile, Leuchtschicht, Masken-Effekte, Signallichter, Dampf, Kran, Drohnen)
 function tfxHTML(T,src,tier){const W=T.W,H=T.H,pre=src.replace('.webp','');const X=v=>(v/W*100).toFixed(2)+'%',Y=v=>(v/H*100).toFixed(2)+'%';let h='';
